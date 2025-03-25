@@ -1,3 +1,3 @@
 # thesis
 
-This repo is ment to share material and links relevant for my thesis to my supervisers. 
+This repo is ment to share material and links relevant for my thesis with my supervisers. 
