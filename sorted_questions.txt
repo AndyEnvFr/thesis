@@ -1,0 +1,94 @@
+16:59 19/03/2025
+
+geordnete Frage-Liste
+
+Allgemein
+
+	was für Muster meinst du in: " … Machine Learning tools Muster identifizieren könnte, die CNDD kreiert"
+
+	auf welchem Modell bauen wir die Analyse?
+		Phylosim
+			- hat keine Demographie, auch nicht binär (seedling, adult)
+				andere Modelle haben diese Unterteilung immer und die CNDD wirkt sich auch die seedlings aus
+				jedoch argumentieren ältere Studien meistens mit pathogenen, die sich auf die Samen und Setzlinge auswirken
+					May et al argumentiert auch mit geteilten Ressourcen. Dieser Prozess ist vielleicht besser abgebildet, wenn die Sterblichkeit im Erwachsenen Alter stattfindet			
+			-? densityCut der Dichteeinfluss ist binär (?)
+				A decrease of neighbourhood effects with increasing distance can not be considered
+			
+			+ gleiche traits schwächen die fitness des Individuums, womit auch HNDD modelliert würde
+			+ dispersal ist drin
+			+ räumliche Verteilung ist drin
+			+ Ergebnisse auf unterschiedlichen Skalen visualisieren ist einfach: localPlots() stanz zufällig definierte Plotgrößen aus
+			+ speciation
+			+ sac; rac
+			+ Phylogenie: Wie wirkt sich CNDD / HNDD auf die Phylogenie aus?
+
+			trait spezifische densitiy dependency 
+
+			variance and strenght in NDD is driven by phylogenetic 
+
+			microbial pathogene species specifc
+		con VS Phylo
+			kernel über Phyl. Distanz und schaut ob CNDD artspezifisch ist oder 
+			Phylogeny is available
+			traits must be fixed
+
+		Research Question
+			Species specific VS Phylo specific NDD
+			Raum Zeit
+				was passiert wenn man unterschiedliche Skalen misst: was kommt an CNDD raus, wenn man was reinwirft und auf unterschiedlichen raum- zeit eben schaut
+
+		CNDD abundance correlation
+
+		mutualist & pathogens in phylosim
+			trait einfügen mit positive interaktion
+
+		Raum Zeit
+			ML: cndd dominert system, da die arten zeitich stabil, lokale dichteabhängig
+
+		CNDD messen
+			cndd korreliert nicht mit abundance
+
+		auf das Modell analyseverfahren einbauen
+			cndd pro art statistisch messen und schauen ob mit abundance korelliert
+
+mutualsit in phylosim einbauen, die weniger spezifisch ist
+
+erst mit phylosim vertraut machen und schauen, ob man ndd pro art rausfischen kann
+Funktion schrieben zwischen zwei zeitschritten: Sterblichkeit ~ conspezifische Dichte
+
+wenn hohe cndd -> niedrige abundace
+	1) empirisch: warum korreliert cndd emp mit abundace (arten mit mehr CNDD sind seltener)
+	2) wenn CNDD variable ist, ist es diversity enhancing
+	cndd variation die man empirisch misst ist real: mehr cndd = seltener
+		neg. cndd N correlation: 
+	oder CNDD abundance correaltion ist ein Artefakt:
+		die Arten haben unterschieldiche CNDD
+
+	CNDD Leipzig ist wie schaaf model:
+
+Ou is random walk mit anziehung
+			
+Paper
+
+
+
+
+
+
+Meeting:
+
+phylosim = hubble model
+	(speciation spielt eine rolle)
+	inspiert schaaf 2002. Chave J, Muller-Landau HC & Levin SA (2002). Comparing classical community models: theoretical consequences for patterns of diversity. The American Naturalist 159(1): 1-23.
+	kann man aus dem muster schlißeen, ob cndd da ist? oder idiosyncratic, dass man mit anderen Mechanismen ähnliche muster bekommt?
+	welche parameter 
+
+welches CNDD muster is nachweisbar mit Phylosim
+Aus drift der popgröße: random walk ? sowie CNDD (common down, rare up)
+zeitliche muster: 
+Gefahr beei ML: gutmachbar, wie verallgemeinerbar ist es?
+combiniert: muster die CNDD erzeigt: rämich, zeitlich und in Kombination miteinander
+
+wiegand Modell:
+	

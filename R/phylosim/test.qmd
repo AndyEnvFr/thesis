@@ -1,0 +1,35 @@
+---
+title: "EcoPhyloSim"
+format: html
+editor: visual
+---
+
+```{r}
+library(PhyloSim)
+```
+
+```{r}
+par1 <- createCompletePar(x = 100,
+                         y = 100,
+                         dispersal = "global",
+                         runs = c(1000, 5000, 10000),
+                         specRate = 2,
+                         density = 2, # NDD (but not Conspecific)
+                         environment = 0,
+                         fitnessActsOn = "mortality",
+                         fitnessBaseMortalityRatio = 3, # lower fitness, hence more equal traits (conspecific)
+                         densityCut = 15,
+                         seed = 20250320,
+                         type = "base",
+                         protracted = 150)
+
+simu <- runSimulation(par1) # run 30h and didn't finish
+```
+
+```{r}
+saveRDS(simu, "~/Documents/Uni/Master/MA/R/phylosim/test_1.rds")
+```
+
+
+
+
