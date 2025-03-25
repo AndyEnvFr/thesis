@@ -22,6 +22,7 @@ Allgemein
 			+ speciation
 			+ sac; rac
 			+ Phylogenie: Wie wirkt sich CNDD / HNDD auf die Phylogenie aus?
+			+ environmental matrix allows to model: “There is ample evidence that community composition and diversity at larger scales is influenced by environmental heterogeneity (Cottenie 2005, Kreft and Jetz 2007, Stein et al. 2014) and that the relative importance of heterogeneity increases with the spatial scale considered (Chase 2014, Garzon-Lopez et al. 2014).” ([May et al., 2020, p. 1080])
 
 			trait spezifische densitiy dependency 
 

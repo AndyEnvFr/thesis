@@ -828,7 +828,26 @@ Do rare spec have higher CNDD empirically?
 	NO: Although associations between CNDD and species abundance have been reported in previous studies, all but one study8 analysed CNDD at only a single site, mostly in tropical forests. Of these, some reported stronger CNDD for rare species3,38, others showed stronger CNDD for common species28,39 and still others showed no association40. We attribute these apparently inconsistent previous results to strong between-site variability, which is evident in our data as well (Fig. 1).
 	Ambiguous: “Janzen-Connell hypothesis has received strong support [13,14–16]. Nevertheless, it was still unclear how NDD strength variation would influence relative species abundance. The first expectations were that the most abundant species are the ones suffering more from the presence of conspecifics. However, it has been shown that locally rarer species have stronger NDD [3,11,17–19]. Indeed, theoretical studies have shown that, within a forest, there is a positive relationship between NDD strength and relative abundances of tree species [11,20,21]. Surprisingly, Bagchi et al. [12] showed that species with higher seed abundance are the ones suffering more from natural enemies. Despite the discrepancy of these results, all these works show that the variation of NDD within a community have an impact on relative abundances and possibly on the diversity of the community.” ([Miranda et al., 2015, p. 2])
 	Ambiguous: " “Several studies have also shown that conspecific neighbours tend to be more harmful for rarer species compared to species that are more common in the community (Klironomos 2002; Petermann et al. 2008; Comita et al. 2010; Mangan et al. 2010; though for exceptions see Reinhart 2012; Zhu et al. 2015; Wills et al. 2016).” ([Stump and Comita, 2018, p. 1541])"
+	
+Why even include infinite dispersal in the simulations? it is unrealistic!
+
+Empery Vs Simulation - Variance of CNDD: variance in cndd strength can be high in real communities. Simulations show that S decreases with variation.
+	“This means that in real communities, there must be additional mechanisms and trade-offs that maintain diversity and balance the disadvantage of high species-specific CNDD. Theoretical analyses indicated that coexistence might be fostered by a tradeoff between species-specific CNDD and growth rate when rare (Chisholm and Muller-Landau 2011).” ([May et al., 2020, p. 1080])
+
+Phylogenetic CNDD approach
+	“Accordingly, a relaxation of the simplified binary distinction between con- and hetero specifics in our model would represent a lower host-specificity and result in lower diversity. Therefore, we conclude that our general results will not change with a more realistic scenario of competition and negative density dependence based on trait differences or phylogenetic relatedness.” ([May et al., 2020, p. 1080])
+	My ideas
+		lower host specificity leads to more pathogen regulation (because pathogens from conspecifics + closely related species cause NDD)
+		this could lead to higher NDD strength, hence higher diversity
+		this inherently leads to higher variation in strength, as different species exert different NDD strength on the focal species, hence lower diversity (Miranda et al, Stump & Comita, May et al)
+
+Possible Research Questions
+“We sampled smaller areas within a given 100 ha plot, whereas Levi et al. (2019) simulated community dynamics in plots of increasing size. Comparing species–area relationships that were derived with consistent methods from simulations of both models, might be an interesting follow up study to improve our understanding of the scaling behaviour of biodiversity with CNDD, but is beyond the scope of this study.” ([May et al., 2020, p. 1079])
+	-> one could analyse the spatial patterns and how different methods come to different results. However, mentioned results assume closed populations, which is unrealistic
+	
+
+“From the perspective of niche theory, the fitness of individuals might be suppressed more by neighbours with similar traits and/or from closely related species than by neighbours with different traits or from distantly related species (Kraft and Ackerly 2010).” ([May et al., 2020, p. 1080])
+	-> analyse the phylogenetics in phylosim
 
 
 
-Yenni et al 2012
