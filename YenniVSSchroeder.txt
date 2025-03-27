@@ -1,0 +1,130 @@
+12:18 26/03/2025
+
+Yenni et al 2012 "strong self-limitation promotes the persistence of rare species"
+	assumption/ idea
+		rare species follow different population dynamics than dominant species
+		rarity could be caused by strong NDD instead of heterospecific suppression
+		strong stabilization in a community is achieved, if intrasp. comp. > intersp. comp., as the species limits it self more than it limits others I.e., high CNDD
+			the higher CNDD, the more stable a community is (also simulation studies find that)
+	Methods
+		deterministic model (logit regression):
+			after accounting for stabilization and equivalence (don't know why) the effect of v (N / stabilization) on coexistence was estimated (logit model, as coexistence is binary variable)
+		stochastic model (lm)
+			after accounting for stabilization and equivalence the effect of v (N / stabilization) on the "time until exctinction" was estimated
+	Results
+		v = mean population abundance / Stabilization (i.e., CNDD)
+		v < 0 = rare species have higher CNDD
+
+		deterministic model
+			negative estimate of v suggests that if rare species have higher CNDD, coexistence occurs more often
+		stochastic model
+			negative estimate of v suggests that if rare species have higher CNDD, the time until extinction is longer
+			Fig 3: high S in rare species can extend coextinction, while high S in common species can not
+	Discussion
+		mechanisms behind deterministic and stochastic stabilization differ
+			however, i don't understand why
+			Both times, rare species growth rate is increased when rare (= buffering the species against low population numbers)
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Schroeder et al 2020 "Mutualists and pathogen traits interact to affect plant community structure in a spatially explicit model"
+	The paper brings the attention away from CNDD or HNDD, as it explains scenarios, where common species can have weaker negative PSF (generally thought of reducing biodiversity) then rare species and still coexistence is possible.
+		This is because of underlying microbial pattern: E.g., persistence of pathogens after a conspecific dies can supress future conspecifics growth in that area without being directly linkable to an home/ CNDD scenario
+			this reduces the strength of PSF, because PSF considers multispecies feedbacks and includes recruitment numbers also of non-focal species in a home - away scenario (really complex)
+		Another such mechanism can be the spill over effect, whereby pathogens of common species are sparsely distributed in space, negatively effecting away/HNDD scenarios without the direct effect of hetero- and conspecifics
+		See: “mechanism by which common plants may develop less negative PSF than rare plants. As plants become more common, their pathogens become relatively more abundant beneath heterospecifics than those of rare plants, thereby reducing the strength of net negative feedback for common plants, and reducing their survival probability. Concomitantly, common plants accumulate more of their preferred mutualists than rare plants, increasing survival probability beneath conspecifics, and decreasing the strength of negative feedback” ([Schroeder et al., 2020, p. 7])
+	
+	we develop testable mechanistic explanations for recent puzzling results [such as] “the persistence of rare species even when they appear to be subject to stronger negative feedback than common species5,6.” ([Schroeder et al., 2020, p. 2])	
+	background
+		JC predicted that common plants exhibit high -PSF
+		However, the contrary has been observed: rare species exhibit high -PSF
+			-> N ~ PSF ?
+		plant <-> soil can cause NDD recruitment, maintaining plant community diversity
+		Problem: common species have lower CNDD than rare species is difficult to reconcile with a high community diversity
+		Solution: a model shows that -- plant-soil feedbacks ~ host N + microbial traits -- in a compatible way with upper problem
+	Terminology / Introduction
+		Plant soil feedback = how plant influence the composition of local soil microbiome
+		PSF differentially influences the recruitment of Con- VS Heterospecifics
+		negative PSF between 2 plant spec. = build up microbes evoke CNDD (= CNDD > HNDD)
+			-> this can promote coexistence
+			-> PSF summarizes CNDD and HNDD: it is a metric that accounts for the home (CNDD) survival and the away (HNDD) survival
+		positive PSF are expected to reduce diversity
+		In nature net PSF is the combination of pathogens and mutualists
+		Interspecific variation in PSF strength: what are causes and consequences
+			why do species exhibit stronger - PSF than others?
+				how does this relate to community dynamics?
+		conventional approach
+			Plant Species -> soil microbes -> PSF
+		new approach
+			Plant identity (age, size ...) and plant community structure <-> soil microbes <-> PSF
+			to understand how the feedbacks differ between tree species, we must analyze microbial traits (e.g., dispersal / host affinity) because they can differ between mutualists and pathogens
+	Methods
+		PSF(strength and direction) ~ 17 microbial traits
+		S & N ~ 17 microbial traits
+		Starting with many params and combining them
+		Use RF+particle swarm optimization to param sets that
+			1) create freq. dependent rare species advantages
+			2) generate positive correlation between N and PSF (i.e., common spec have positive PSF)
+	Results Overview
+		Acting together, the combined effects of the accumulation of pathogens of common tree species beneath heterospecifics, and the accumulation of their mutualists beneath conspecifics, each decrease the net strength of negative PSF experienced by common plants, resulting in a positive correlation between PSF and host abundance
+		spatial and temporal dynamics of microbial communities emerges as a potentially key factor in promoting host species diversity
+		Random Forest
+			1) negative plant-soil feedback as the primary determinant of plant diversity maintenance (Fig 5 organge)
+			(2) “plant abundances are much more likely to reach a stable temporal equilibrium under negative feedback than under positive feedback” ([Schroeder et al., 2020, p. 5])
+				??? isn't this already the second RF? because it is in the same paragraph as the first
+			2) The strongest predictor of negative feedback is the relative effect of mutualists on seedling survival followed by the relative host affinity of pathogens (strong)  and mutualists (weak!!)
+				As the host affinity of pathogens increases negative feedback is more likely to develop
+				Conversely, as the host affinity of mutualists increases, the probability that negative feedback will develop decreases
+					I still don't understand how to read this
+			3) pathogen persistence, rather than more recent spill-over from nearby common hosts, primarily drives the correlation between host abundance and PSF strength
+
+		microbial community dynamics can lead to: common plant species experience weaker local negative PSF than rare plant species
+			unintuitive, however empirically observed: “Following early studies, it has been proposed that common species should accumulate more pathogens and thereby suffer greater localized pressure from natural enemies1,2. However, multiple experimental studies have shown the opposite is apparently true; common plant species generally exhibit weaker negative PSF than rare species” ([Schroeder et al., 2020, p. 2])
+		Spillover effect: If Pat_a is relatively specific to common Host_a, it is possible that higher abundances for Pat_a spill over to (i.e., are maintained) also in non-target Host_b or Host_c
+			contrary this doesn't work if the target host is rare
+		Pathogens tend to maintain higher abundance on non-target hosts than mutualists (Fig. 2 a, distance = 0)
+		
+	
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+both papers try to elaborate on how the empirical evidence of a negative abundance - CNDD / negative PSF can maintain high biodiversity.
+While Yenni provides a simple theoretical argumentation, Schroeder shows that underlying microbial traits (that lead to mechanisms such as persistence of pathogens after host death) can harmonize weak negative PSF for common species with high biodiversity maintenance.
+	Yenni
+		theoretical model demonstrating that high CNDD for rare species 1) buffers them against stochastic extinction threats & 2) leads to high invasion growth rates that cause a reliable come back after abundance drops low ( I can't distinguish argumentation of 1) and 2), however the paper suggests that there are differences) 
+	Schroeder
+		modelling approach shows that common species can have weak negative PSF. A weak PSF is usually linked to declining biodiversity. But, the study models scenarios, where biodiversity can be maintained with common species having weak negative PSF
+			this can be explained through spill-over or persistence effects of pathogens
+		
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+		
+		
