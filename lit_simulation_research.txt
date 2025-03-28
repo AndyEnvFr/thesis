@@ -3,6 +3,8 @@
 When citing (from …) means that the information does not directly come from that source, but is cited in it
 
 Glossary
+	Predator satiation
+		strategy of prey species: produce very high number of offspring and so reducing the proportion eaten by predators
 	intrinsic fitness
 		= intrinsic population growth rate when a species is rare or density dependent effects are absent
 	ecological drift <-> ecological stochasticity <-> demographic stochasticity
@@ -30,9 +32,21 @@ Glossary
 			chaotic attractors (initial settings can vastly change outcomes, no cyclic pattern, irregular changes) can make this possible
 			However, the more spec we have, the more complex is it to mathematically maintain an equilibrium
 				via varying competitions coefficients, growth rates, responses to env variation
+		Coexistence occurs because each species consumes more of the resource that most limits its population growth (Coexistence theory)
+	Resource competition theory
+		extends the concept of coexistence theory by adding potential niche differentiations
+			natural enemies
+			mutualists
+		stabilizing if
+			intrasp. > intersp. competition
+			relative host specificity of natural enemies
+		stabilizing CNDD = fosters richness by creating niche differentiation which in turn increase intrasp. competition, all else being equal
 	Community Size
 		total number of individuals in the community regardless the species
+	Plant Soil Feedback
+		Plant–soil feedback occurs when an individual plant conditions local soil environments such that the demographic performance of conspecific seedlings (or juvenile age classes more generally) are affected differently relative to heterospecific seedlings (Bennett and Klironomos  2019; Bever, Westover, and Antonovics  1997; Crawford et  al.  2019; Eppinga et  al.  2018). from laManna et al 2024
 	Janzen-Conell-Theory
+		“The hypothesis that [relatively] specialized enemies maintain plant species diversity by creating higher seed and seedling mortality at higher conspecific densities and closer to conspecific adults; and that this mechanism is more effective in the tropics” (Hülsmann, Chisholm, and Hartig 2021). Janzen-Connell mechanisms are expected to generate local stabilizing CDD.
 		is a stabilizing mechanism*
 		promotes species coexistence (Chave & Muller-Landau & Levin 2002, American Naturalist; Molofsky et al 1999, Theoretical Population Biology; Bonanomi & Giannino & Mazzoleni 2005, Oikos)
 		Theoretical studies (without interspecific variance in CNDD) show that JC promotes diversity (Leigh 1982 The Ecology of a Tropical Forest; Armstrong 1989 Theor. Biol.,; Adler & Muller-Landau 2005 Ecol. Lett; Muller-Landau & Adler 2007 Seed Dispersal: Theory and Its Application in a Changing World; Stump & Chesson 2015 Theor. Popul. Biol.,);
@@ -58,6 +72,7 @@ Glossary
 		has been shown to increase S in plots < 15m² and this has been extrapolated at community level (Harms et al. 2000 Nature; Bagchi et al. 2014 Nature).
 		Seed dispersal greatly affects the impact of CNDD (MullerLandau & Adler 2007 Seed Dispersal: Theory and Its Application in a Changing World; Murrell 2010 Ecology; Stump & Chesson 2015 Theor. Popul. Biol.,)
 		CNDD effects are more pronounced in earlier life stages (from Hülsmann et al 2024)
+		Species tend not to replace themselves during gap dynamics (Pham et al., 2004; Runkle, 1982 :::::: from Magee et al 2024),
 	Transient
 		a temporary state that persists for a long time before the systems reaches eq
 			i.e., when diversity is high in stable states, this means that it is not necessarily stable in time

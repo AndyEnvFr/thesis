@@ -1,0 +1,76 @@
+10:19 28/03/2025
+
+LaManna et al. 2024: effect of Consp. density effect on community dynamics and plant diversity
+
+2.1 | Different Viewpoints on Conspecific Density Dependence in Ecology
+	(un)stabilizing CNDD: In this framework, stabilizing CDD occurs when increasing conspecific densities reduces species' demographic performance more than increasing heterospecific densities (Hülsmann et al. 2024). In other words, stabilizing CDD is CDD corrected for general (non-species specific) density effects.
+	PSF
+		Is = 𝛿11 + 𝛿22 − 𝛿12 − 𝛿21 OR (home - away) OR (Con. - Het.)
+		where I_s is the pairwise feedback between two species
+		When density is explicit, this is analogous to stabilizing CDD.
+		stabilizing CNDD -> + diversity under the assumptions that
+			heterospec. DD is equal between all species
+			species are equal in all other aspects than CNDD
+			homogenous environment
+3 | Understanding Local Stabilizing CDD: mechanisms that drive stab CNDD coming from different communities + how does stab CNDD interact with dispersal and plants spatial distribution (this is needed, when determining the landscape scaling of stab CNDD effects)
+	we need to understand and account for dispersal and habitat, when predicting how stab CNDD alters plant communities
+		dispersal
+			typically most seeds fall close to their parents, forming an aggregation of conspecifics AND few seeds are transported far away
+			in that aggregation pathogens (with S increasing effects) or mutualists (with S decreasing effects) form faster then in areas where conspec. are sparsely distributed
+			for species with high stab CNDD the far away seeds should have higher demographic performance
+		abiotic habitat
+			also create variation of conspecific densities
+		both factors influence, how stab CNDD assembles communities
+	Mechanisms of local stabilizing CNDD in subfields / research communities
+		host-specific natural enemies and intraspecific competition as mechanisms generating local stabilizing CDD
+		However, an emerging consensus is that stabilizing CDD is the net outcome of many types of biotic interactions:
+			relative host- specificity of pathogens & mutualists
+			allelopathy
+			strength of competition against consp. and heterosp.
+		PSF
+			advantage to separate stab CDD into positive and negative feedbacks and look how each part contributes to the net stab CDD effect
+		Spatial pattern
+			species with high stab CNDD might show less aggregations
+				in old compared to young age classes (as the older aggregations had more time to thin out)
+				compared to other species with low stab CNDD
+			research on the effect of stab CNDD on aggregations found that stab CNDD weakens aggregations
+				they used empirical null models with dispersal kernel
+				aggregation with stab CDD was lower compared to this null model
+		Dispersal
+			stab. CDD favours away recuits, therefore directionally selects traits that cause far dispersal
+			Therefore, aggregation will be counteracted by stab CNDD + by directional selection
+			fruit/ seed traits can attract a vector that disperses them close/away to/from con-/heterospec.
+			Comparisons for future study include how dispersal phenology, distance, and mode (and other dispersal-associated traits) are related to local stabilizing CDD across species
+4 | Scaling up Impacts of Local Stabilizing CDD on Communities and Metacommunities
+	difficult because
+		trees are long living, therefore empirical research is difficult
+		there could be other processes that leads to similar pattern (e.g., mass effects and source sink dynamics (May et al 2020) at different spatial and temporal scales
+	Processes at large scale can counteract local stab CNDD (e.g., predator satiation)
+	landscape stab CDD might be generated at higher scales (e.g., bark beetle responding to host density in landscape scale) without involving local scale
+(4.1.1) stab CNDD in the context of modern coexistence theory
+	modern coexistence theory is driven by 2 phenomenological (non-mechanistic) processes
+		1) interspecific fitness difference (= equalizing mechanisms)
+			reduction of intrinsic fitness differences
+		2) niche differences (= stabilizing mechanisms)
+			species get advantage when rare
+		if 2) > 1) coexistence is likely. E.g., when stab. CNDD compensates fitness differences
+	Population scale: how does the population growth rate change based on increasing species density
+	local scale: how does demographic performance change based on the increase of density of con- relative to heterospecifics
+	=> local stab CNDD != NDD at community scale
+		E.g., if a rare species is spatially aggregated they have no community wide NDD. However, within their aggregation they can have stab. CNDD
+(4.1.2) stab CNDD in the context of resource competition theory
+	extends the concept of coexistence theory by adding potential niche differentiations
+	natural enemies
+	mutualists
+	stabilizing if
+		intrasp. > intersp. competition
+		relative host specificity of natural enemies
+	stabilizing CNDD = fosters richness by creating niche differentiation which in turn increase intrasp. competition, all else being equal
+(4.2) scaling up local stab CNDD
+	many processes can boost or weaken the effects of local stab CNDD when up-scaling it
+	
+	
+	
+		
+	
+	
