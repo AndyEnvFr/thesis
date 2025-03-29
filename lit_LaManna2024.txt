@@ -68,7 +68,14 @@ LaManna et al. 2024: effect of Consp. density effect on community dynamics and p
 	stabilizing CNDD = fosters richness by creating niche differentiation which in turn increase intrasp. competition, all else being equal
 (4.2) scaling up local stab CNDD
 	many processes can boost or weaken the effects of local stab CNDD when up-scaling it
-	
+
+4.2.1 - 4.2.3 is very specific: variation of stab CNDD within ontology, interaction with interspecific intrinsic fitness differences, pairwise interaction: lumped heterosp. and multispecies systems
+	life stage: stab CNDD in one life stage/ demographic rate must not translate into stab CDD in λ, as the different stages can experience also de-stabilizing CDD, resulting in different net effects
+
+4.3 | Spatial and Temporal Variation in Local Stabilizing CDD
+	habitat preferences can also result in the appearance of destabilizing CDD (i.e., higher growth/survival in preferred habitats with higher abundances)
+	Recent studies have found evidence that CDD becomes more stabilizing in wetter conditions
+	plant–soil feedback meta-analyses suggest that feedback is more positive (less stabilizing) with increasing aridity
 	
 	
 		

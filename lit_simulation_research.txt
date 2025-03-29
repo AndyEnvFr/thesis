@@ -3,6 +3,10 @@
 When citing (from …) means that the information does not directly come from that source, but is cited in it
 
 Glossary
+	demographic rates
+		reproduction, recruitment, mortality
+	Intransitive competition
+		is a concept in ecology where competition among species forms a non-linear, rock-paper-scissors-like relationship rather than a simple linear hierarchy. In other words, no single species is universally dominant over all others, and competitive interactions form a loop.
 	Predator satiation
 		strategy of prey species: produce very high number of offspring and so reducing the proportion eaten by predators
 	intrinsic fitness

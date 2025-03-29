@@ -14,8 +14,14 @@ Allgemein
 					May et al argumentiert auch mit geteilten Ressourcen. Dieser Prozess ist vielleicht besser abgebildet, wenn die Sterblichkeit im Erwachsenen Alter stattfindet			
 			-? densityCut der Dichteeinfluss ist binär (?)
 				A decrease of neighbourhood effects with increasing distance can not be considered
+			-  Phylosim neglects destabilizing DD
+				can this be a problem? We make the assumption that DD is always stab, when in reality it is (only) mostly so
+				Especially, when looking at spatial pattern, it would be nice to include destabilizing DD
+				But i think thats what Florian suggested when adding mutualists
+			- Every species will suffer likely from DD (when in reality: “Species within a community might also differ in the degree to which they experience stabilizing CDD (Comita et al. 2010; Hülsmann et al. 2024; Mangan et al. 2010).” ([LaManna et al., 2024, p. 19])
 			
 			+ gleiche traits schwächen die fitness des Individuums, womit auch HNDD modelliert würde
+				hmm … HNDD und CNDD werden in phylosim nicht separat modelliert. Es gibt eine generelle DD, die stärker ist bei ähnlicher Phylogenie
 			+ dispersal ist drin
 			+ räumliche Verteilung ist drin
 			+ Ergebnisse auf unterschiedlichen Skalen visualisieren ist einfach: localPlots() stanz zufällig definierte Plotgrößen aus
@@ -70,8 +76,6 @@ wenn hohe cndd -> niedrige abundace
 
 Ou is random walk mit anziehung
 			
-Paper
-
 
 
 

@@ -22,4 +22,23 @@ spatial patterns:
 		(e.g., Chesson's scale transition theory; Chesson 2012; Chesson et al. 2005)
 	One outcome of this synthesis is the acknowledgment that theoretical frameworks with different underlying mechanisms often predict similar outcomes at the individual, population, and community levels (Table  1; Chave, Muller-Landau, and Levin  2002)
 		Therefore, we advise caution when inferring mechanism from a pattern, and additional predictions should be tested where possible to disentangle alternative mechanisms.
-	
+	Dispersal
+		Challenge: “Strong local stabilizing CDD should exert strong directional selection for traits that enable greater dispersal distances.
+		Solution: Examine the potential for such interplay between dispersal strategies and stabilizing CDD, which has been rarely studied. Interesting comparisons include how dispersal phenology, distance, and mode (and any other dispersal-associated traits) differ across tree species as a function of their local stabilizing CDD.” ([LaManna et al., 2024, p. 19])
+			Does this play a role for phylo sim? where traits evolve -> A question could be how the evolving of the trait feeds back to stab CNDD
+Other research questions for thesis:
+	stab CDD > interspec. fitness differences
+		die fitness geht runter in phylosim, wenn traits ähnlich sind, dadurch wird die dichte weniger.
+		Während dessen gibt es eine generelle negative Dichteabhängigkeit im Hintergrund
+	lumping of heterospecific effects
+		“Challenge: Studies using statistical modeling to estimate the performance of individual plants often lump heterospecific effects (Hülsmann et al. 2024), a simplifying assumption used to make calculations more tractable
+		when DD differs through phylogen. relatedness, heterosp. effects are not lumped anymore.
+		A question can then be: how does strength of DD, that differs between species, yield stab. DD?
+questions:
+	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17)
+		what they mean?
+	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17])
+		what is this?
+
+
+Incorporate these ideas into the sorted_questions.txt file, where other ideas for phylo sim are
