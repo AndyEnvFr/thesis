@@ -95,5 +95,23 @@ zeitliche muster:
 Gefahr beei ML: gutmachbar, wie verallgemeinerbar ist es?
 combiniert: muster die CNDD erzeigt: rämich, zeitlich und in Kombination miteinander
 
-wiegand Modell:
+
+adding tree for checking the effect of stab CDD in model:
+	2, 3 cm DBH (isn't this recruit age ?)
+	so even recruits exhibit and suffer from stab CDD?
+	But then this is wrong: “A caveat here is that neighboring conspecifics could also be the result of simultaneous recruitment events.” ([Chisholm and Fung, 2020, p. 652])
+	within 1m radius
+		as in the model there is no distance term, it means the model is fitted only with 1m data right?
+		=> there is a distance term in the neighborhood effect index!
+	We used all stems to calculate the neighbourhoods, but multiple 20 stems were not considered to affect one another” ([Magee et al., 2024, p. 1])
+		what does this mean?
+		=> maybe omitted focal stems less than 20 m from the plot boundary
+
+“If mortality is species specific, but density independent, then predators may have a role analogous to a spatio-temporally variable environment, which may lead to coexistence by the spatial storage effect (111).” ([Chesson, 2000, p. 357])
+	a species specific but density independent host-pathogen interaction is not considered in the simulation studies
+	Could this be interesting to look at?
+	As this functions like a spatio-temporally variable environment, this creates patches of survival, that are interacting with patches created by CNDD.
+	But in what scenarios could a host-pathogen interaction be species specific but not density dependent?
+		I don't know
+	
 	

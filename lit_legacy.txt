@@ -40,3 +40,9 @@ Magee et al 2024: legacy effects of conspecifics
 ???		I think the model needs to account for light-germinators
 			If a tree dies it is much more likely that a light-germinator thrives (as these typically are more r- strategics [=successional])
 			If the dead species wasn't, then likely LCNDD > LHNDD
+
+???
+“Our model equation was the same as the Bayesian equation 48 described in the main text, however, we did not annualize survival during the search. 49 𝑠𝑢𝑟𝑣𝑖𝑣𝑎𝑙𝑖𝑠𝑘 ~ 𝐵𝑒𝑟𝑛𝑜𝑢𝑙𝑙𝑖(𝑝𝑖𝑠𝑘)” ([Magee et al., 2024, p. 2])
+	what is annualizing good for? how does it influence the model?
+	“where pt isk is the survival probability exponentiated to the number t years between the consecutive observations” ([Magee et al., 2024, p. 4])
+	how does it work to get annual results in a 5 year census?

@@ -3,6 +3,19 @@
 When citing (from …) means that the information does not directly come from that source, but is cited in it
 
 Glossary
+	Tilman's resource competition theory
+		species jointly limited by a single resource obey the R* rule
+		for every species R* is the resource level at which the species is just able to persist
+		the winner of the competition is the species with lowest R* value
+			R* reflects not the ability of the species to harvest resources at low concentration but
+			to achieve high enough growth and reproduction / maintain stable population at low resource levels to compensate tissue death and mortality
+				latter factors themself are affected by grazing and predation
+			If a species experience lower grazing / mortality, it can have lower R*
+		The overall fitness of a species leads to its R* value
+	stochastic boundedness
+		in a stochastic system species D are bounded to not fall below extinction rate or transpass unrealistically high D
+	species turnover
+		change in species (functional) composition between between communities, habitats, or time periods
 	demographic rates
 		reproduction, recruitment, mortality
 	Intransitive competition
@@ -111,6 +124,7 @@ Modelling Terminology
 	diffuse competition model
 		competition occurs because of direct but also indirect effects across the community
 		species compete with multiple species in the community
+		a competition between two species involves interaction of comparable strength between all pairs of species		
 	spatial neighborhood approach
 		rather than using grids, vicinity relations are given by coordinates (x,y), allowing for more realistic representation of spatial patterns
 		interaction strength decays with distance

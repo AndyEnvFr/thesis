@@ -56,7 +56,7 @@ LaManna et al. 2024: effect of Consp. density effect on community dynamics and p
 		if 2) > 1) coexistence is likely. E.g., when stab. CNDD compensates fitness differences
 	Population scale: how does the population growth rate change based on increasing species density
 	local scale: how does demographic performance change based on the increase of density of con- relative to heterospecifics
-	=> local stab CNDD != NDD at community scale
+	=> local stab CNDD ≠ NDD at community scale
 		E.g., if a rare species is spatially aggregated they have no community wide NDD. However, within their aggregation they can have stab. CNDD
 (4.1.2) stab CNDD in the context of resource competition theory
 	extends the concept of coexistence theory by adding potential niche differentiations
