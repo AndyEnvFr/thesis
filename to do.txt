@@ -1,3 +1,11 @@
+Lesen:
+	bias intzroduced ... detto et al
+	logistic regfession ... mood
+	do not transform count data: hara & kotze
+	(Lederer et al)
+	(Fan et al)
+
+
 genetisches CNDD: 
 	“From the perspective of niche theory, the fitness of individuals might be suppressed more by neighbours with similar traits and/or from closely related species than by neighbours with different traits or from distantly related species (Kraft and Ackerly 2010).” ([May et al., 2020, p. 1080](zotero://select/library/items/WJAAGJCH)) ([pdf](zotero://open-pdf/library/items/F3F5WL33?page=9&annotation=P4SXF5PN))
 	“for example, by strong overlap of resource requirements (MacArthur and Levins 1967) or by shared pathogens or herbivores (Freckleton and Lewis 2006)” ([May et al., 2020, p. 1080](zotero://select/library/items/WJAAGJCH)) ([pdf](zotero://open-pdf/library/items/F3F5WL33?page=9&annotation=3CCCYD3W))
@@ -34,6 +42,9 @@ Other research questions for thesis:
 		“Challenge: Studies using statistical modeling to estimate the performance of individual plants often lump heterospecific effects (Hülsmann et al. 2024), a simplifying assumption used to make calculations more tractable
 		when DD differs through phylogen. relatedness, heterosp. effects are not lumped anymore.
 		A question can then be: how does strength of DD, that differs between species, yield stab. DD?
+
+
+
 questions:
 	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17)
 		what they mean?
