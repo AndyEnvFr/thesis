@@ -4,7 +4,7 @@ LaManna et al. 2024: effect of Consp. density effect on community dynamics and p
 
 2.1 | Different Viewpoints on Conspecific Density Dependence in Ecology
 	(un)stabilizing CNDD: In this framework, stabilizing CDD occurs when increasing conspecific densities reduces species' demographic performance more than increasing heterospecific densities (Hülsmann et al. 2024). In other words, stabilizing CDD is CDD corrected for general (non-species specific) density effects.
-	PSF
+	PSF 
 		Is = 𝛿11 + 𝛿22 − 𝛿12 − 𝛿21 OR (home - away) OR (Con. - Het.)
 		where I_s is the pairwise feedback between two species
 		When density is explicit, this is analogous to stabilizing CDD.
