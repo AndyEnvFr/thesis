@@ -114,4 +114,7 @@ adding tree for checking the effect of stab CDD in model:
 	But in what scenarios could a host-pathogen interaction be species specific but not density dependent?
 		I don't know
 	
+
+Reasearch how CNDD affects speciation:
+	“Also, the topic of how CNDD affects speciation, which has been experimentally touched on in other life forms [130], seems an area ripe for theoretical investigation [131].” ([Hülsmann et al., 2021, p. 160](zotero://select/library/items/7M65U4NE)) ([pdf](zotero://open-pdf/library/items/Q7I2N3EQ?page=10&annotation=G3MN22ZJ))
 	

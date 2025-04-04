@@ -156,8 +156,25 @@ Stats
 	Binomial model: complementary log-log link function (instead of logit)
 		allows to better account for differences in observation time (Delta time) through an offset term
 	confounder or precision variables
-		
-
+	regression dilution bias OR regression attenuation
+		happens when there is measuring error in X-variable
+		shifts the regression line or curve towards zero
+		it is problematic, if H0 is that there is an effect and H1 states that the effect either increases or decreases with X
+			the downward regression shift will make an effect appear where there is none
+			works also vice versa: when H0 is that there is a negative effect and H1 states that is de-/ increases, the upwards regression shift will make an effect appear where there is none
+		it is not problematic, if H0 is that there is no effect and H1 is that the effect increases with X
+			the downward regression shift will just make harder to detect an effect when there is one (so it is also kind of problematic). But we trade off Type I error with Type II error (this might be domain specific: Jill Sequelly works in landscape genomics and she rather has a more pregressive testing than conservative because she argues that it is better to find all the mutating snp and finding some that are not mutated, then getting only mutated ones, but missing out some muated as well. She justifies it, that when multiple studies do the reserach jsut by chance it will clarify whether the mutated snp was actually causing adaptation.
+		I didn't understand the math behind that (https://www.rohanbyanjankar.com.np/2024/11/attenuation-bias-how-it-occurs-and-how.html)
+			however, it has to do with the introduced variation in X (how big the measuring error is: the bigger the measuring error, the more shifted towards 0 the regression will be)
+		Code to replicate and try around:
+			np<-30
+			x<-rnorm(np,30,4)
+			y<- 2.2*x + rnorm(np,0,2)
+			set.seed(1066)
+			slopes<-numeric(1000)
+			for(i in 1:1000) slopes[i]<-coef(lm(y ~ rnorm(np,x,1)))[2]
+			summary(slopes)
+	
 		
 
 Simulation studies
@@ -882,5 +899,10 @@ Possible Research Questions
 “From the perspective of niche theory, the fitness of individuals might be suppressed more by neighbours with similar traits and/or from closely related species than by neighbours with different traits or from distantly related species (Kraft and Ackerly 2010).” ([May et al., 2020, p. 1080])
 	-> analyse the phylogenetics in phylosim
 
+Hülsmann et al 2021:
+	Despite warnings by Freckleton et al.[153], several analyses have used a design based on proportionality to test for CNDD in trees over the last decades, both for spatial associations of adults and recruits (e.g., [25,65]) and transition rates between different life stages (e.g., [52,154]).
+		how is the experimental design different in e.g., hülsmann et al 2024?
+		so wrong would be: compare number of recruits with number of adults, because this means that H0 assumes proportionality
+		and correct would be: 
 
 

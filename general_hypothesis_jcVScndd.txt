@@ -1,0 +1,62 @@
+15:41 01/04/2025
+
+what is the difference between the concept of stabilizing CDD / CNDD and the Janzen-Connell hypothesis?
+
+JC is limited by the fact that it claims higher host-specificity in tropics compared to temperate forests due to a lack of seasonality, while stab CDD can act everywhere
+CNDD is tied to one focal species, claiming that its demographic rates are driven by the conspecific density (relatively more then to heterospecific density)
+
+JC
+	mediated through limited to seed and seedling mortality by seed and seedling enemies
+	the individual performance is given by the
+		JC is dependent of the density of seeds and seedlings and …
+		… Besides, on adult distance (i.e., dispersal)
+			the density of adults is not explicitly mentioned in JC. Only the distance to them
+		explicitly incorporates that the density and distance effects are more pronounced in the tropics, what can explain latitudinal gradients in biodiversity
+stab CDD / CNDD
+	we need to differentiate between
+		empirically measured CNDD (interested on a density effect at individual level)
+			measured on individual level
+			is measured by plant traits (e.g., mortality)
+			as a function of local CDD and sometimes HDD
+		CNDD as stabilizing mechanism (interested on a density effect that acts at individual level but that has a stabilizing function in the light of coexistence theory)
+			therefore, CNDD as a stab mechanisms extends the concept of purely empirically measured CNDD, but requires these measures to assess an effect
+			measured on population level
+			is measured like empirically measured CNDD
+		The explanation in CNDD is not explicitly stated in constrast to JC
+			however, mostly CNDD is thought to generate in areas of high conspecifics and impact seed and seedling mortality by respective enemies but also
+				hence, in an experimental setting without adults and only varying seedling densities, we can not check for CNDD. However, we also can not check for JC, as the adult distance is missing
+				resource requirements
+				autotoxicity
+				other processes
+				and they act on dispersal, growth, mortality, and reproduction
+
+stabilizing in JC vs stabilizing in CNDD
+	JC explains high niche availability and biodiversity when common species are being supressed more (?) 
+	CNDD says that the density dependent effect should be higher in rare species for a stabilizing effect (?)
+
+
+Synopsis of current knowledge
+	there are 4 subhypothesis
+		1) CNDD exists (strong evidence)
+		2) CNDD > HNDD (less strong but still evidence)
+		3) CNDD stabilization scales up to the community
+		4) this effect varies along ecological gradients and drives diversity patterns
+Obstacles -> Soulutions
+	Conspecific Exposure Is Difficult to Quantify
+		measure by distance or density? (maybe species dependent and dependent how the distance and density affects conspecifics)
+			density better approximated by freq., BA, biomass?
+			how to define adult and juvenile ?
+		-> measure conspecific exposure in multiple ways and compare them. If results are robust all methods should point towards an effect
+		-> candidate measures should be evaluated by showing that they give estimates close to zero when applied in a null model
+	we are interested in stab. CDD on population level. We have to quantify fitness (i.e., over the whole life) to assess community level stabilization. However, many studies use a proxy for fitness that is limited to one life-history-trait. It could be that this advantage is offset in later stages in life. 
+	indirect measures from Static data are prone to confounding factor
+		e.g., static forest patterns could be due to CNDD but also to confounders such as environmental factors or dispersal or other nonspecialized biotic interactions
+		ontogeny-for-time-substitution tries to quantify the effect of conspecifics to the demographic dynamics, however comes with problems
+			when to distinguish between juveniles and adults?
+			confounders are not accounted for, as above (imagine: adults~recruits like adults~forest patterns)
+	if H0 assumes proportionality or specific effect size (which is generally not recommended) regression dilution can be mitigated
+		-> 1) make sure to exclude CNDD from H0: one study did that using a fungicide
+		-> 2) quantify the error in X
+open question:
+	does the C in CNDD (or in modern study also H included) refer to adults only or seeds and seedlings or saplings as well? I.e., in CNDD observational study what do we check for when quantifying conspecificity?
+
