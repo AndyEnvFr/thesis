@@ -1,0 +1,112 @@
+---
+title: "Phylo Sim density dependence"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+  
+library(PhyloSim)
+```
+
+### define params and run model
+
+```{r}
+#| eval: true
+#| echo: false
+
+par1 <- createCompletePar(x = 500,
+                         y = 500,
+                         dispersal = 5,
+                         runs = c(1,2
+                                  # 10,11, 50,51, 100,101, 150,151, 200,201,
+                                  # 250,251, 300,301, 350,351, 400,401, 450, 451
+                                  # 1000,1001
+                                  ),
+                         specRate = 2,
+                         density = 1.2, # NDD (but not Conspecific)
+                         environment = 0,
+                         fitnessActsOn = "mortality",
+                         fitnessBaseMortalityRatio = 1, # must be >1 otherwise error
+                         densityCut = 1,
+                         seed = 20250408,
+                         type = "base",
+                         protracted = 0,
+                         fission = 0,
+                         redQueen = 0,
+                         redQueenStrength = 0,
+                         airmat = NA,
+                         scenario = "null")
+
+simu <- runSimulation(par1)
+```
+
+```{r}
+#| eval: true
+#| echo: false
+
+saveRDS(simu, "/home/andy/cyber_synch/local/runs/20250408_dd_1")
+```
+
+```{r}
+#| echo: false
+
+simu <- readRDS("/home/andy/cyber_synch/local/runs/20250408_dd_1")
+```
+
+### visualize results
+
+```{r}
+#| label: fig-spatial_distirbution
+#| fig-width: 5
+#| fig-height: 5
+#| fig-cap:
+#|   - Spatial distribution at step 1
+#|   - Spatial distribution at step 2
+#|   - Spatial distribution at step 10
+#|   - Spatial distribution at step 11
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+
+
+plotSpatialPhylo(simu, which.result = 1)
+plotSpatialPhylo(simu, which.result = 2)
+plotSpatialPhylo(simu, which.result = 3)
+plotSpatialPhylo(simu, which.result = 4)
+plotSpatialPhylo(simu, which.result = 5)
+plotSpatialPhylo(simu, which.result = 6)
+plotSpatialPhylo(simu, which.result = 7)
+plotSpatialPhylo(simu, which.result = 8)
+plotSpatialPhylo(simu, which.result = 9)
+plotSpatialPhylo(simu, which.result = 10)
+plotSpatialPhylo(simu, which.result = 10)
+plotSpatialPhylo(simu, which.result = 11)
+plotSpatialPhylo(simu, which.result = 12)
+plotSpatialPhylo(simu, which.result = 13)
+plotSpatialPhylo(simu, which.result = 14)
+plotSpatialPhylo(simu, which.result = 15)
+plotSpatialPhylo(simu, which.result = 16)
+plotSpatialPhylo(simu, which.result = 17)
+plotSpatialPhylo(simu, which.result = 18)
+plotSpatialPhylo(simu, which.result = 19)
+plotSpatialPhylo(simu, which.result = 20)
+plotSpatialPhylo(simu, which.result = 21)
+plotSpatialPhylo(simu, which.result = 22)
+```

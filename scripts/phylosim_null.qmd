@@ -1,5 +1,5 @@
 ---
-title: "EcoPhyloSim"
+title: "Phylo Sim null model"
 format: html
 editor: visual
 ---
@@ -24,7 +24,7 @@ par1 <- createCompletePar(x = 100,
                                   400000,400001, 500000,500001, 600000,600001
                                   ),
                          specRate = 2,
-                         density = 0.1, # NDD (but not Conspecific)
+                         density = 0, # NDD (but not Conspecific)
                          environment = 0,
                          fitnessActsOn = "mortality",
                          fitnessBaseMortalityRatio = 0, # equal traits -> mortality
