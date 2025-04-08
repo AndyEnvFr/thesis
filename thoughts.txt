@@ -1,23 +1,15 @@
 carsten said that ML is no good for science. This is strongly reduced and he didnt said it like that.
 However, his point was that the black-box nature of the ML undermines causalities, hence doesn't contribtue to our understanding.
+BUT imagine i want to show if CNDD acts stronger on rare plants, i.e., is stsabilizing: I don't care how CNDD works on rare plants but I care i rare plants show higher CNDD
 
-
-Alert: it might be wrong but here i was thinking of having a model with CNDD ~ important_var + species_abundance
-	The core idea is to ML estimate imoprtant variables (that species specific/ specific to ecosystems/ Environment) that can best predict CNDD and include abundance as additive term. The estimate of abundance tells me the relationship between CNDD and N after correcting for other main drivers of CNDD (ML variable)
-	However, as the models mostly are logistic and use p(srvival as response) this already might be wrong!
-	
-	Now, as I am writing my thesis, I recognize that many theories can not be tested, becuase we lack data
-	e.g., dynamic data of forest plots with many variables. E.g., if CNDD is known to be mediated by soil pathogens, then it would be good to predicto it based on the conspecidic fine root mass instead of the basal area maybe)
-		It is really difficult to reach that step where I understand the mechanisms in such detail that I can claim that fine root mass can best predict CNDD, but LM can help there and it might be justifyable:
-			BUT: i might not be interested in learning macro-molecular, or more generally, fine scaled mechanisms such that microbial pathogen at species with trait XY correlate strongly with fine-root-mass
+Now, as I am writing my thesis, I recognize that many theories can not be tested, becuase we lack data e.g., dynamic data of forest plots with many variables.
+One way of making variables available for modelling is to approximate them with allometric equations
+	If CNDD is known to be mediated by soil pathogens, then it would be good to predict it based on the conspecific fine root mass instead of the basal area maybe
+	However, it is really difficult to reach that step where I understand the mechanisms in such detail that I can claim that fine root mass can best predict CNDD, but LM can help there and it might be justifyable:
+		BUT: i might not be interested in learning macro-molecular, or more generally, fine scaled mechanisms such that microbial pathogen at species with trait XY correlate strongly with fine-root-mass
 			I might just be interested in the most important variable for that specific species that drives CNDD. So while not knowing the fine-scaled mechanism, I still can use the information to understand the broader mechanism that shape biodiversity across latitudes: E.g., CNDD acts stronger in tropics.
-		However I see a problem with this: looking at every species seperately gives the advantage of knowing the important variables for CNDD. Yet, I can't use the same variable across all species. This is fatal, if I want to quantify CNDD in a multi-species community. The problem is that while for one species fine-root-biomass might be a good proxy, for my other species it is not
-		==> Do I need a unique proxy for all species in my model?
-		Maybe not: then, If I have a good model that predicts the CNDD for each species, I could build a regression with such ML-predictors and as another standard regression variable I add species abundance (i would have to deal with all the correlation issues if there are). 
-		
-		 
+		However I see 2 main problem with this
+			1)looking at every species seperately gives the advantage of knowing the important variables for CNDD. Yet, I can't use the same variable across all species. This is fatal, if I want to quantify CNDD in a multi-species community. The problem is that while for one species fine-root-biomass might be a good proxy, for my other species it is not
+				Therefore, when doing it like Hülsmann et al 2024 i.e., adding a conspecific and measuring the difference in response, adding one tree is not enough, it must be added all traits that were used for that specific species (e.g. fine root mass)
+			2) Is it feasible do ML- detect a set of params that are working fine to predict CNDD in one species?
 	If we think that it makes sense to predict CNDD by another variable we could try to estimate that variable based on allometric relationships:
-However, then we have the problem, that we rarely know if
-	1) the approximation holds true, e.g., if basal area can be a proxy for fine root mass.
-		I guess this could be demonstrated by a simple allometric relationship
-	2) how the approximation covaries with biotic(species) and abiotic(edaphic, climatic) variables

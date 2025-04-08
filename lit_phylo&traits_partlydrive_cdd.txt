@@ -1,0 +1,33 @@
+09:53 07/04/2025
+
+Song et al 2021
+note: these studies dont look at the effect of phylogenetic diversity among heterospecifics on CDD but look at the CDD strength across related taxa
+Are JC effects phylogen. conserved?
+	If so, then phylogenetic relatedness drives CNDD rates in two ways
+		1) relatedness in trees implies same defences against pathogens (e.g., shade tolerant trees are less susceptible)
+		2) relatedness in plants drives pathogens host-specificity
+	the strength these processes take place will shape of conspecificity at which CNDD operates (e.g., species, family, genus)
+	But JC effects may vary strongly even across closely related species
+Methods
+	species as random intercept had best AIC
+Results
+	mean effect size within each family varied much
+	negative effect ≈ positve effect ≈ neutral effect
+	species-level effects were not strongly structured within higher clade orders such as genus or family
+		adding genus or family as random effect to species didn't improve AIC, hence differences are explained best at species level
+
+Kunstler et al 2016
+while it is known that traits are trade offs: fast growth and low wood density, hence, low durability VS slow growth and high wood density, hence, high durabilty
+how do 3 traits (wood density, specific leaf area, maximum height) influence competition?
+
+Results
+	more different traits had little influence on weakening interspecific competition
+		none for leaf area and wood density; little benefit for max height
+	trait ~ competition
+		higher wood density = higher tolerance against competition
+		no correlation between max heihgt and competitive effect
+		high SLA had low competitive effect
+
+
+
+

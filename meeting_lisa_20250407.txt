@@ -1,9 +1,6 @@
-questions:
-	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17)
-		what they mean?
-	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17])
-		what is this?
+16:39 07/04/2025
 
+Meeting with Lisa
 
 Schroeder paper:
 	does it claim CDD ~ N ?

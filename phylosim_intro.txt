@@ -2,6 +2,8 @@
 
 PhyloSim notes
 
+PhyloSim is inspired by the Hubell model (Chave J, Muller-Landau HC & Levin SA (2002). Comparing classical community models: theoretical consequences for patterns of diversity. The American Naturalist 159(1): 1-23.)
+
 	runs on discrete grid
 		each grid is occupied by an individual at any time
 		boundaries are warped
