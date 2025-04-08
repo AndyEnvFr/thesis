@@ -1,0 +1,50 @@
+---
+title: "EcoPhyloSim"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+  
+library(PhyloSim)
+```
+
+### define params and run model
+
+```{r}
+par1 <- createCompletePar(x = 100,
+                         y = 100,
+                         dispersal = "global",
+                         runs = c(1,2, 10,11, 100,101, 1000,1001, 10000,10001
+                                  # 10000,10001,
+                                  # 100000,100001, 200000,200001, 300000,300001,
+                                  # 400000,400001, 500000,500001, 600000,600001
+                                  ),
+                         specRate = 2,
+                         density = 0, # NDD (but not Conspecific)
+                         environment = 0,
+                         fitnessActsOn = "mortality",
+                         fitnessBaseMortalityRatio = 0, # equal traits -> mortality
+                         densityCut = FALSE,
+                         seed = 20250408,
+                         type = "base",
+                         protracted = 0,
+                         fission = 0,
+                         redQueen = 0,
+                         redQueenStrength = 0,
+                         airmat = NA,
+                         scenario = "null")
+
+simu <- runSimulation(par1) # run 30h and didn't finish
+```
+
+```{r}
+saveRDS(simu, "/home/andy/local/runs/20250408_null")
+```
+
+### visualize results
+
+```{r}
+plotSpatialPhylo(simu)
+```
