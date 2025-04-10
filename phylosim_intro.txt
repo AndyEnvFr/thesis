@@ -71,6 +71,7 @@ PhyloSim is inspired by the Hubell model (Chave J, Muller-Landau HC & Levin SA (
 			environment 			= 0 (=default)						: float environment doesn't influence the model
 			fitnessActsOn			= "mortality" (=default), "reproduction" or "both"	: how does the fitness influence the individuals
 			fitnessBaseMortalityRatio 	= int							: determines the fitness based mortality ratio
+														  must be >1 otherwise density dependent mortality does not work
 			densityCut			= int							: defines the effective range of the competition
 							= FALSE							: ingores range of competition
 			type 				= char							: "base" (=default), "Leipzig", "Rneutral" (=only for test and teaching, as slow and truncated output)
@@ -81,6 +82,7 @@ PhyloSim is inspired by the Hubell model (Chave J, Muller-Landau HC & Levin SA (
 			airmat				= Matrix						: determines the environment of a simulation; needs the same dimensions as x,y
 			scenario			= String						: further information you want to add to the parameter set in order to refer to a model run more conveniently
 			)
+
 		run the simulation
 			simu <- runSimulation(par) (=returns in PhyloSim obj)
 			runSimulationBatch: allows to run a set of parameter combinations (=returns PhyloSimList)

@@ -1,0 +1,10 @@
+12:51 10/04/2025
+
+problems Phylosim
+
+while
+par1 runs with speciation = 2
+par2 gives an error with speciation = 2.5
+	Error in FUN(X[[i]], ...) : 
+  	numbers of left and right parentheses in Newick string not equal
+par3 crashes R with speciation = 3

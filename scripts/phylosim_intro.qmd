@@ -1,0 +1,100 @@
+---
+title: "EcoPhyloSim"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+  
+library(PhyloSim)
+```
+
+### define params and run model
+
+```{r}
+#| eval: false
+#| echo: false
+
+par1 <- createCompletePar(x = 100,
+                         y = 100,
+                         dispersal = "global",
+                         runs = c(1,2, 10,11, 100,101, 1000,1001,
+                                  100000,100001, 200000,200001, 300000,300001,
+                                  400000,400001, 500000,500001, 600000,600001
+                                  ),
+                         specRate = 2,
+                         density = 0.1, # NDD (but not Conspecific)
+                         environment = 0,
+                         fitnessActsOn = "mortality",
+                         fitnessBaseMortalityRatio = 0, # equal traits -> mortality
+                         densityCut = FALSE,
+                         seed = 20250408,
+                         type = "base",
+                         protracted = 0,
+                         fission = 0,
+                         redQueen = 0,
+                         redQueenStrength = 0,
+                         airmat = NA,
+                         scenario = "null")
+
+simu <- runSimulation(par1) # run 30h and didn't finish
+```
+
+```{r}
+#| eval: false
+#| echo: false
+
+saveRDS(simu, "/home/andy/cyber_synch/local/runs/20250408_null")
+```
+
+```{r}
+#| echo: false
+
+simu <- readRDS("../../local/runs/20250408_null")
+```
+
+
+### visualize results
+
+```{r}
+#| label: fig-spatial_distirbution
+#| fig-width: 5
+#| fig-height: 5
+#| fig-cap:
+#|   - Spatial distribution at step 1
+#|   - Spatial distribution at step 2
+#|   - Spatial distribution at step 10
+#|   - Spatial distribution at step 11
+#|   - Spatial distribution at step 100
+#|   - Spatial distribution at step 101
+#|   - Spatial distribution at step 1000
+#|   - Spatial distribution at step 1001
+#|   - Spatial distribution at step 10000
+#|   - Spatial distribution at step 10001
+
+
+plotSpatialPhylo(simu, which.result = 1)
+plotSpatialPhylo(simu, which.result = 2)
+plotSpatialPhylo(simu, which.result = 3)
+plotSpatialPhylo(simu, which.result = 4)
+plotSpatialPhylo(simu, which.result = 5)
+plotSpatialPhylo(simu, which.result = 6)
+plotSpatialPhylo(simu, which.result = 7)
+plotSpatialPhylo(simu, which.result = 8)
+plotSpatialPhylo(simu, which.result = 9)
+plotSpatialPhylo(simu, which.result = 10)
+# plotSpatialPhylo(simu, which.result = 10)
+# plotSpatialPhylo(simu, which.result = 11)
+# plotSpatialPhylo(simu, which.result = 12)
+# plotSpatialPhylo(simu, which.result = 13)
+# plotSpatialPhylo(simu, which.result = 14)
+# plotSpatialPhylo(simu, which.result = 15)
+# plotSpatialPhylo(simu, which.result = 16)
+# plotSpatialPhylo(simu, which.result = 17)
+# plotSpatialPhylo(simu, which.result = 18)
+# plotSpatialPhylo(simu, which.result = 19)
+# plotSpatialPhylo(simu, which.result = 20)
+# plotSpatialPhylo(simu, which.result = 21)
+# plotSpatialPhylo(simu, which.result = 22)
+```
