@@ -16,28 +16,26 @@ library(PhyloSim)
 #| eval: true
 #| echo: false
 
-par1 <- createCompletePar(x = 500,
-                         y = 500,
-                         dispersal = 5,
-                         runs = c(1,2
-                                  # 10,11, 50,51, 100,101, 150,151, 200,201,
-                                  # 250,251, 300,301, 350,351, 400,401, 450, 451
-                                  # 1000,1001
-                                  ),
+sort(c((rep(1:50 * 50) + 1), rep(1:50 * 50)))
+
+par1 <- createCompletePar(x = 256,
+                         y = 256,
+                         dispersal = 1,
+                         runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
                          specRate = 2,
-                         density = 1.2, # NDD (but not Conspecific)
+                         density = 1, # NDD (but not Conspecific)
                          environment = 0,
                          fitnessActsOn = "mortality",
-                         fitnessBaseMortalityRatio = 1, # must be >1 otherwise error
+                         fitnessBaseMortalityRatio = 1, 
                          densityCut = 1,
-                         seed = 20250408,
+                         seed = 20250414,
                          type = "base",
                          protracted = 0,
                          fission = 0,
                          redQueen = 0,
                          redQueenStrength = 0,
                          airmat = NA,
-                         scenario = "null")
+                         scenario = "dd_1")
 
 simu <- runSimulation(par1)
 ```
@@ -46,16 +44,68 @@ simu <- runSimulation(par1)
 #| eval: true
 #| echo: false
 
-saveRDS(simu, "/home/andy/cyber_synch/local/runs/20250408_dd_1")
+saveRDS(simu, "/home/andy/cyber_synch/local/runs/20250414_dd_1")
 ```
+
+### Access results
+#### Spatial distribution
+```{r}
+#| fig-width: 2.5
+#| fig-height: 3
+
+simu_4000 <- simu$Output[[4000]] # simulation step 100001, i.e., last model output
+image(simu_4000$specMat)
+```
+
+#### Species richness
+```{r}
+sr_simu <- sapply(1:4000, function(x) PhyloSim::specRich(simu = simu, which.result = x))
+plot(sr_simu, type = "l")
+```
+#### Species abundance
+```{r}
+abundance
+PhyloSim::rac(simu, plot = "bar", which.result = 4000)
+PhyloSim::rac(simu, plot = "line", which.result = "all")
+```
+
 
 ```{r}
 #| echo: false
 
-simu <- readRDS("/home/andy/cyber_synch/local/runs/20250408_dd_1")
+simu <- readRDS("/home/andy/cyber_synch/local/runs/20250414_dd_1")
 ```
 
 ### visualize results
+
+```{r}
+#| label: fig-spatial_distirbution
+#| fig-width: 5
+#| fig-height: 5
+
+plotSpatialPhylo(simu, which.result = 100)
+plotSpatialPhylo(simu, which.result = 200)
+plotSpatialPhylo(simu, which.result = 300)
+plotSpatialPhylo(simu, which.result = 400)
+plotSpatialPhylo(simu, which.result = 500)
+plotSpatialPhylo(simu, which.result = 600)
+plotSpatialPhylo(simu, which.result = 700)
+plotSpatialPhylo(simu, which.result = 800)
+plotSpatialPhylo(simu, which.result = 900)
+plotSpatialPhylo(simu, which.result = 1000)
+plotSpatialPhylo(simu, which.result = 1100)
+plotSpatialPhylo(simu, which.result = 1200)
+plotSpatialPhylo(simu, which.result = 1300)
+plotSpatialPhylo(simu, which.result = 1400)
+plotSpatialPhylo(simu, which.result = 1500)
+plotSpatialPhylo(simu, which.result = 1600)
+plotSpatialPhylo(simu, which.result = 1700)
+plotSpatialPhylo(simu, which.result = 1800)
+plotSpatialPhylo(simu, which.result = 1900)
+plotSpatialPhylo(simu, which.result = 2000)
+plotSpatialPhylo(simu, which.result = 4000)
+
+```
 
 ```{r}
 #| label: fig-spatial_distirbution
@@ -86,27 +136,27 @@ simu <- readRDS("/home/andy/cyber_synch/local/runs/20250408_dd_1")
 #|   - Spatial distribution at step xx
 
 
-plotSpatialPhylo(simu, which.result = 1)
-plotSpatialPhylo(simu, which.result = 2)
-plotSpatialPhylo(simu, which.result = 3)
-plotSpatialPhylo(simu, which.result = 4)
-plotSpatialPhylo(simu, which.result = 5)
-plotSpatialPhylo(simu, which.result = 6)
-plotSpatialPhylo(simu, which.result = 7)
-plotSpatialPhylo(simu, which.result = 8)
-plotSpatialPhylo(simu, which.result = 9)
-plotSpatialPhylo(simu, which.result = 10)
-plotSpatialPhylo(simu, which.result = 10)
-plotSpatialPhylo(simu, which.result = 11)
-plotSpatialPhylo(simu, which.result = 12)
-plotSpatialPhylo(simu, which.result = 13)
-plotSpatialPhylo(simu, which.result = 14)
-plotSpatialPhylo(simu, which.result = 15)
-plotSpatialPhylo(simu, which.result = 16)
-plotSpatialPhylo(simu, which.result = 17)
-plotSpatialPhylo(simu, which.result = 18)
-plotSpatialPhylo(simu, which.result = 19)
-plotSpatialPhylo(simu, which.result = 20)
-plotSpatialPhylo(simu, which.result = 21)
-plotSpatialPhylo(simu, which.result = 22)
+# plotSpatialPhylo(simu, which.result = 1)
+# plotSpatialPhylo(simu, which.result = 2)
+# plotSpatialPhylo(simu, which.result = 3)
+# plotSpatialPhylo(simu, which.result = 4)
+# plotSpatialPhylo(simu, which.result = 5)
+# plotSpatialPhylo(simu, which.result = 6)
+# plotSpatialPhylo(simu, which.result = 7)
+# plotSpatialPhylo(simu, which.result = 8)
+# plotSpatialPhylo(simu, which.result = 9)
+# plotSpatialPhylo(simu, which.result = 10)
+# plotSpatialPhylo(simu, which.result = 10)
+# plotSpatialPhylo(simu, which.result = 11)
+# plotSpatialPhylo(simu, which.result = 12)
+# plotSpatialPhylo(simu, which.result = 13)
+# plotSpatialPhylo(simu, which.result = 14)
+# plotSpatialPhylo(simu, which.result = 15)
+# plotSpatialPhylo(simu, which.result = 16)
+# plotSpatialPhylo(simu, which.result = 17)
+# plotSpatialPhylo(simu, which.result = 18)
+# plotSpatialPhylo(simu, which.result = 19)
+# plotSpatialPhylo(simu, which.result = 20)
+# plotSpatialPhylo(simu, which.result = 21)
+# plotSpatialPhylo(simu, which.result = 22)
 ```
