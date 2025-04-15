@@ -1,0 +1,127 @@
+08:08 20/03/2025
+
+PhyloSim notes
+
+PhyloSim is inspired by the Hubell model (Chave J, Muller-Landau HC & Levin SA (2002). Comparing classical community models: theoretical consequences for patterns of diversity. The American Naturalist 159(1): 1-23.)
+
+	runs on discrete grid
+		each grid is occupied by an individual at any time
+		boundaries are warped
+	Individuals have 3 traits
+		env
+		competitions
+		neutral
+	Species and Phylogeny
+		each individuals belongs to a spec
+		spec properties are described by mean of all traits of all individuals of a spec
+		The traits drive the evolution of the species over time
+	Processes in order
+		mortality/ reproduction
+			if individuals dies, it is replaced by a surrounding individual
+				surrounding depends on the dispersal kernel
+					global
+					exponential kernel -created a weighting- : w_d = exp - d / Sigma
+						Sigma = dispersal distance
+						dispersal cut-off at 2 * Sigma: individuals disperse only in that distance
+		Evolution of trait
+			parental traits + small gaussian random variable + attraction towards the species mean traits
+		Fitness calculation
+			according to the new traits, the fitness of the new individuals will be calculated
+				the closer trait is to the surrounding, the more the fitness of the individual is reduced
+???					what means surrounding here?
+				higher r = higher fitness (it is the sum of all trait differences)
+		Speciation
+			default: point speciation
+				frequency is controlled by speciation rate
+				new species are also created by reproduction, hence have parents
+				new species replace randomly chosen individuals
+???					why not the ones with lowest fitness?
+				new species traits depends on parents traits + randomly generated value
+			other speciation implementations
+				point mutation
+					a randomly chosen individual becomes a new species
+				Fission type 1
+					A species is randomly chosen and every second individuals becomes part of the new species
+				Fission type 2
+					A species is randomly chosen and geographically split in two parts: one part evolves into a new species, the other is not affected
+???					how is that different to Fission type 1?
+				Protracted speciation
+					speciation is thought of as a long development, where species might diverge but gene flow is still possible
+					offspring of diverging parents (hybrids) have lower fitness
+					parts of the genome can develop, while other remain the same
+					while species diverge slowly, they have equal fitness = neutral theory
+???						but also in the model -> fitness calculation ?
+				Red Queen
+					new species have advantages over old ones
+						because they possess new traits that allow them accessing resources that were locked before
+					this affect vanishes over time
+						because the threats/environment/competition also changes, the advantages of the new species decrease with time
+					Red Queen tells Alice: "it takes all the running you can do, to keep in the same place."
+						organisms must evolve to maintain their fitness, not to increase it
+						species must constantly evolve to outcompete or defend against perpetually evolving/ changing threats
+	Running the model in R
+		generate a list of params
+			par <- createCompletePar(
+			x,y : grid size
+			runs = c(500,1000) 		: recording of outputs
+			dispersal 			= "global" 						: each individual can reproduce in every cell of the grid
+							=> 1 int set the dispersing distance
+			specRate			= int							: number of individuals introduced in the community each step
+			density 			=0 (=default)						: there is no density dependence; the higher, the more density dependent
+			environment 			= 0 (=default)						: float environment doesn't influence the model
+			fitnessActsOn			= "mortality" (=default), "reproduction" or "both"	: how does the fitness influence the individuals
+			fitnessBaseMortalityRatio 	= int							: determines the fitness based mortality ratio
+														  must be >1 otherwise density dependent mortality does not work
+			densityCut			= int							: defines the effective range of the competition
+							= FALSE							: ingores range of competition
+			type 				= char							: "base" (=default), "Leipzig", "Rneutral" (=only for test and teaching, as slow and truncated output)
+			fission				= {0,1,2}						: 0 = none, 1 & 2 see speciation
+			redQueen			= float							: fitness decline of a new species
+			redQueenStrength		= float							: if >0, new species gets advantage
+			protracted			= int							: time span, a new species stays "incipient" before turning "new"
+			airmat				= Matrix						: determines the environment of a simulation; needs the same dimensions as x,y
+			scenario			= String						: further information you want to add to the parameter set in order to refer to a model run more conveniently
+			)
+
+		run the simulation
+			simu <- runSimulation(par) (=returns in PhyloSim obj)
+			runSimulationBatch: allows to run a set of parameter combinations (=returns PhyloSimList)
+				parmBatch ← list(par1, par2 )
+				simuBatch ← runSimulationBatch(parmBatch, parallel = 2)
+					access the first simulation by simuBatch[[1]]
+		Access results
+			res <- sim$Output[[1]]
+			str(res)
+				gives all the different $___matrix
+			str(sim$Model)
+				for settings
+			PhyloSim object can be directly passed to further functions
+				by default functions use the final results
+				if not: which.results = ... : allows to chose interim results
+_________________________________________________________________________________________________
+
+	Plots
+		plotSpatialPhylo()	: easy overview of simulation
+		sac()
+		rac()
+		phyloReconstruct()	: based on traits, phylogenies are constructed and can be compared to the real phylogeny of the community
+					Phyl ← ape::drop.fossil(simu$Output[[2]]$phylogeny)
+					rePhyl ← phyloReconstruct(simu)
+					par(mfrow = c(1,2)); plot(Phyl, main = "..."); plot(rePhyl, ...)
+???		hihglightLocalPhylo()	: what is a metacommunity? what extent of the simulation area is looked at (and how does n influence this)?
+						-> see localPlots()
+
+	Summary statistics
+		localPlots()				: creates random subplots of a given size within the metacommunity
+		nullModel()				: compares random subplots against null models
+							fun = "mdp" or "pd" : phylogenetic measures that is used
+		calculatePhylogeneticDispersion()	: calculates null models for all runs in phyloBatch for different plot sizes	
+								different types of nullmodels are possible
+								visualized with plotPhylogeneticDispersion()
+		
+						
+
+
+
+
+

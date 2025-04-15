@@ -1,0 +1,908 @@
+13:41 12/03/2025
+
+When citing (from …) means that the information does not directly come from that source, but is cited in it
+
+Glossary
+	Tilman's resource competition theory
+		species jointly limited by a single resource obey the R* rule
+		for every species R* is the resource level at which the species is just able to persist
+		the winner of the competition is the species with lowest R* value
+			R* reflects not the ability of the species to harvest resources at low concentration but
+			to achieve high enough growth and reproduction / maintain stable population at low resource levels to compensate tissue death and mortality
+				latter factors themself are affected by grazing and predation
+			If a species experience lower grazing / mortality, it can have lower R*
+		The overall fitness of a species leads to its R* value
+	stochastic boundedness
+		in a stochastic system species D are bounded to not fall below extinction rate or transpass unrealistically high D
+	species turnover
+		change in species (functional) composition between between communities, habitats, or time periods
+	demographic rates
+		reproduction, recruitment, mortality
+	Intransitive competition
+		is a concept in ecology where competition among species forms a non-linear, rock-paper-scissors-like relationship rather than a simple linear hierarchy. In other words, no single species is universally dominant over all others, and competitive interactions form a loop.
+	Predator satiation
+		strategy of prey species: produce very high number of offspring and so reducing the proportion eaten by predators
+	intrinsic fitness
+		= intrinsic population growth rate when a species is rare or density dependent effects are absent
+	ecological drift <-> ecological stochasticity <-> demographic stochasticity
+		changes in size of a species population (abundance) due to random birth, death, and migration
+		can lead to species loss in a community over time as species go extinct even without competitive exclusion
+		ED acts independent of deterministic processes, like natural selection, env changes, competition
+		drift is stronger in small populations
+	Neutral model
+		all species have equal fitness, hence ecological drift is the only driver shaping species diversity
+		there might be stabilizing effect (JC) that hinder the dominance of few species and, therefore, the loss of diversity
+	Neutral theory
+		assumes spec are functionally equivalent and community composition is largely shaped by random processes
+		Critics:
+			eq fitness assumption is implausible
+			the theory is not robust against slight variations
+			drift would than shape most diversity structure because competitions is excluded. However, drift has only weak effect
+			
+	Stabilizing mechanisms
+		without niche stabilizing mechanisms, immigration or speciation, any community will collapse to a state of 0 or 1 individual in theory. However, this is not the case
+		Therefore people investigate stabilizing mechanisms
+		Cause population growth rate to decline below an intrinsic rate of increase, as the species becomes more abundant
+	Coexistence (n Species with n resources)
+		n Species can coexists on n Resources. However, in plankton or tropical rainforests even more
+			limit cycles (e.g., pred prey cycle: coexistence, because populations never reach eq. The regular cycles repeat over time and are less sensitive to initial settings) and or
+			chaotic attractors (initial settings can vastly change outcomes, no cyclic pattern, irregular changes) can make this possible
+			However, the more spec we have, the more complex is it to mathematically maintain an equilibrium
+				via varying competitions coefficients, growth rates, responses to env variation
+		Coexistence occurs because each species consumes more of the resource that most limits its population growth (Coexistence theory)
+	Resource competition theory
+		extends the concept of coexistence theory by adding potential niche differentiations
+			natural enemies
+			mutualists
+		stabilizing if
+			intrasp. > intersp. competition
+			relative host specificity of natural enemies
+		stabilizing CNDD = fosters richness by creating niche differentiation which in turn increase intrasp. competition, all else being equal
+	Community Size
+		total number of individuals in the community regardless the species
+	Plant Soil Feedback
+		Plant–soil feedback occurs when an individual plant conditions local soil environments such that the demographic performance of conspecific seedlings (or juvenile age classes more generally) are affected differently relative to heterospecific seedlings (Bennett and Klironomos  2019; Bever, Westover, and Antonovics  1997; Crawford et  al.  2019; Eppinga et  al.  2018). from laManna et al 2024
+	Janzen-Conell-Theory
+		“The hypothesis that [relatively] specialized enemies maintain plant species diversity by creating higher seed and seedling mortality at higher conspecific densities and closer to conspecific adults; and that this mechanism is more effective in the tropics” (Hülsmann, Chisholm, and Hartig 2021). Janzen-Connell mechanisms are expected to generate local stabilizing CDD.
+		is a stabilizing mechanism*
+		promotes species coexistence (Chave & Muller-Landau & Levin 2002, American Naturalist; Molofsky et al 1999, Theoretical Population Biology; Bonanomi & Giannino & Mazzoleni 2005, Oikos)
+		Theoretical studies (without interspecific variance in CNDD) show that JC promotes diversity (Leigh 1982 The Ecology of a Tropical Forest; Armstrong 1989 Theor. Biol.,; Adler & Muller-Landau 2005 Ecol. Lett; Muller-Landau & Adler 2007 Seed Dispersal: Theory and Its Application in a Changing World; Stump & Chesson 2015 Theor. Popul. Biol.,);
+		Theoretical studies (with interspecific variance in CNDD) show that higher CNDD leads to lower anundance in the community (Miranda et al 2015, Mangan et al. 2010 Nature; Chisholm & MullerLandau 2011 Theor. Ecol.,; Mack & Bever 2014 J. Ecol) 
+		if each species has antagonists, more abundant species (i.e., with more conspecifics) will have decreased recruitment near conspecifics
+			leading to rare species advantages and stabilized community diversity
+		as in resource models, the more species we have, the more mathematically complex the coexistence of them all
+			in theory infinetly many species can coexists, but Hubbell 1980 showed that only few can coexist by JC
+		Also applies on temperate and subtropical forests or coral reefs (from Miranda et al 2015)
+		Pathogens that are easily transmittable between conspecifics are
+			first proposal: insects that prey on seeds or herbivors (from Miranda et al 2015)
+			more recently: root or soil pathogens (Bever JD, 1994 Ecology; Packer A & Clay K, 2000 PMID; Bell et al 2006 Ecology Letters; Mangan et al 2010 Nature) (from Miranda et al 2015) 
+		rare species have stronger CNDD (from Miranda et al 2015)
+		happens at seedling stage (Connell 1971 Centre for Agricultural Publishing and Documentation)
+		happens at seedling and seed stage (Janzen 1970 American Naturalist)
+			at seed stage NDD is stronger for more abundant species (Bagchi et al 2014 nature)
+		Species differ in CNDD response
+			positive correlation between CNN variation and shade tolerance + resistance to natural enemies (Kobe RK & Vriesendorp CF, 2011 PMID)
+			invasive species suffer less (Klironomos 2002, Nature)
+			slow-growing species suffer less (Zhu et al. 2018, Ecol. Lett.)
+			species with high resistance gene diversity suffer less(Marden et al. 2017, Mol. Ecol.,)
+			shade tolerant species suffer less(Kobe & Vriesendorp 2011, PMID)
+		has been shown to increase S in plots < 15m² and this has been extrapolated at community level (Harms et al. 2000 Nature; Bagchi et al. 2014 Nature).
+		Seed dispersal greatly affects the impact of CNDD (MullerLandau & Adler 2007 Seed Dispersal: Theory and Its Application in a Changing World; Murrell 2010 Ecology; Stump & Chesson 2015 Theor. Popul. Biol.,)
+		CNDD effects are more pronounced in earlier life stages (from Hülsmann et al 2024)
+		Species tend not to replace themselves during gap dynamics (Pham et al., 2004; Runkle, 1982 :::::: from Magee et al 2024),
+	Transient
+		a temporary state that persists for a long time before the systems reaches eq
+			i.e., when diversity is high in stable states, this means that it is not necessarily stable in time
+		It is an important concept, as in reality almost no ecosystems reach stable states because of disturbances
+	two-allele drift-selection model
+		new allele (rare species) vs established allele (common species)
+			new allele is subject to genetic drift (ecological drift) and selection [competition between genes] (competitive exclusion)
+				drift can sometimes allow the rare species to persist, but it is unstable
+				competitive exclusion prefers species with higher intrinsic fitness
+	vital rates
+		growth rate, survival rate, seed production, and recruitment success
+	Coexistence theory (local scale)
+		species can coexist if they have niche differences that reduce direct competition
+	Metacommunity Theory (large scale)
+		extends the coexistence theory by allowing i-/ emmigration from one community to the other across landscapes
+		besides dispersal and spatial connectivity (in which relation are habitats connected with respect to each other) the model accounts for patch dynamics: how a patch (i.e. community behaves depends on local (ecological processes) and regional (immigration)
+			Mass effect
+				are driven by high dispersal levels. This high dispersal may overrides the community structure in the new location
+				species that are not well adapted to local conditions can be maintained due to high dispersal
+				Mass effects == source-sink dynamics
+	latitudinal patterns of biovariables and their effect on ecosystems from Hülsmann et al 2024: reference 68, 69
+Modelling Terminology
+	periodic boundary (torus)
+		if an individual escapes left, it re-enters right
+	individual based model
+		each individual is modelled, rather than the population as a whole
+	Site Occupancy Model
+		presence / absence model accounting for imperfect detection (available species can go undetected)
+		for species distribution and habitat selection
+	invasion analysis
+		assesses how an invader spreads across a system and establishes there.
+	diffuse competition model
+		competition occurs because of direct but also indirect effects across the community
+		species compete with multiple species in the community
+		a competition between two species involves interaction of comparable strength between all pairs of species		
+	spatial neighborhood approach
+		rather than using grids, vicinity relations are given by coordinates (x,y), allowing for more realistic representation of spatial patterns
+		interaction strength decays with distance
+		allows modelling of spatial heterogeneity: S can be higher/ lower in some regions.
+	zero sum dynamics
+		number of individuals remain constant over generations
+		represents a fixed carrying capacity of the community
+	Species Abundance Distribution
+	Pair- Correlation function
+	Distance Decay of Community Similarity
+	Rank-Abundance curves / Whittaker plot
+		relative abundance on Y
+		rank abundance on X (most abundant is assigned to rank 1)
+	
+
+Stats
+	KS Test 
+		measures how much the CDF of one distribution deviates from another distribution
+		a low D value suggests small variations between the distributions
+	non-biased lottery competition	
+		p is purely based on n rather than on traits
+	Pielou Evenness measures species evenness based on the shannon index in a community
+		0 = one species dominates
+		1 = species are evenly distributed
+	regression dilution / attenuation bias
+		when a relationship between 2 variables is weakened because of
+			measurement error
+			variability in the data
+	Binomial model: complementary log-log link function (instead of logit)
+		allows to better account for differences in observation time (Delta time) through an offset term
+	confounder or precision variables
+	regression dilution bias OR regression attenuation
+		happens when there is measuring error in X-variable
+		shifts the regression line or curve towards zero
+		it is problematic, if H0 is that there is an effect and H1 states that the effect either increases or decreases with X
+			the downward regression shift will make an effect appear where there is none
+			works also vice versa: when H0 is that there is a negative effect and H1 states that is de-/ increases, the upwards regression shift will make an effect appear where there is none
+		it is not problematic, if H0 is that there is no effect and H1 is that the effect increases with X
+			the downward regression shift will just make harder to detect an effect when there is one (so it is also kind of problematic). But we trade off Type I error with Type II error (this might be domain specific: Jill Sequelly works in landscape genomics and she rather has a more pregressive testing than conservative because she argues that it is better to find all the mutating snp and finding some that are not mutated, then getting only mutated ones, but missing out some muated as well. She justifies it, that when multiple studies do the reserach jsut by chance it will clarify whether the mutated snp was actually causing adaptation.
+		I didn't understand the math behind that (https://www.rohanbyanjankar.com.np/2024/11/attenuation-bias-how-it-occurs-and-how.html)
+			however, it has to do with the introduced variation in X (how big the measuring error is: the bigger the measuring error, the more shifted towards 0 the regression will be)
+		Code to replicate and try around:
+			np<-30
+			x<-rnorm(np,30,4)
+			y<- 2.2*x + rnorm(np,0,2)
+			set.seed(1066)
+			slopes<-numeric(1000)
+			for(i in 1:1000) slopes[i]<-coef(lm(y ~ rnorm(np,x,1)))[2]
+			summary(slopes)
+	
+		
+
+Simulation studies
+	Chisholm and Fung 2020
+		in a neutral model* JC maintains high diversity especially in big communities (= as species becomes common?)
+		in a model with competitive exclusion and with varying intrinsic fitness, JC is strongly reduced and scales bad with community size
+		because in reality, fitness is varying, JC has weak effects in and can't explain high diversity in tropical rainforests
+		dispersal limitation surprisingly further reduces effectiveness of JC
+			we would expect that limiting dispersal would increase the chance that conspecifics encounter, therefore increase a potential JC effect
+			dispersal limitation does amplify JC but relatively more for rare than common species (unlimited dispersal and rare species -> unlikely encounter)
+		uses two-allele-drift-selection model to (standard proced. in theoretical ecology: simplify the system first, then use mathematically known frameworks to test the findings in a more complex and realistic model
+			predict the likelihood of a rare species to establish in community
+			investigate how JC counteracts competitive exclusion
+			investigate the interaction between drift, exclusion, and JC
+		maintainable S is dependent on sigma_f and k
+		Math
+			S = number of common species with equal relative abundance
+			k = number of individuals in the exclusion zone (excluding the dying individual) (0 in a neutral model) 
+			alpha_jancon (selection coefficient) ~ k/S (probability of recruitment failure for a common species) = expected change in log abundance over one time step
+				for neutral model alpha_jancon is the only selective force
+				A species will recover from rarity, if alpha >> drift (the only diversity-eroding process in a neutral model)
+				if J alpha >> 1 , the species will escape rarity
+					J = community size
+			in a neutral model alpha = 0 and drift always dominates
+			in a neutral model + JC:
+				J alpha_jancon ~ J k/S >> 1 , easy to satisfy, because J >= S
+					-> in larger areas, we can have higher S. It becomes easier to counteract drift with large community size
+			with varying intrinsic fitness we have a focal species with less vitality than common species
+				- alpha' < 0 (negative alpha means that the species would go extinct)
+				J(-a' + a_jc) ~ J(-a' + k/S) >> 1 , this is much harder to satisfy
+					For a given -a' we have a defined S that can be saved from rarity
+					if S > k/a' , the rule can not be satisfied
+					This reveals that the ability to save rare species from competitive exclusion is weak
+					This ability does not increase much with community size, hence spatial scale
+			If there is no speciation, we need high initial S to maintain diversity via JC
+		Mechanistic Markov Chain Model
+			a comprehensive model would allow intrinsic fitness to vary within species time and spaces, but it would be hard to draw inference
+			1)
+				model with species varying fitness (reproduction rates) but fix in space and time:
+				drift, dispersal limitation, Janzen-Connell effects, interspecific intrinsic fitness variation
+				J = grid lenght² (Individuals)
+				S_i (Species index) with 
+					n_i = abundance
+					f_i = intrinsic fitness
+				at each t
+					one individual dies randomly
+					each individuals produces propagules proportional to f_i
+						propagules are distributed in a 2D landscape based on bivariate normal distribution with mean and covariance = 0 and sigma_d[units of grid cells]
+						one propagule of all landing on a cell is chosen randomly with rules of JC
+							propagule can not be of the same species as one of the k individuals in the dead individual's exclusion zone. This means that the recruitment event for k > 0 sometimes will fail
+				f_i ~ lognormal(µ = 0, sigma_f)
+				simulations with all combinations of sigma_f (seq(0,1, by = .2) and L[2²,...,2^8]
+					biggest grid size equals the community size of a 50ha forest plot
+				per capita speciation rate v = 10^-6 (rate at which a new species is introduced into the system)
+					allows community to maintain a stable number of species rather than breaking down
+				Species identity drawn random from S_0 = 1000
+				T_max = 10^7 generations
+				if S changed little after T = 10^6, dynamic equilibrium was reached
+				k = 8 (Moore) / k = 24
+				sigma_d = inf (for both k)
+					= [1,5,10,15] for k = 8
+			2)
+				model comparison with Levi et al 2018: large grid simulation (15 scenarios at each of L)
+				k = dying individual can not be replaced by conspecific propagule (little effect if S is high)
+				v = NA
+				sigma_d = NA
+				boundary conditions (vs buffer zone in Levi et al 2018) (little effect)
+				k = [0, 1, 9, 24, 49]
+				T_max = 10^6
+				L = [2^8, 2^9, 2^10, 2^11]
+					biggest grid size equals the community size of a 100km² forest plot
+				sigma_f = [0.1, 1] equal across all individuals
+		Real life estimations
+			parameters were estimated based on 50ha tropical forest plot on Barro Colorado Island (Condit et al 2017)
+			estimation of k
+				adult tree if DBH > DBH threshold for reproduction
+			estimation of c_k
+				conspecifics among closest neighbours with k = [8,24]
+				caveat: conspecific neighbours could be the result of simultaneous recruitment
+				considered the 30 most abundant species with > 250 individuals (Wright et al 2005a)
+			estimation of simga_f
+				seed production rates or seedling recruitment rates (Wright et al 2005b) / number of k
+				for 15 species
+				seed production and recruitment is only meaningful in relative numbers because (Wright et al 2005b) used subplots
+					However, multiplying the seed estimates didn't change log_sigma (???)
+					-> therefore the variation corresponds to sigma_f
+				limitation
+					seeds may come from trees outside the 50ha plot
+					adult tree estimation is not precise
+					errors propagate up to sigma_f
+					seed production rates are less informative than seedling recruitment, because latter covers both, production and germination
+					both proxies omit some mechanisms relevant to the species fitness
+		Results
+			JC kept S high in neutral model or when sigma_f is low, thus when species have anyway the same fitness
+			However, for higher sigma_f (variation in intrinsic fitness), JC could not maintain high S
+				hence, only weakly opposes competitive exclusion
+			strong dispersal decreases S
+			Also for the big plot simulation when variation of sigma was 0, JC could maintain many species
+				S scales strongly with Area (Community Site used as proxy for area)
+			When sigma_f = 0.1, S is heavily reduced especially for bigger plots
+			When sigma_f = 1 the reductions were even stronger
+				S scales weakly with Area
+			For Estimation of k and sigma_f see paper highlighted yellow
+				the most abundant species (10% of individuals) was excluded for estimating sigma_f, because we check the intrinsic fitness, hence, without density dependencies
+	
+	Levi et al. (2018): neutral models (only with drift and without competitive exclusion)
+		in transient state, diversity is increased due to JC
+		This is a weak results, as drift acts weakly on big communities. Therefore, if JC can compensate drift, JC effect is not necessarily strong
+		
+	Miranda et al 2015: The strength by which CNDD applies varies through species in a community. How does the variation affect S across forest communities?
+		stronger mean NDD in community -> higher S and shannon index
+			final mean NDD is weaker than the intial: the remaining tree species are the ones with lower NDD
+			the higher mean NDD, the lower the difference between final and initial mean NDD (S fig 4)
+			stronger NDD leads to less variance of relative abundance between species (with low NDD): if NDD is low, the variation of relative abundance between the species is higher
+				(which is logical, because with higher NDD more species are present, hence their relative abundance is unlikely to vary more than if fewer species were there)
+				the decrease of realtive abundance for low NDD species provides space for high NDD species to remain in the community
+		low variance NDD in community -> higher S and lower variance of n
+			But Why is that
+				1) the higher the variance, the higher the competitive advantage of low NDD species
+				2) the higher the variance, the higher are the NDD differences between species
+				this is why relative abundance variance is higher for higher NDD variance
+				a small increase of variance -> higher extiction rates (Fig 5B: the proportion of the NDD variance maintained when initial variance is low is high but shrinks quickly, as intial variance increases)
+			maximum S, when variance = 0
+			final mean NDD is weaker than the intial if variance is there: the remaining tree species are the ones with lower NDD
+			final mean NDD equals intial if no variance is there
+			the species with lower NDD are finally the most abundant
+				if variance is low, relative abundance is equal at the end. If variance is high, low NDD species have high relative abundance
+			
+		tropical vs temperate forests: tropical forests may have lower NDD variances
+		1) fixed variance, varying mean
+		2) varying variance, fixed mean
+		Model
+			100 x 100 torus
+			each grid cell_ji can be empty or contain an individual (intial condition is random)
+				individuals are adult
+				individuals are drawn from 50 species
+				individual is characterized by location ij and NDD strength
+			all species have common fixed parameters
+				seed reproduction rate f = 500
+				adult mortality rate m
+				mean seed dispersal distance d = 3
+				R = 5
+				N_ij = seed pool
+			processes (in order)
+				adult mortality (includes stochasticity)
+				seed dispersal (includes stochasticity)
+					the negative exponential distribution ensures that closer grid cells have higher chance to disperse seed (discrete seeds)
+					then binomial distribution transforms discrete in probability
+					at the end of the process all the seeds accumulate in a seed pool N_ij
+				seed mortality (includes stochasticity)
+				seed establishment (includes stochasticity)
+					based on non-biased-lottery-competition* -> p depends on N (number of seeds of a given species in the pool)
+					Then a new individual is assigned to that empty grid cell
+					
+			NDD
+				increased seed mortality, when conspecific adults are present
+				conspecific seed survival in a Moore neighborhood decreases
+				4 different NDD if 1-2, 3-4, 5-6, 7-8, conspecific adults in Moore neighborhood
+ 				7 communities were generated with NDD [-1, -.1]
+					mean community NDD [seq(-0.79, -0.46, 0.05)] and constant variation of 0.11
+						this resulted in an overlap of half the variance between all communities (Fig 1)
+					continuous gradient of NDD between the 50 species
+						max and min values are given in S table 1
+				10 Communities were generated with mean NDD = 0.63
+					variance was seq(0.45, 0, .6 or .5)
+					as above, NDD had continuous gradient -> when variance narrows, the NDD difference between two species decreases
+			T = 20 000
+				because 94% of extinctions occured in the first 10 000 steps for mean NDD simulations
+				because 89% of extinctions occured in the first 10 000 steps for variance NDD simulations
+		Simulation in Matlab
+			10k individuals proportionally belonging to 50 spec and stochastically running through 20k steps
+			in each step, relative abundance and shannon index were registered
+			each treatment (community) was repeated 5 times
+			Checked the result variance
+				for varying mean and variance NDD by changing grid size, initial S, f, m, d
+
+	Stump and Comita (2018) examines how CNDD variation shapes community stability and diversity; parametrized with BCI data
+		interspecific variation in CNDD can make species less likely to coexist (with estimates derived from BCI) (like in Miranda)
+		variable CNDD makes communities less stable (like in Miranda)
+		if common species have low CNDD, the community stabilizing effect of CNDD is reduced (like in Miranda)
+		if dispersal is limited, seedlings susceptible to CNDD are at a competitive disadvantage (novel claim) (compare to Chisholm and Fung 2020: there dispersal had little effect)
+			results in unstable community
+		If dispersal is high, CNDD can benefit rare species relatively more than non rare species
+		variation of CNDD decreases coexistence (more than variation in other competitive factors)
+		stabilizing mechanisms of CNDD are inversly proportional to species richness
+			as species richness is high, relative abundances are low. Therefore, seeds are less likely to encounter conspecifics, thus CNDD won't reduce survival.
+			also, if all N_j are low, there is no competitive advantage in being a rare species
+		Model
+			1) adults produce seeds
+???				fraction d of this seeds is dispersed uniformly around the environment (Why not lognormal ???)
+				remaining 1-d fraction of seeds stays at parents grid cell
+			2) seeds are harmed by CNDD
+				seed at parents or conspecific adult site dies at rate alpha_j (j is species specific)
+				seed distant from parent or conspecific survives
+			3) adults die with Delta
+				if adult survives, all seeds dispersed to its site die
+			4) If adult dies, seed is chosen randomly to become next adult (lottery competition)
+			Y_j: is a species yield that alters the chance of being chosen to enter a gap
+				this accounts for other competitivity factors than CNDD (e.g., higher seed production and survival)
+				has an advantage in capturing all sites VS low alpha_j has an advantage in capturing conspecific sites
+		Model analysis
+			invader analysis
+				each spec in turn was an invader with density approx. 0
+???				finite rate of increase was measured for every species in turn, weighted by its ??? sensitivity to competition ??? and partitioned in
+					Delta P_j (caused by CNDD) and Delta Y_j (caused by Yield)
+						Delta P_j is the benefit of CNDD for an invasive species compared to a settled species
+						the stabilizing mechanisms were mean of each term --> one per community; was analyzed for a particular set of parameters
+							mean(Delta P_j) = stabilizing mechanism
+								if no interspecific variation in alpha, the stabilizing mechanism of CNDD is very high
+								variation usually weakens the rare species advantage: rare species still have lower mortality due to CNDD, however, if dominant species have low CNDD as well, the relative advantage of rare species becomes less and the stability of the community decreases
+									--> is alpha varies, the abundance of species defines the communities stability: cov(alpha_j, N_j) ; this quantifies, if low alpha values belong to dominant species or not
+						the mean fitness difference was (Delta P - mean(Delta P)) ; same for Y --> one per species (describing its competitive ability)
+			Robustness to demographic stochasticity (i.e., drift ?)
+				species competed in small communities (2000 sites)
+				starting conditions was the equilibrium density (calculated in a bigger simulation)
+					if species went extinct in bigger simulation, their relative abundance was set to 1 %
+				T = 2000
+				it was measured the ln(time to first extinction)
+					ln(2000) if no extinctions
+				and S after t = 2000
+				repeated this process 5000 times for averaging
+		Parameterising the model
+			hierarchical (mixed effect ???) bayesian models: predictions of seedling survivals in BCI
+				only canopy tree species
+				-> 77 S
+				to estimate CNDD we need
+					species sensitivity to CNDD alpha_j
+						parameterized using CONBA (consp.basal area)
+							seedling survival = basal area weighted by exp{–0.2*distance}
+???								??? why does basal area affect cndd ; it is not included in the 3 parameters influencing CNDD
+???	whatever this is			parameterized using CONS (consp. influence on survival)
+					Abundance of each spec N_j
+						parameterized via relative basal area or relative abundance
+					fraction of seeds dispersed d
+						could not be parameterized, therefore considering many options
+		Results
+			1) how variation in alpha affects stability
+				Depends on two mechanisms: 1) multispecies interacions and 2) seed dispersal (this part is written very complicated and i didn't fully understand it)
+				1) the benefit of CNDD is proportional to Delta P_j (reduced mortality of invader compared to settled species)
+					-> each species advantage depends on the community advantage: (D P_j - mean(D P_j))
+					-> if alpha_j varies, species with lower alpha_j will suffer more, the less likely is coexistence and the stabilizing community effect
+					-> In communities, with low mean alpha, variation in CNDD is even more harmfull
+				2) if d is low, species with high alpha likely loose the adults site, as undispersed seeds likely die due to CNDD
+					contrary, Species with low alpha can hold the site for multiple generations
+			2) comparing communities that differ in alpha_j to communities that differ in Yield_j Y_j, to check whether alpha is different than other competitive factors (e.g., Y)
+				Y and alpha can produce equivalent mean fitness differences
+				communities where Y varies are more stable than communities where CNDD varies
+					again, because when there are differences in alpha, the more dominant species suffer less from CNDD
+						however, if there are differences in Y, all species still are affected the same by CNDD
+				Again, How Y and alpha affect the relationship between lambda_j (growth rate) and N_j
+					if alpha varies, the relationship is more negative for species with high alpha
+					if Y varies, the relationship is similar across species
+				Again, the Pielou eveness in a community is higher when Y changes, compared to when alpha changes
+			3) suggest methods to quantify CNDD and use those methods on BCI
+				1) examine how variation in alpha alters the communities stabilizing mechanism (divide stabilizing mechanisms with alpha variation (with covariance term) by stabilizing mechanisms without
+					if common species than have lower alpha, the variation of alpha negatively impacts the community stability
+				2) examine how CNDD affects invaders growth rate of each species
+					add stabilizing effect with varying alpha (cov term) to the mean fitness difference on species j
+					if the result is negative, it means that CNDD makes species i less able to persist
+			4) How do the effets affect BCI?
+				variation in CNDD weakens stabilizing effect
+		Limitations
+			species interact with heterospecifics equally, which is not the case
+				-> overestimation of CNDD
+				-> overestimation of mean fitness difference that CNDD produces
+			alpha can vary in space, time, or population size
+			d varies interspecifically
+
+	May et al 2020 	 			
+		varied CNDD strength, variation, and immigration rates
+		closed model
+			increasing C_m maintained a reasonable number of S
+				this effect increased with space
+				this effect increased with r_max (especially if C_m was high)
+				not much difference between random and restricted dispersal
+			increase in C_cv sharply dropped S (like in Miranda, Stump & Comita)
+		open model
+			increasing C_m supports higher S only in 0 or low immigration
+				in high immigration the magnitude of C_m becomes irrelevant 
+			effect of spatial scale
+				was quantified by the log-ratio of the SR in the final community for scenarios with CNDD (C_m > 1) / without CNDD (C_m = 1)
+				0 immigration
+					positive CNDD effect on S increased with scale
+				> 0 immigration
+					the higher the immigration rate, the lower the CNDD effect on S
+					CNDD drived SR the most in intermediate scales: 4-6 ha
+		In realistic settings CNDD is a weak driver of biodiversity
+		closed model assumptions (classical coexistence theory) is not enough to explain biodiversity maintenance
+					
+		Introduction
+			shows that coexistence and biodiversity maintenance are scale dependent (local scale = coexistence theory; landscape scale = large scale metacommunity theory)
+			suggests that most studies focus on only one of those and extrapolate the results by generalizing the findinds for all scales
+			((includes high resource competition as reason for CNDD, besides pathogens (plant soil feedbacks)/ host specific consumer
+			((empirical evidence is high
+			recent studies showed that there is a gap when extrapolating the CNDD effect present in a local scale into a broader spatial scale
+				but we dont know if and how local CNDD mechanisms scale at larger landscapes
+				How does CNDD interacts with other diversity maintenance processes (i.e., dispersal, immigration, source-sink dynamics)				
+					what share of coexistence is due to CNDD and what due to Mass dynamics
+					Levi et al uses closed models, therefore neglects mass dynamics
+					Use spatially explicit and individual based model to entangle those effects
+			
+		Model (confetti)
+			1) adult dies (at random, i.e., non independent of species or individuals interactions)
+			2) recruitment
+				either from a meta-population wit probabilit = m (= immigration rate)
+				or from the local population with prob = 1 - m
+					randomly choose a species with either
+					1) spatially restricted dispersal: drawn from a radially symmetric gaussian kernel with mean distance d_m
+					2) spatially unrestricted dispersal: random position
+						the meta communities have static species abundance distribution (according to the assumption that metacomm. dynamics are much slower than local dynamics)
+						each realtive abundance was drawn from a log-normal distribution and later standardized so that the sum of all relative abundances = 1						
+					((periodic boundary conditions
+					3) neighborhood interactions affect recruitment probability
+						recruit is affected by all adult individuals within a certain distamce r_max
+						NCI (neighb. competition index) considers species identity and distance of all individuals with r_max
+							thereby each species combination has a competition coefficient c_ij between recruit i and neighb. spec. j
+							NCI is standardized by area (to allow comparisons for different r_max values)
+								this is done to disentagle the effect of the strenght of neighborhood competition (captured by NCI: depends on number and distance of neighbors) versus the range of neighborhood interactions (r_max: determines distance at which interaction still is possible)
+							finally NCI is converted into a probability
+							If a recruitment is not successfull, a new position is tested, until recruitment is succesfull
+								thereby, the previous choice between immigration and local recruitment is only made once to assure that the immigration rate remains how it was defined
+		Model parameterization
+			CNDD is incorporated through c_ij
+				interspecific competition is equal for all species (=1)
+				increased CNDD (relative to HNDD) results when c > 1
+				to get species specific c_ij values, they are drawn from a truncated normal distribution with C_m and C_cv (coefficient of variation = sd / mean)
+					(truncated normal rather than log-normal because the parametrization is more intuitive in normal, preliminary results showed no differences)
+					strength and variation can be tuned with these params
+					distribution truncated at 1 to exclude positive DNN
+			parameter set from may et al 2015 based on BCI
+				model was optimized to result in same predictions as BCI
+				resulting estimates were used:
+					S, N-distribution, pair correlation function, spec-area relationship, distance decay of community similarity
+						species abundance distribution answers how the individuals are distributed across species and space:typically few are dominant and most are rare 
+						Pair correlation function quantifies how the density of individuals of one species changes as a function of distance from individuals of the same or different species
+							is the species aggregated, randomly distributed, or evenly spaced?
+						Distance Decay of Community Similarity
+							closer communities are more ecologically similar
+				in the simulations these parameter space was extended
+					as interested in m (immigration), C_m (CNDD strength), and C_cv (CNDD variation), these parameters were tested across wide ranges
+						m from Chisholm and Lichtstein 2009 estimation approach with combined with seed dispersal distance in temperate and tropical forests between 10 and 100m
+							these m were used as maximum (so also more conservative values were tested)
+		Simulation experiments
+			1) how is S determined by CNDD in a closed community with equal CNDD
+				1) check carying capacity of S
+					change r_max (up to inf, ignoring the distance and assessing the competition) and C_m (CNDD strength)
+					C_cv = 0
+			2) how does S maintenance change with interspecific CNDD?
+				r_max = 10m
+				varying C_cv and C_m
+			3) how do immigration from a meta- community and CNDD jointly and interactively influence S across spatial scales?
+				different combinations of m and C_m
+				no interspecific variation of CNDD (C_cv = 0)
+				r_max = 10m
+???				r_max = inf --> assessing competition ???
+					d_m = 40 m (spatially restricted recruitment)
+					d_m = random (spatially un-restricted recruitment)
+		Model evaluation and scheduling
+			1) realtive abundance of each species were sampled from log-normal distribution with N = 40 000
+			2) T = min. 10 000 after that stopped if
+				- just one spec survived in the local community (only for closed model)
+				- S and N reached an equilibrium (assessed by shannon diversity index after 1000 generations
+			3) 100 replicate simulations
+			4) at the end of each simulation run, the community was used to derive SAR (species area relationship)
+				using non overlapping squares that cover the entire plot and vary in size from 25m² to 100ha
+					??? how can a 100 square ha be non-overlapping, if the plot has 100ha?
+						it can only be that not every simulation had SAR for 100 ha
+					the SAR was averaged for each scenario (over all sizes?)
+			5) Shannon index was calculated for 100ha at the end of each simulation
+
+				
+				
+			
+		Math
+			CNDD is incorporated as a function of distance and density of conspecifics
+				i think density is novel, as previuos studies focused only on the distance but neglected the abundance in close proximity
+		Limitations
+			size difference between individuals are not considered in the NCI
+			cannot be directly compared to the open models in Levi et al 2019, because they used different sized plot to infer the effect of CNDD along a scale gradient, while May et al 2020 always used a 100 ha plot but with different sized windows to examine Shannon index
+			models show that C_cv increase negatively affects S. However, empirical data shows that C_cv varies substantially, while biodiversity is maintained
+				this means, that other biodiversity maintaining mechanisms must play a role	
+				theoretical analysis suggests that there is a trade-off between species specific CNDD and growth rate when rare
+					-> rare species grow faster, therefore have higher fitness	
+			same recruitment and mortality rates for all species
+				if including fitness differences, coexistence theory suggests that biodiversity will be reduced if there is no other maintaining mechanism
+				variability in HNDD is possible, but not done here, as this would likely decrease S
+				any other fitness differences would reduce the positive effects of CNDD (??? WHY)
+			binary distinction between con- and hetero specifics
+				niche theory predicts that individuals with distinct traits that are far related have a weaker NDD
+				it was shown that strong host specificity increased the positive effect of CNDD on biodiversity
+
+	Hülsmann et al 2024: Latitudinal patterns in stabilizing density dependence of forest communities
+???		dynamic vs static data
+			Dynamic data is derived from multiple sampling periods
+			static data represents only one sampling event
+		stabilizing CNDD was stronger towards the tropics
+			regulation of population abundances --> higher diversity
+			however strength of stabilizing CNDD had no trend along latitude
+		rare and intermediate species experience stronger stabilizing CNDD than common species
+		interspecific variation across CNDD was high but not different across latitiudes
+			contrasts to estimates used in simulation models in stump & comita 2018; Miranda et al 2015; May et al 2020
+		Intro
+			CNDD mediated by specialized enemies
+				high diversity in tropics because temporally stable and productive conditions lead to specialization of natural enemies/pathogens
+					these enemies/pathogens have a higher damage on conspecifics neighbors compared to heterospecifics
+					this creates a stabilizing mechanisms, similarly to intraspecific resource competition
+			Meta-analyses on CNDD based on empirical seed and seedling survival found no effects with latitude
+			CNDD measured as relative change in mortality after perturbation of conspecific neighbors, while keeping the total densities constant
+			By keeping total density constant, CNDD and HNDD can be entangled. The mortality can be traced back to conspecifics, as heterospecifics were always equal
+			the study assesses along a latitudinal gradient:
+				1*) the average strength of stabilizing CNDD
+				2*) its effect on N
+				3*) its interspecific variability
+					only 2*) showed latitudinal trend
+		Results
+			No significant trend in 1*)
+				yet higher mortality with higher conspecific density of
+					.41% in tropics
+					.26% in temperate forests
+				the absolute change in stabilizing CNDD was small along latitudes compared to differences across S and N
+			Stronger CNDD for rare tropical species 2*)
+				is important for stabilizing species abundance
+					therefore a proxy for the importance of CNDD on community structure
+				expanding the meta analysis and including interaction between N and stabilizing CNDD:
+					with increasing latitude this effect weakened: in temperate forests there was no significant effect
+				-> CNDD for rare and intermediate trees is higher in tropics and shows decline with increasing latitude
+				-> CNDD for common species shows no pattern along latitudes
+				-> other studies shows divergent results relating to CNDD * N
+					because strong between site variability
+				but Why?
+					suggestion: inverted causality: N determines CNDD
+						high N -> high pathogen load homogenously distributed -> no effect on nearby conspecifics
+			CNDD varies interspecifically 3*)
+				regressions fitted separately for each site because high sampling error for CNDD
+				calculated coefficient of variation of CNDD (sd/mean) and analyzed latitudinal patterns
+					no latitudinal pattern
+					as Sd ~~ mean, cv was often 1
+				Interspecific variation in CNDD has been linked to species-specific characteristics such as mycorrhizal type40 and life history strategy41, as well as to population-level diversity of pathogen resistance genes48, but our estimate of interspecific variation is also likely to reflect temporal variation due to complex host–enemy dynamics and resource competition in varying environments49.
+		Limitation
+			species abundance can be controlled during the entire life cycle rather than at sapling morality
+		Perspectives
+			by accumulating CNDD across different vitality rates and life stages, we could estimate the effect of CNDD on an individuals overall fitness and population growth rate
+					
+		Methods
+			decreasing neighborhood effect with increasing distance was considered using 2 alternative decay functions
+			densities was considered using 2 alternatives: N and basal area (BA)
+				both considerations of density and decreasing neighborhood effect (with its param µ) were optimized through a grid-search
+					µ optimized for all species but separetely for conspecifics and total densities
+			1) fitted species-site specific mortality models from repeated observations of individual trees
+				binomial GLMM
+				complementary log-log link to model the tree status to model tree status (dead or alive)
+					as a function of conD, totD, DBH (added as confounder or precision covariates)
+				because CNDD could be non-linear and might saturate, they used GAM with thin plate splines
+					GAM with REML estimation
+					k = 10 but reduced, if unique values in a pred were less than 10
+				overall: Y ~ Binom(Pr(y_ij = 1)
+					where: log(-log(1-Pr(y_ij=1))) = ß_0 + f_conD (x_conD) + f_totD (x_totD) + f_DBH (x_DBH) + u_j + log(Delta t)
+						where:	log(Delta t) is the cloglog offset term (census interval length in year)
+							Pr(Y_ij = 1) is the mortality probability in
+								i = observation
+								j = census
+							f_pred is the smooth function of x_pred (predictor)
+				with this setup species-site specific models were build
+					for each species that had at least 20 dead and alive
+					and at least 4 unique conspecific density values with a certain range
+					if species didn't fulfil these requirements or model didn't converge (63.2% of species), they were fitted jointly in either
+						rare shrub species or
+						rare tree species
+						as growth forms could have different mortality rates
+			2) use these models to quantify CNDD for each species and site
+				used average marginal effect (AME) to have comparable (across species and sites) estimate of stabilizing CNDD
+					AME of small Pertubation in conspecific density on mortality probability at the response scale
+						absolute AME: % effect of perturbation on mortality per year
+							individual (non averaged) aME_i = Pr_(i, conD_i + 1) - Pr_i, conD_i -> abs effect of adding one conspecific
+						relative AME: % effect change of perturbation on mortality per year
+							individual (non averaged) rME_i = (Pr_(i, conD_i + 1) / Pr_i, conD_i) -1 -> rel effect of adding one conspecific
+						The perturbation was only + 1 conspecific with DBH = 2 cm, a very small one
+							however, still in the observed range even for rare species
+							using higher perturbations could cause extrapolation problems
+				Another approach was to set conD = 0 and again, increase it by +1 with 2cm DBH at 1 m distance
+				Another approach was to calculate the change in mortality when increasing conD from the first to the thirs quantile
+					however, as the quantiles differed for each species and site, they can not directly be compared
+				Individual aME and rME were averaged over all observations per species
+				As there is no analytical function to forwards the GAM uncertainties (variances and significance levels), a simulation was done
+					from the GAM unconditional covariance matrix (contains information of model parameter estimates)
+				focused on relative changes in mortality because
+					relative changes account for the base mortality rate
+						e.g., if it is high, we would expect also the absolute changes to be high
+					mortality rates could correlate with N and lat; with relative mortality changes we account for these confounding effects
+			3) Meta regression: 3 latitudinal patterns (1*,2*,3*)
+				
+			Robustness Test
+				DHARMa
+				Spatial Autocorrelation check
+				as there were more tropical data, models were re-fitted
+					first influential species-site-specific CNDD estimates were indentified
+					then models were refitted with a reduced dataset without these observations
+					reduced and full models had similar results
+				redoing the whole analysis pipe line but with
+					randomized dead / alive status within each species to disconnect any connection between response and predictors (but maintained the species mortality rates)
+					randomized the conspecific densities (removing the relationship between response and conD) but maintaining the relationship between response and confounders
+					--> this accounts for statistical artifacts (confounders, or pattern in the predictors)
+				Potential confounders were included in the "abundance-mediated CNDD model"
+					as faster growing species are rarer and could experience higher CNDD this could bias the N-CNDD relationship
+					by adding
+						1) species specific growth and survival rates
+						2) species specific values along two demographic trade off axes
+							‘growth–survival’ and ‘stature–recruitment’
+						both rates were standardized with site: subtract the mean and divide by sd
+			alternative definitions of CNDD
+				default) relative change in mortality probability of saplings after small perturbation of conspecifics
+					most recent studies have estimated seperate effects for CNDD and HNDD
+					however, we are only interested in the difference between CNDD and HNDD, because only a CNDD > HNDD can have stabilizing influences on the population
+					-> D_CNDD_HNDD = "stabilizing CNDD"
+				1) absolute change in mortality
+				2) relative change in mortality at low conspecific densities (species increase in abundance when rare)
+				
+	Hülsmann & Hartig 2018
+		spatial coupling can be broken by
+			adult mortality: there might be offsprings but no adult
+			dispersal: S grows far away from A
+		Ricker model
+			Fig 1:
+				the Colors result in a set of parameters.
+					E.g., if we take grey (A): high dispersal, low adult survival … lead to strong CNDD ~ N relations (B)
+			LaManna et al had plots with S (subadults) but not A (adults) [apparently recruitment is not local]
+				The Assumptions that A and S are directly proportional does not hold
+				Still, to explain this, authors introduced a background adult ratio density of 0.1 in the Ricker model
+					this led to S/A ratios of e.g., >= 10, when there were only 4 S.
+					The Ricker model must then wrongly assume high intrinsic growth paired with strong density dependence
+					because S > 0 and A = 0 happens more often for rare species in the tropics
+		offset-power model
+			S/A ratio is distorted also here
+			LaManna fitted a mixed effect model without RI only with RS as species effect
+				As the S/A ratio depends on the rarity of the species, it should have been included in the RI
+				by not including a RI, the distortion that happens in S/A is compensated by Species Specific CNDD effect (Random Slope)
+				As rare species have higher S/A distortion, these species are assigned a stronger CNDD effect, because the model tries to compensate the distorted S/A with species specific CNDD effect
+					in addition the compensation is even stronger, as there is no random intercept used in the model
+		Getting unbiased results seems difficult as one would require species specific values for dispersal and other spatial processes that were shown to distort the analysis
+		The biased estimators found in the review, question the evidence of the reported CNDD patterns but do not constitue proof of their absence
+		
+
+
+
+
+
+					
+	Janzen + Connell
+		hypothesized that NDD is stronger in tropics than in temperate forests
+			no evidence (comita et al) but
+			possibly the lower variance of NDD in tropics causes higher S in tropics, even though the strenght of NDD is similar across biomes (Comita et al)
+	Johnson et al 2012
+		higher NDD with decreasing latitude
+	Comita et al 2014
+		no relationship between latitude and NDD effect
+
+räumliche Skalierungen von CNDD Effekten
+
+Machine Learning tools Muster identifizieren könnte, die CNDD kreiert
+
+https://github.com/TheoreticalEcology/EcoPhyloSim
+
+
+
+
+
+
+
+
+
+
+???
+
+why simulate a rain forest and resemble k, if the real k is available in the BCI forest? one could simply see, if conspecifics appear less often in vicinity than at random (binomial model)
+	limited to one ecosystem
+	unable to assess how model parameters effect JC (e.g., dispersal, fitness, scaling with area ...)
+
+Is it only the pathogens that play a role for JC or maybe resources that conspecifics compete for?
+
+Miranda et al 2015: The expectation was that rare species suffering most with the presence of conspecifics (stronger NDD) are close to extinction, but we show that this extinction is highly dependent on the interaction between overall community NDD mean strength and NDD variance.
+	is this expectation justified? Why presume that rare species have highest NDD ? could be that they have lowest and only therefore persist (as rare species)
+	Miranda cites
+		10.1126/science.1220269
+		10.1038/nature09273
+		Klironomos JN (2002) Feedback with soil biota contributes to plant rarity and invasiveness in communities. Nature 417: 67–70. PMID: 11986666
+		10.1126/science. 1190772
+		Metz MR, Sousa WP, Valencia R (2010) Widespread density-dependent seedling mortality promotes species coexistence in a highly diverse Amazonian rain forest. Ecology 91: 3675–3685. PMID: 21302838
+	Stump and Comita cite
+		(Klironomos 2002; Petermann et al. 2008; Comita et al. 2010; Mangan et al. 2010; though for exceptions see Reinhart 2012; Zhu et al. 2015; Wills et al. 2016).
+	This would mean however, that CNDD would weaken the rare species advantage (Chesson 2000, Annu. Rev. Ecol. Syst.).
+
+Are there studies that assess the causes of NDD variation in a community?
+	not clear what are the roles of life-stages, species traits, and species relative abundances in driving intra and inter specific NDD variance
+	In addition, characteristics of parasites such as specificity can be important drivers of the NDD variance (Sedio BE & Ostling AM 2013, PMID)
+
+Stump and Comita: i find it very difficult to understand D P_j
+
+The effect of seed dispersal seems ambiguous: it likely depends on the model structure
+	in Chisholm & Fung the the non-dispersed seeds will remain in the grid, as the adult dies before their distribution. Therefore, dispersal and CNDD have no strong dependencies
+	A similar Sequenz of events is implemented in Miranda et al. However, here the effect of d remains neglected over the whole paper. It was only used to test result robustness across different secnarios
+	in Stump and Comita seeds are (non-)dispersed before the adult dies, hence CNDD affects survival of undispersed seeds
+	What I think: I think it depends on the pathogen. Is it possible that infestation occurs when the fruit is maturing? Or does it occurs as soon as the seeds drops?
+		In former example even a high dispersal would make no change, lowering the effect of CNDD
+		In latter example CNDD would be stronger and more dependent on the despersal
+	--> Ask Lisa, what does she think? Is there are more correct way of modelling the dispersal?
+
+Why don't record the deaths occured because of CNDD at each generation? This could be plotted against other informations such as S or N and would show, in which cases CNDD actually affects the community
+
+Source-Sink effects VS Mass Effects ?
+
+May et al:
+	why don't align the dispersal function to the plot margins? Why make possible that random dispersal happens outside of the box?
+	
+	When an establishment event is not successful, a new position is tested until there is a successful establishment. However, while several positions can be tested for an establishment event, the choice between immigration and local recruitment is only made once to assure that the correct proportions of immigrants and local recruits are simulated.
+		i get that point. However, it is unrealistic.
+		if a seed can not establish, its gone. Another seed should have the possibility instead.
+		why is it modelled this was?
+	Shannon diversity index: isnt sum(p_i) = 1 ? Or is it the intial index?
+		what is the coefficient of variation?
+	why testing open models without immigration?
+	Binary con-hetro: authors claim that
+		Accordingly, a relaxation of the simplified binary distinction between conand heterospecifics in our model would represent a lower host-specificity and result in lower diversity. Therefore, we conclude that our general results will not change with a more realistic scenario of competition and negative density dependence based on trait differences or phylogenetic relatedness.
+		I suggest the opposite: including relatedness in species will make specific hosts of the neighbor species more likely to disrupt recruitment of the related focal species
+
+Hülsmann et al 2024:
+	Because CNDD and HNDD are both estimated with uncertainty (characterized by the standard error), previous analyses that separately estimated CNDD and HNDD often faced challenges when formally testing whether conspecific effects are significantly more negative than are heterospecific effects
+		Why?
+			if we fit y ~ int + a X1 + b X2
+				where X1 = CNDD and X2 = HNDD
+				we must calculate D_X1_X2 posthoc, dealing with SE and p values
+			instead we fit y ~ int + a X1 + b (X1 + X2)
+				where X1 = CNDD and (X1 + X2) = total density
+				here a directly estimates "stabilizing CNDD"
+					because b estimates the shared NDD, a estimates only the excess NDD of CNDD
+
+	why does stronger CNDD for rare species contribute to a more stable community?
+		I think if CNDD negatively affects rare species, it could trigger their extinction
+		can we suggest that, while the effect of CNDD in tropics ~~ as in temperate forests, the effectiveness is higher, just because we observe it?
+			Why? What mechanism is behind that?
+
+	regression dilution
+		in other studies H0 : "positive relationship between saplings and adults"
+		here H0 : "no effect", hence more conservative
+			but: isn't it just trading off type I against type II error?
+			where does regression dilution come from?
+			regression dilution leads to decreased slope
+				overestimation of CNDD
+			is it generally recommended to have H0: "no effect…"
+			How does H0 relate to the data type (static vs dynamic)? 
+
+	Local conspecific and total densities around each focal tree were calculated as the number of neighbouring trees (N) or their basal area (BA) at the census preceding the census at which tree status was modelled.
+		why?
+
+	The parameter μ was optimized jointly for all species but separately for conspecific and total densities following the idea that the two effects are caused by different agents and thus may act at different spatial scales.
+		are mechanisms of CNDD and HNDD the same?
+
+	To ensure that the joint optimization of μ for all species did not induce a bias that correlated with the main predictors, that is, latitude and species abundance, we further examined species-specific optima of μ for those species for which the grid search yielded a distinct optimum of the log likelihood
+		why only those species?
+
+	The challenge here is that the nonlinear link in the GLMMs implies that effects at the scale of the linear predictor can translate nonlinearly to the response scale (mortality rates) when the estimated intercept differs between individual species and sites
+		???
+	
+	Error propagation method for GAM predictions used unconditional covariance matrix
+		What is the condition in a GAM?
+		I can think of the conditions (random effect) in a LMM, but not in a GAM
+
+	To improve the normality assumption of the residuals of the meta-regressions, rAMEs were log-transformed after adding 1 before calculating the sampling variances (see above);
+		why does this improve the normality assumption of the residuals?
+
+	Tbl 1: what information can i retrieve from the intercept? What does it suggest if the intercept is significant? and What does its magnitude imply other than just dictating the shape of the regression line?
+		as we centered the predictors (N=1 and lat° = 17.5) the intercept tells us, the intercept relates to rare tropical trees.
+			lat is somewhere in the middle of the tropics (-23°27, 23°27) but shifted more towards the rainforest part
+	The predictors were centred at abundance = 1 tree per hectare and absolute latitude = 11.75°, so that main effects reflect slopes and respective significance tests for rare tropical species (Table 1).
+		how does it work that than the slope and significance is better represented for that rare species?
+		what exactly means to Center a predictor?
+			centering at 1 means to subtract 1 from all abundances. This causes the intercept to relate to that condition.
+				if we would not Center, the intercept would refer to a model, where all predictors = 0
+				we changed this to intercept refers to a model where, lat = 17.5 and N = 1	
+
+	how to test for autocorrelation with DHARMa?
+
+Hülsmann & Hartig 2018
+	Species-specific values are important because a correlation of traits such as dispersal or habitat specificity with species abundance or latitude could create additional artifacts (10), let alone the effect of intraspecific trait variation
+		is this the reason why in Hülsmann et at 2024 there are included "life history strategies, which can correlate with both species rarity and CNDD"
+
+	Directly analyzing CNDD in demographic rates such as growth and mortality of saplings (11), which are much less affected by dispersal, seems far more promising to us.
+		in contrast to subadults analyzed in LaManna?
+
+	Accordingly, we find their low CNDD estimates for rare temperate species far more surprising than strong CNDD and CNDD-abundance slopes in the tropics.
+		because of literature or this analysis ?
+
+	It is frequently assumed that CNDD is mediated by specialized pathogens (14). It would be surprising if such strict mutualisms could persist and exert effective control for exceedingly rare species.
+		But: simulations/ other studies show that rare species have higher CNDD
+
+	Diversity differences alone could create a latitudinalpatterninmeanCNDD...
+		how and why?
+		...butwouldnotlead to a latitudinal shift of the CNDD-abundance correlation (Fig. 1).
+			how and why? in lower latitude there is higher diversity… so why couldn't this explain the CNDD effect?
+
+Do rare spec have higher CNDD empirically?
+	NO: Although associations between CNDD and species abundance have been reported in previous studies, all but one study8 analysed CNDD at only a single site, mostly in tropical forests. Of these, some reported stronger CNDD for rare species3,38, others showed stronger CNDD for common species28,39 and still others showed no association40. We attribute these apparently inconsistent previous results to strong between-site variability, which is evident in our data as well (Fig. 1).
+	Ambiguous: “Janzen-Connell hypothesis has received strong support [13,14–16]. Nevertheless, it was still unclear how NDD strength variation would influence relative species abundance. The first expectations were that the most abundant species are the ones suffering more from the presence of conspecifics. However, it has been shown that locally rarer species have stronger NDD [3,11,17–19]. Indeed, theoretical studies have shown that, within a forest, there is a positive relationship between NDD strength and relative abundances of tree species [11,20,21]. Surprisingly, Bagchi et al. [12] showed that species with higher seed abundance are the ones suffering more from natural enemies. Despite the discrepancy of these results, all these works show that the variation of NDD within a community have an impact on relative abundances and possibly on the diversity of the community.” ([Miranda et al., 2015, p. 2])
+	Ambiguous: " “Several studies have also shown that conspecific neighbours tend to be more harmful for rarer species compared to species that are more common in the community (Klironomos 2002; Petermann et al. 2008; Comita et al. 2010; Mangan et al. 2010; though for exceptions see Reinhart 2012; Zhu et al. 2015; Wills et al. 2016).” ([Stump and Comita, 2018, p. 1541])"
+	
+Why even include infinite dispersal in the simulations? it is unrealistic!
+
+Empery Vs Simulation - Variance of CNDD: variance in cndd strength can be high in real communities. Simulations show that S decreases with variation.
+	“This means that in real communities, there must be additional mechanisms and trade-offs that maintain diversity and balance the disadvantage of high species-specific CNDD. Theoretical analyses indicated that coexistence might be fostered by a tradeoff between species-specific CNDD and growth rate when rare (Chisholm and Muller-Landau 2011).” ([May et al., 2020, p. 1080])
+
+Phylogenetic CNDD approach
+	“Accordingly, a relaxation of the simplified binary distinction between con- and hetero specifics in our model would represent a lower host-specificity and result in lower diversity. Therefore, we conclude that our general results will not change with a more realistic scenario of competition and negative density dependence based on trait differences or phylogenetic relatedness.” ([May et al., 2020, p. 1080])
+	My ideas
+		lower host specificity leads to more pathogen regulation (because pathogens from conspecifics + closely related species cause NDD)
+		this could lead to higher NDD strength, hence higher diversity
+		this inherently leads to higher variation in strength, as different species exert different NDD strength on the focal species, hence lower diversity (Miranda et al, Stump & Comita, May et al)
+
+Possible Research Questions
+“We sampled smaller areas within a given 100 ha plot, whereas Levi et al. (2019) simulated community dynamics in plots of increasing size. Comparing species–area relationships that were derived with consistent methods from simulations of both models, might be an interesting follow up study to improve our understanding of the scaling behaviour of biodiversity with CNDD, but is beyond the scope of this study.” ([May et al., 2020, p. 1079])
+	-> one could analyse the spatial patterns and how different methods come to different results. However, mentioned results assume closed populations, which is unrealistic
+	
+
+“From the perspective of niche theory, the fitness of individuals might be suppressed more by neighbours with similar traits and/or from closely related species than by neighbours with different traits or from distantly related species (Kraft and Ackerly 2010).” ([May et al., 2020, p. 1080])
+	-> analyse the phylogenetics in phylosim
+
+Hülsmann et al 2021:
+	Despite warnings by Freckleton et al.[153], several analyses have used a design based on proportionality to test for CNDD in trees over the last decades, both for spatial associations of adults and recruits (e.g., [25,65]) and transition rates between different life stages (e.g., [52,154]).
+		how is the experimental design different in e.g., hülsmann et al 2024?
+		so wrong would be: compare number of recruits with number of adults, because this means that H0 assumes proportionality
+		and correct would be: 
+
+

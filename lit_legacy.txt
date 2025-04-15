@@ -1,0 +1,48 @@
+08:08 28/03/2025
+
+Magee et al 2024: legacy effects of conspecifics
+	legacy effects
+		if het-neighbor died, the recruits had higher survival
+		if con-neighbor died, the recruits had lower survival
+			means that CNDD includes the "lingering effects of the past conspecifics"
+	legacy vs living
+		legacy CNDD was stronger then living CNDD
+		Stabilizing LCNDD (LCNDD - LHNDD) was 4 x stronger than Stabilizing CNDD (CNDD - HNDD)
+???			however, I don't agree in applying the concept of stabilizing CNDD on LCNDD. Specifically, I think the term stabilizing is misleading:
+				say a rare species suffers from CNDD
+					if CNDD > HNDD it is stabilizing, because heterospecific recruitment is boosted
+					however, if that rare species dies, it might be extinct locally. Therefore, acting LCNDD is not stabilizing
+				say a common species suffers from CNDD
+					it increases biodiversity by allowing recruitment of rare species
+					also, after it's death it increases biodiversity by allowing rare species recruitment
+				I think, this goes back to the problem that I don't understand why term (CNDD - HNDD) "stabilizing", as stab. CNDD could also lead to extinction (e.g., if variation in strengt is high)
+???		Is this study appropriate in comparing LCNDD with CNDD, as the CNDD effect is very low (Fig 2, 3 (blue))
+			-> less than half of the species (11 of 23) showed negative CDD
+	Which species exerted CDD (living and legacy)
+		21 of 23 (only for 8 with strong evidence: credible interval did not overlap with 0)
+
+	Discussion
+		“We found that tree survival increased if deceased neighbouring trees were of a different species, but survival decreased if the neighbours were conspecifics.
+		Secondly, the effect of legacy CDD on survival was approximately four times more negative than that of living CDD.
+		Therefore, the advantage a tree had when its neighbours were different species (i.e., conspecific minus heterospecific effects) was enhanced after the neighbouring trees were deceased, thus providing an avenue for species replacement and the maintenance of biodiversity in canopy gaps.”
+		([Magee et al., 2024, p. 7)
+???			BUT don't they also measures the lasting effects of living CNDD / HNDD?
+				when living CNDD supresses consp. recruitment, this supression can be measured after the tree dies.
+				As the heterosp. recruits can wait for optimal conditions to thrive while focal tree is living (like Fagus Silvatica or Picea Abies, who can dwell for an increased period, waiting for optimal conditions).
+				the census was 2008, 2013, 2018: mortality and recruited stems >1cm DBH were recorded
+				If 2012 There is an adult tree that exerts living CNDD, only heterosp. will grow around it.
+					If the tree dies and is recorded as dead in 2013 (whatever dead means … the paper doesn't provide any information on that)
+						-> the already established heterosp. recruits would be able to reach >1cm DBH
+						-> un-established conspecifics would not, as they were suppressed by living CNDD
+						=> this is falsly recognised as legacy CNDD
+							To prevent this effect, one should measures either in more frequent censi or include baby recruits
+				I think this argumentation depends on, if a tree can reach >1cm DBH within 1,2,3 or 4 years
+???		I think the model needs to account for light-germinators
+			If a tree dies it is much more likely that a light-germinator thrives (as these typically are more r- strategics [=successional])
+			If the dead species wasn't, then likely LCNDD > LHNDD
+
+???
+“Our model equation was the same as the Bayesian equation 48 described in the main text, however, we did not annualize survival during the search. 49 𝑠𝑢𝑟𝑣𝑖𝑣𝑎𝑙𝑖𝑠𝑘 ~ 𝐵𝑒𝑟𝑛𝑜𝑢𝑙𝑙𝑖(𝑝𝑖𝑠𝑘)” ([Magee et al., 2024, p. 2])
+	what is annualizing good for? how does it influence the model?
+	“where pt isk is the survival probability exponentiated to the number t years between the consecutive observations” ([Magee et al., 2024, p. 4])
+	how does it work to get annual results in a 5 year census?

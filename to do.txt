@@ -1,0 +1,22 @@
+questions:
+	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17)
+		what they mean?
+	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17])
+		what is this?
+
+
+Schroeder paper:
+	does it claim CDD ~ N ?
+	are mut. more host spec. than pathogens?
+	
+Phylosim:
+	do some runs and check how outputs behave
+	for each output create a model summary
+	
+	Phylogeny
+		one can look at CDD strength across taxa: binary distinction between con- and het- and checking of one taxa is affected more by CDD
+			Song et al 2021
+		We want to look at: how does the degree of relatedness affect CDD i.e., break down binary distinction and see how CDD changes along a phylogenetic gradient
+			Zhu et al 2015
+			Webb et al 2006
+			Lebrija-Trejos et al 2014

@@ -1,0 +1,26 @@
+17:11 07/04/2025
+
+Zhu et al 2015: this is what we want to model
+Intro
+	Binary het-con. might not be appropriate, as a study showed different HNDD dependent on the neighbor species
+	neighbors that are more closely related, have stronger impact on focal species survival
+	if the impact of hetsp. relatedness on the survival of the focal species varies much, this might suggest that cndd depends on phylogenetic distance and that phylogenetic distance shapes the spatial patterns that ultimately arise
+Results
+	The phylogenetic distance had an impact on survival but the strength and direction depended on life stages
+	survival of juveniles and adults were significantly negative impacted by closely related neighbours (i.e., >= 5cm DBH)
+	with increasing dbh, the closely related hets had a stronger negative impact
+	however, on seedling survival closely related neighbours had a positive effect
+		An explanation could be that related species also share the same habitat preferences
+		while consistent with some studies, this is not consistent to others. A possible explanation could be that phylogenetic niche preservation differs among locations
+
+Notes
+	this study does not account for dispersal or habitat preferences, which could also cause observed survival patterns
+
+**************************************************************************************************************************************************************************
+
+Webb et al 2006
+
+**************************************************************************************************************************************************************************
+
+“From the perspective of niche theory, the fitness of individuals might be suppressed more by neighbours with similar traits and/or from closely related species than by neighbours with different traits or from distantly related species (Kraft and Ackerly 2010).” ([May et al., 2020, p. 1080](zotero://select/library/items/WJAAGJCH)) ([pdf](zotero://open-pdf/library/items/F3F5WL33?page=9&annotation=P4SXF5PN))
+“for example, by strong overlap of resource requirements (MacArthur and Levins 1967) or by shared pathogens or herbivores (Freckleton and Lewis 2006)” ([May et al., 2020, p. 1080](zotero://select/library/items/WJAAGJCH)) ([pdf](zotero://open-pdf/library/items/F3F5WL33?page=9&annotation=3CCCYD3W))

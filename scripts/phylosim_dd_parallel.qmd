@@ -1,0 +1,404 @@
+---
+title: "Phylo Sim exploration runs"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+  
+library(PhyloSim)
+```
+
+### define params and run model
+
+```{r}
+#| eval: true
+#| echo: false
+
+par1 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 1,
+                          dispersal = 1,
+                          specRate = 2,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd1_disp1_sr2_e0_m1_cut1")
+
+par2 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 1,
+                          dispersal = 5,
+                          specRate = 2,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd1_disp5_sr2_e0_m1_cut1")
+
+par3 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 1,
+                          dispersal = 10,
+                          specRate = 2,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd1_disp10_sr2_e0_m1_cut1")
+
+par4 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 0,
+                          dispersal = 1,
+                          specRate = 2,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd0_disp1_sr2_e0_m1_cut1")
+
+par5 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 0.5,
+                          dispersal = 1,
+                          specRate = 2,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd0-5_disp1_sr2_e0_m1_cut1")
+
+par6 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 1.5,
+                          dispersal = 1,
+                          specRate = 2,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd1-5_disp1_sr2_e0_m1_cut1")
+
+par7 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 1,
+                          dispersal = 1,
+                          specRate = 1,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd1_disp1_sr1_e0_m1_cut1")
+
+par8 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 1,
+                          dispersal = 1,
+                          specRate = 3,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd1_disp1_sr3_e0_m1_cut1")
+
+par9 <- createCompletePar(x = 256,
+                          y = 256,
+                          density = 1,
+                          dispersal = 1,
+                          specRate = 4,
+                          environment = 0,
+                          fitnessBaseMortalityRatio = 1, 
+                          densityCut = 1,
+                          seed = 20250414,
+                          type = "base",
+                          protracted = 0,
+                          fission = 0,
+                          redQueen = 0,
+                          redQueenStrength = 0,
+                          airmat = NA,
+                          fitnessActsOn = "mortality",
+                          runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                          scenario = "dd1_disp1_sr4_e0_m1_cut1")
+
+par10 <- createCompletePar(x = 256,
+                           y = 256,
+                           density = 1,
+                           dispersal = 1,
+                           specRate = 2,
+                           environment = 0,
+                           fitnessBaseMortalityRatio = 2, 
+                           densityCut = 2,
+                           seed = 20250414,
+                           type = "base",
+                           protracted = 0,
+                           fission = 0,
+                           redQueen = 0,
+                           redQueenStrength = 0,
+                           airmat = NA,
+                           fitnessActsOn = "mortality",
+                           runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                           scenario = "dd1_disp1_sr2_e0_m1_cut2")
+
+par11 <- createCompletePar(x = 256,
+                           y = 256,
+                           density = 1,
+                           dispersal = 1,
+                           specRate = 2,
+                           environment = 0,
+                           fitnessBaseMortalityRatio = 1, 
+                           densityCut = 3,
+                           seed = 20250414,
+                           type = "base",
+                           protracted = 0,
+                           fission = 0,
+                           redQueen = 0,
+                           redQueenStrength = 0,
+                           airmat = NA,
+                           fitnessActsOn = "mortality",
+                           runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                           scenario = "dd1_disp1_sr1_e0_m1_cut3")
+
+par12 <- createCompletePar(x = 256,
+                           y = 256,
+                           density = 1,
+                           dispersal = 1,
+                           specRate = 2,
+                           environment = 0,
+                           fitnessBaseMortalityRatio = 2, 
+                           densityCut = 1,
+                           seed = 20250414,
+                           type = "base",
+                           protracted = 0,
+                           fission = 0,
+                           redQueen = 0,
+                           redQueenStrength = 0,
+                           airmat = NA,
+                           fitnessActsOn = "mortality",
+                           runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                           scenario = "dd1_disp1_sr1_e0_m2_cut3")
+
+par13 <- createCompletePar(x = 256,
+                           y = 256,
+                           density = 1,
+                           dispersal = 1,
+                           specRate = 2,
+                           environment = 0,
+                           fitnessBaseMortalityRatio = 3, 
+                           densityCut = 1,
+                           seed = 20250414,
+                           type = "base",
+                           protracted = 0,
+                           fission = 0,
+                           redQueen = 0,
+                           redQueenStrength = 0,
+                           airmat = NA,
+                           fitnessActsOn = "mortality",
+                           runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                           scenario = "dd1_disp1_sr1_e0_m3_cut3")
+
+par14 <- createCompletePar(x = 256,
+                           y = 256,
+                           density = 1,
+                           dispersal = 1,
+                           specRate = 2,
+                           environment = 0,
+                           fitnessBaseMortalityRatio = 4, 
+                           densityCut = 1,
+                           seed = 20250414,
+                           type = "base",
+                           protracted = 0,
+                           fission = 0,
+                           redQueen = 0,
+                           redQueenStrength = 0,
+                           airmat = NA,
+                           fitnessActsOn = "mortality",
+                           runs = sort(c((rep(1:2000 * 50) + 1), rep(1:2000 * 50))),
+                           scenario = "dd1_disp1_sr1_e0_m4_cut3")
+
+
+params <- list(par1, par2, par3, par4, par5, par6, par7, par8, par9, par10,
+               par11, par12, par13, par14)
+```
+
+```{r}
+simu <- runSimulationBatch(params, parallel = 33)
+```
+
+### Or load data
+```{r}
+#| echo: false
+
+simu_fat <- readRDS("/home/andy/cyber_synch/local/runs/20250414_dd_1")
+simu_fat <- readRDS("~/Uni/Master/MA/local/runs/fat/20250414_dd_1")
+
+simu_slim <- slim(simu_fat, batch = FALSE)
+
+spec_time(simu_slim, ymax = 50)
+```
+### Access results
+
+#### Species richness
+
+```{r}
+spec_time(sim_out = simu_slim, ymax = 60, thinning_factor = NULL)
+```
+
+#### Species abundance
+
+```{r}
+abundance
+PhyloSim::rac(simu, plot = "bar", which.result = 4000)
+PhyloSim::rac(simu, plot = "line", which.result = "all")
+```
+
+### visualize results
+
+```{r}
+#| label: fig-spatial_distirbution
+#| fig-width: 5
+#| fig-height: 5
+
+plotSpatialPhylo(simu, which.result = 100)
+plotSpatialPhylo(simu, which.result = 200)
+plotSpatialPhylo(simu, which.result = 300)
+plotSpatialPhylo(simu, which.result = 400)
+plotSpatialPhylo(simu, which.result = 500)
+plotSpatialPhylo(simu, which.result = 600)
+plotSpatialPhylo(simu, which.result = 700)
+plotSpatialPhylo(simu, which.result = 800)
+plotSpatialPhylo(simu, which.result = 900)
+plotSpatialPhylo(simu, which.result = 1000)
+plotSpatialPhylo(simu, which.result = 1100)
+plotSpatialPhylo(simu, which.result = 1200)
+plotSpatialPhylo(simu, which.result = 1300)
+plotSpatialPhylo(simu, which.result = 1400)
+plotSpatialPhylo(simu, which.result = 1500)
+plotSpatialPhylo(simu, which.result = 1600)
+plotSpatialPhylo(simu, which.result = 1700)
+plotSpatialPhylo(simu, which.result = 1800)
+plotSpatialPhylo(simu, which.result = 1900)
+plotSpatialPhylo(simu, which.result = 2000)
+plotSpatialPhylo(simu, which.result = 4000)
+
+```
+
+```{r}
+#| label: fig-spatial_distirbution
+#| fig-width: 5
+#| fig-height: 5
+#| fig-cap:
+#|   - Spatial distribution at step 1
+#|   - Spatial distribution at step 2
+#|   - Spatial distribution at step 10
+#|   - Spatial distribution at step 11
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+#|   - Spatial distribution at step xx
+
+
+# plotSpatialPhylo(simu, which.result = 1)
+# plotSpatialPhylo(simu, which.result = 2)
+# plotSpatialPhylo(simu, which.result = 3)
+# plotSpatialPhylo(simu, which.result = 4)
+# plotSpatialPhylo(simu, which.result = 5)
+# plotSpatialPhylo(simu, which.result = 6)
+# plotSpatialPhylo(simu, which.result = 7)
+# plotSpatialPhylo(simu, which.result = 8)
+# plotSpatialPhylo(simu, which.result = 9)
+# plotSpatialPhylo(simu, which.result = 10)
+# plotSpatialPhylo(simu, which.result = 10)
+# plotSpatialPhylo(simu, which.result = 11)
+# plotSpatialPhylo(simu, which.result = 12)
+# plotSpatialPhylo(simu, which.result = 13)
+# plotSpatialPhylo(simu, which.result = 14)
+# plotSpatialPhylo(simu, which.result = 15)
+# plotSpatialPhylo(simu, which.result = 16)
+# plotSpatialPhylo(simu, which.result = 17)
+# plotSpatialPhylo(simu, which.result = 18)
+# plotSpatialPhylo(simu, which.result = 19)
+# plotSpatialPhylo(simu, which.result = 20)
+# plotSpatialPhylo(simu, which.result = 21)
+# plotSpatialPhylo(simu, which.result = 22)
+```

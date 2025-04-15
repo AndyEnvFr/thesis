@@ -1,0 +1,39 @@
+16:59 19/03/2025
+
+		Phylosim
+			- hat keine Demographie, auch nicht binär (seedling, adult)
+				andere Modelle haben diese Unterteilung immer und die CNDD wirkt sich auch die seedlings aus
+				jedoch argumentieren ältere Studien meistens mit pathogenen, die sich auf die Samen und Setzlinge auswirken
+					May et al argumentiert auch mit geteilten Ressourcen. Dieser Prozess ist vielleicht besser abgebildet, wenn die Sterblichkeit im Erwachsenen Alter stattfindet			
+			-? densityCut der Dichteeinfluss ist binär (?)
+				A decrease of neighbourhood effects with increasing distance can not be considered
+			- density effect is not mechanistic and lumped
+				“Challenge: Studies using statistical modeling to estimate the performance of individual plants often lump heterospecific effects (Hülsmann et al. 2024), a simplifying assumption used to make calculations more tractable
+			- Every species will suffer likely from DD (when in reality: “Species within a community might also differ in the degree to which they experience stabilizing CDD (Comita et al. 2010; Hülsmann et al. 2024; Mangan et al. 2010).” ([LaManna et al., 2024, p. 19])
+			
+			+ gleiche traits schwächen die fitness des Individuums, womit auch HNDD modelliert würde
+				hmm … HNDD und CNDD werden in phylosim nicht separat modelliert. Es gibt eine generelle DD, die stärker ist bei ähnlicher Phylogenie
+			+ dispersal ist drin
+			+ räumliche Verteilung ist drin
+			+ Ergebnisse auf unterschiedlichen Skalen visualisieren ist einfach: localPlots() stanz zufällig definierte Plotgrößen aus
+			+ speciation
+			+ sac; rac
+			+ Phylogenie: Wie wirkt sich CNDD / HNDD auf die Phylogenie aus?
+			+ environmental matrix allows to model: “There is ample evidence that community composition and diversity at larger scales is influenced by environmental heterogeneity (Cottenie 2005, Kreft and Jetz 2007, Stein et al. 2014) and that the relative importance of heterogeneity increases with the spatial scale considered (Chase 2014, Garzon-Lopez et al. 2014).” ([May et al., 2020, p. 1080])
+
+Model improvement
+	mutualsit in phylosim einbauen, die weniger spezifisch ist
+	auf das Modell analyseverfahren einbauen: cndd pro art statistisch messen und schauen ob mit abundance korelliert
+	kann man aus dem muster schlißeen, ob cndd da ist? oder idiosyncratic, dass man mit anderen Mechanismen ähnliche muster bekommt?
+	Reasearch how CNDD affects speciation:	“Also, the topic of how CNDD affects speciation, which has been experimentally touched on in other life forms [130], seems an area ripe for theoretical investigation [131].” ([Hülsmann et al., 2021, p. 160](zotero://select/library/items/7M65U4NE)) ([pdf](zotero://open-pdf/library/items/Q7I2N3EQ?page=10&annotation=G3MN22ZJ))
+	
+Result quantification
+	dynamic quantifiaction of how population size changes with CDD ? In space and time
+
+wenn hohe cndd -> niedrige abundace
+	1) empirisch: warum korreliert cndd emp mit abundace (arten mit mehr CNDD sind seltener)
+	2) wenn CNDD variable ist, ist es diversity enhancing
+	cndd variation die man empirisch misst ist real: mehr cndd = seltener
+		neg. cndd N correlation: 
+	oder CNDD abundance correaltion ist ein Artefakt:
+		die Arten haben unterschieldiche CNDD
