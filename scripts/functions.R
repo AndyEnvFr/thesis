@@ -74,12 +74,4 @@ save_out <- function(sim_out, path, batch = FALSE, slim = TRUE) {
   }
 }
 
-
-
-
-
-for (i in seq_along(res_batch)) {
-  print(i)
-}
-
   

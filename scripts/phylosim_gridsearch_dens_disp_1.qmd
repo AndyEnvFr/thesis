@@ -10,6 +10,7 @@ Here, I check the relationship between the *density* param and the species richn
 #| warning: false
 library(PhyloSim)
 library(parallel)
+source("~/cyber_synch/git_synch/scripts/functions.R")
 ```
 
 ### define params and run model
@@ -57,19 +58,35 @@ for (i in 1:length(density_val)) {
 
 # run parallel
 
-The implemented simulation batch function has no option to save interim results. 
-Computation can still be parallelized in a safe way:
+The implemented simulation batch function has no option to save interim results. Computation can still be parallelized in a safe way:
+
 ```{r}
 set.seed(20250416)
 
-results <- mclapply(1:length(params), function(x) {
+results <- mclapply(seq_along(params), function(param_index) {
   tryCatch({
-    result <- runSimulation(params[[x]])
+    message("Processing parameter set ", param_index, "/", length(params))
+    current_params <- params[[param_index]]
+    
+    # Add param_index to results for traceability
+    result <- runSimulation(current_params)
+    result$param_index <- param_index
+    
     save_out(sim_out = result,
-             path = "~/", batch = FALSE, slim = TRUE)
+             path = "~/cyber_synch/local/runs/slim/",
+             batch = FALSE,
+             slim = TRUE)
+    
+    return(result)
   }, error = function(e) {
-    message("Fehler in Job ", x, ": ", e$message)
-    NULL
+    # Save which param_index failed
+    error_log <- data.frame(
+      param_index = param_index,
+      error_msg = e$message,
+      timestamp = Sys.time()
+    )
+    saveRDS(error_log, paste0("~/cyber_synch/local/runs/slim/ERROR", param_index, ".rds"))
+    return(NULL)
   })
-}, mc.cores = 4)
+}, mc.cores = 40)
 ```
