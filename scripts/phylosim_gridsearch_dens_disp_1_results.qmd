@@ -4,88 +4,46 @@ format: html
 editor: visual
 ---
 
-Here, I check the relationship between the *density* param and the species richness. Also, seed dispersal = (1, global). For this purpose the frequency of the output must not be every 50 generations for 100k generations.
-
-```{r}
-#| warning: false
-library(PhyloSim)
-library(parallel)
-source("~/Uni/Master/MA/git_synch/scripts/functions.R")
-```
-
-### define params and run model
-
-```{r}
-#| eval: true
-#| echo: false
-
-# loop creates parameter set
-
-params <- list()
-density_va <- seq(0,2,.25)
-density_val <- rep(density_va,2)
-dispersal_val <- c(as.list(rep(1,length(density_va))),
-                   as.list(rep("global",length(density_va))))
-scenario_density <- gsub("\\.", "-", as.character(density_val))
-scenario_dispersal <- gsub("global", "G", as.character(dispersal_val))
-
-for (i in 1:length(density_val)) {
-  params[[i]] <- createCompletePar(x = 256,
-                          y = 256,
-                          density = density_val[i],
-                          dispersal = dispersal_val[[i]],
-                          specRate = 2,
-                          environment = 0,
-                          fitnessBaseMortalityRatio = 1, 
-                          densityCut = 1,
-                          seed = 20250414,
-                          type = "base",
-                          protracted = 0,
-                          fission = 0,
-                          redQueen = 0,
-                          redQueenStrength = 0,
-                          airmat = NA,
-                          fitnessActsOn = "mortality",
-                          runs = rep(1:150 * 500),
-                          scenario = paste0("dd",
-                                            scenario_density[i],
-                                            "_disp",
-                                            scenario_dispersal[i],
-                                            "_sr2_e0_m1_cut1")
-  )
-  }
-```
-
-# run parallel
-
-The implemented simulation batch function has no option to save interim results. Computation can still be paralleled in a safe way:
-
-```{r}
-run_save_batch(params = params,
-               save_path = "~/cyber_synch/local/runs/slim/",
-               cores = 30,
-               slim = TRUE)
-```
-
 # read in output
 ```{r}
-flist <- list.files("~/Uni/Master/MA/local/runs/slim/", full.names = TRUE)
-
-# function for sorting the runs from lowest to highest density
+# Function for extracting the numeric value from dd (convert hyphen to decimal)
 extract_dd_value <- function(x) {
-  num_part <- gsub("^dd([0-9.-]+)_.*", "\\1", x)
-  num_part <- gsub("-", ".", num_part)  # Convert hyphen to decimal point
-  as.numeric(num_part)
+  # Extract filename from path and find the dd part
+  filename <- basename(x)
+  # Extract the dd value (after date_dd and before _disp)
+  dd_part <- sub(".*_dd([0-9.-]+)_.*", "\\1", filename)
+  # Convert hyphen to decimal point for sorting
+  dd_part <- gsub("-", ".", dd_part)
+  # Convert to numeric for proper sorting
+  as.numeric(dd_part)
 }
 
-sort_flist <- flist[order(sapply(filenames, extract_dd_value))]
+# List files and sort based on dd values
+flist <- list.files("~/Uni/Master/MA/local/runs/slim/", pattern = "^20250416", full.names = TRUE)
+
+# Get dd values for all files
+dd_values <- sapply(flist, extract_dd_value)
+
+# Sort file list based on numeric values
+sort_flist <- flist[order(dd_values)]
+
+# Modify the filenames to start from "dd" and assign them to 'filenames'
+filenames <- sub(pattern = ".*_dd", replacement = "dd", x = basename(sort_flist))
+
+# Load the runs using readRDS
 runs <- lapply(sort_flist, function(x) readRDS(file = x))
-filenames <- sub(pattern = ".*dd", replacement = "dd",x = sort_flist)
+
+# Assign the new names to the 'runs' list
 names(runs) <- filenames
-all(names(runs) == sapply(X = runs, FUN = function(x) x$Model$scenario))
+
+# Verify that the names of 'runs' match the scenario names inside the 'Model' list element
+all(names(runs) == sapply(runs, function(x) x$Model$scenario))
 ```
 ```{r}
-sapply(runs,function(x) spec_time(sim_out = x))
+#| fig-width: 4
+#| fig-height: 4
+
+sapply(runs,function(x) spec_time(sim_out = x, ymax = 55))
 ```
 
 

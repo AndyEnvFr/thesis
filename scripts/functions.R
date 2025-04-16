@@ -27,7 +27,7 @@ slim <- function(sim_out, batch){
 }
 
 # function to plot species richness over time
-spec_time <- function(sim_out, thinning_factor = NULL) {
+spec_time <- function(sim_out, thinning_factor = NULL, ymax) {
   
   sr_simu <- sapply(1:length(sim_out$Output),
                     function(x) PhyloSim::specRich(simu = sim_out,
@@ -43,8 +43,13 @@ spec_time <- function(sim_out, thinning_factor = NULL) {
     warning("thinning factor must be > 1 for effective thinning")
   }
   
-  plot(sr_simu, type = "l", ylim = c(0, max(sr_simu)),
-       ylab = "richness", xlab = "start : end")
+  if (is.numeric(ymax)) {
+    plot(sr_simu, type = "l", ylim = c(0, ymax),
+         ylab = "richness", xlab = "start : end", main = sim_out$Model$scenario)
+  } else {
+    plot(sr_simu, type = "l", ylim = c(0, max(sr_simu)),
+         ylab = "richness", xlab = "start : end", main = sim_out$Model$scenario)
+  }
 }
 
 
