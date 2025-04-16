@@ -52,7 +52,9 @@ tst <- readRDS("~/Uni/Master/MA/local/runs/fat/20250414_dd_1")
 ```
 
 ### Access results
+
 #### Spatial distribution
+
 ```{r}
 #| fig-width: 2.5
 #| fig-height: 3
@@ -75,4 +77,3 @@ abundance
 PhyloSim::rac(simu, plot = "bar", which.result = 4000)
 PhyloSim::rac(simu, plot = "line", which.result = "all")
 ```
-
