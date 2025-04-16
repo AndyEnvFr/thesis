@@ -46,7 +46,7 @@ for (i in 1:length(density_val)) {
                           redQueenStrength = 0,
                           airmat = NA,
                           fitnessActsOn = "mortality",
-                          runs = rep(1:200 * 500),
+                          runs = rep(1:150 * 500),
                           scenario = paste0("dd",
                                             scenario_density[i],
                                             "_disp",
@@ -58,35 +58,11 @@ for (i in 1:length(density_val)) {
 
 # run parallel
 
-The implemented simulation batch function has no option to save interim results. Computation can still be parallelized in a safe way:
+The implemented simulation batch function has no option to save interim results. Computation can still be paralleled in a safe way:
 
 ```{r}
-set.seed(20250416)
-
-results <- mclapply(seq_along(params), function(param_index) {
-  tryCatch({
-    message("Processing parameter set ", param_index, "/", length(params))
-    current_params <- params[[param_index]]
-    
-    # Add param_index to results for traceability
-    result <- runSimulation(current_params)
-    result$param_index <- param_index
-    
-    save_out(sim_out = result,
-             path = "~/cyber_synch/local/runs/slim/",
-             batch = FALSE,
-             slim = TRUE)
-    
-    return(result)
-  }, error = function(e) {
-    # Save which param_index failed
-    error_log <- data.frame(
-      param_index = param_index,
-      error_msg = e$message,
-      timestamp = Sys.time()
-    )
-    saveRDS(error_log, paste0("~/cyber_synch/local/runs/slim/ERROR", param_index, ".rds"))
-    return(NULL)
-  })
-}, mc.cores = 40)
+run_save_batch(params = params,
+               save_path = "~/cyber_synch/local/runs/slim/",
+               cores = 30,
+               slim = TRUE)
 ```

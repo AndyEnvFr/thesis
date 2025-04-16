@@ -74,4 +74,44 @@ save_out <- function(sim_out, path, batch = FALSE, slim = TRUE) {
   }
 }
 
+# function for save batch runs saves interim results
+run_save_batch <-       function(params, 
+                                 save_path = "~/cyber_synch/local/runs/slim/",
+                                 cores = 1,
+                                 slim = TRUE) {
+  
+  # Load the parallel package if needed
+  if (!requireNamespace("parallel", quietly = TRUE)) {
+    stop("The 'parallel' package is required but not installed.")
+  }
+  
+  results <- parallel::mclapply(seq_along(params), function(param_index) {
+    tryCatch({
+      message("Processing parameter set ", param_index, "/", length(params))
+      current_params <- params[[param_index]]
+      
+      # Add param_index to results for traceability
+      result <- runSimulation(current_params)
+      result$param_index <- param_index
+      
+      save_out(sim_out = result,
+               path = save_path,
+               batch = FALSE,
+               slim = slim)
+      
+      return(result)
+    }, error = function(e) {
+      # Save which param_index failed
+      error_log <- data.frame(
+        param_index = param_index,
+        error_msg = e$message,
+        timestamp = Sys.time()
+      )
+      saveRDS(error_log, paste0(save_path, "ERROR", param_index, ".rds"))
+      return(NULL)
+    })
+  }, mc.cores = cores)
+  
+  return(results)
+}
   
