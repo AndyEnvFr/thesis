@@ -27,42 +27,59 @@ slim <- function(sim_out, batch){
 }
 
 # function to plot species richness over time
-spec_time <- function(sim_out, ymax, thinning_factor = NULL){
+spec_time <- function(sim_out, thinning_factor = NULL) {
   
   sr_simu <- sapply(1:length(sim_out$Output),
                     function(x) PhyloSim::specRich(simu = sim_out,
                                                    which.result = x))
+  
   if (!is.null(thinning_factor) &&
       is.numeric(thinning_factor) &&
-      thinning_factor > 1){
+      thinning_factor > 1) {
     idx <- seq(1, length(sr_simu), thinning_factor)
     sr_simu <- sr_simu[idx]
-  }else if (!is.null(thinning_factor) &&
-      is.numeric(thinning_factor)){
-    warning("thinning factor must be > 1 for effective thinning")}
-  
-  plot(sr_simu, type = "l", ylim = c(0,ymax))
+  } else if (!is.null(thinning_factor) &&
+             is.numeric(thinning_factor)) {
+    warning("thinning factor must be > 1 for effective thinning")
   }
+  
+  plot(sr_simu, type = "l", ylim = c(0, max(sr_simu)),
+       ylab = "richness", xlab = "start : end")
+}
 
-
-# continue here: automatize the file storage depending on the scenario name
 
 # function to save the output either batch or single. 
-save_out <- function(sim_out, path){
+save_out <- function(sim_out, path, batch = FALSE, slim = TRUE) {
+  if (slim) {
+    sim_out <- slim(sim_out = sim_out, batch = batch)
+  }
+  
+  date_tag <- format(Sys.Date(), "%Y%m%d")
+  
+  get_unique_filename <- function(base) {
+    if (!file.exists(base)) return(base)
+    paste0(base, "_DOUBLENAME")
+  }
+  
+  if (batch) {
+    for (i in seq_along(sim_out)) {
+      file_base <- paste0(path, date_tag, "_", sim_out[[i]]$Model$scenario)
+      file_final <- get_unique_filename(file_base)
+      saveRDS(sim_out[[i]], file = file_final)
+    }
+  } else {
+    file_base <- paste0(path, date_tag, "_", sim_out$Model$scenario)
+    file_final <- get_unique_filename(file_base)
+    saveRDS(sim_out, file = file_final)
+  }
 }
 
 
-scenario <- numeric(length(params))
-for (i in 1:length(params)) {
-  scenario[i] <- params[[i]]$scenario
+
+
+
+for (i in seq_along(res_batch)) {
+  print(i)
 }
 
-for (i in 1:length(params)) {
-  saveRDS(simu[[i]], paste0("/home/andy/cyber_synch/local/runs/20250414_",
-                            scenario[i],".rds"))
-}
-  
-  
-  
-  
   

@@ -4,8 +4,7 @@ format: html
 editor: visual
 ---
 
-Here, I check the relationship between the *density* param and the species richness.
-Also, seed dispersal = (1, global). For this purpose the frequency of the output must not be every 50 generations for 100k generations.
+Here, I check the relationship between the *density* param and the species richness. Also, seed dispersal = (1, global). For this purpose the frequency of the output must not be every 50 generations for 100k generations.
 
 ```{r}
 #| warning: false
@@ -13,6 +12,7 @@ library(PhyloSim)
 ```
 
 ### define params and run model
+
 ```{r}
 #| eval: true
 #| echo: false
