@@ -19,12 +19,10 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 #| eval: true
 #| echo: false
 
-# loop creates parameter set
-
 # Define parameter values
 density_va <- seq(0, 1.5, 0.5)
-dispersal_options <- c(1, "global")
-densityCut_options <- c(1,2,3,4,5)  # Values for densityCut
+dispersal_options <- list(1, "global")  # Using a list to preserve types
+densityCut_options <- c(1,2,3,4,5)
 
 # Initialize empty list for parameters
 params <- list()
@@ -32,12 +30,14 @@ param_index <- 1
 
 # Nested loops for all combinations
 for (density in density_va) {
-  for (dispersal in dispersal_options) {
+  for (disp_idx in 1:length(dispersal_options)) {
     for (cut in densityCut_options) {
+      # Get dispersal value with proper type
+      dispersal <- dispersal_options[[disp_idx]]
       
       # Format scenario names
       scenario_density <- gsub("\\.", "-", as.character(density))
-      scenario_dispersal <- ifelse(dispersal == "global", "G", dispersal)
+      scenario_dispersal <- ifelse(identical(dispersal, "global"), "G", dispersal)
       scenario_cut <- gsub("\\.", "-", as.character(cut))
       
       # Create parameter set
@@ -45,11 +45,11 @@ for (density in density_va) {
         x = 256,
         y = 256,
         density = density,
-        dispersal = dispersal,
+        dispersal = dispersal,  # Now using the properly typed variable
         specRate = 2,
         environment = 0,
         fitnessBaseMortalityRatio = 1, 
-        densityCut = cut,  # Now using the variable cut
+        densityCut = cut,
         seed = 20250414,
         type = "base",
         protracted = 0,
@@ -58,13 +58,13 @@ for (density in density_va) {
         redQueenStrength = 0,
         airmat = NA,
         fitnessActsOn = "mortality",
-        runs = rep(1:150 * 500),
+        runs = rep(1:500 * 200),
         scenario = paste0("dd",
                         scenario_density,
                         "_disp",
                         scenario_dispersal,
                         "_sr2_e0_m1_cut",
-                        scenario_cut)  # Updated scenario name to include cut value
+                        scenario_cut)
       )
       
       # Increment parameter index
@@ -84,3 +84,8 @@ run_save_batch(params = params,
                cores = 30,
                slim = TRUE)
 ```
+```{r}
+error <- readRDS("../../local/runs/slim/ERROR5.rds")
+error
+```
+
