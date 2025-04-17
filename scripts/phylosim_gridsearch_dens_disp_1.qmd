@@ -21,39 +21,57 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 
 # loop creates parameter set
 
-params <- list()
-density_va <- seq(0,2,.25)
-density_val <- rep(density_va,2)
-dispersal_val <- c(as.list(rep(1,length(density_va))),
-                   as.list(rep("global",length(density_va))))
-scenario_density <- gsub("\\.", "-", as.character(density_val))
-scenario_dispersal <- gsub("global", "G", as.character(dispersal_val))
+# Define parameter values
+density_va <- seq(0, 1.5, 0.5)
+dispersal_options <- c(1, "global")
+densityCut_options <- c(1,2,3,4,5)  # Values for densityCut
 
-for (i in 1:length(density_val)) {
-  params[[i]] <- createCompletePar(x = 256,
-                          y = 256,
-                          density = density_val[i],
-                          dispersal = dispersal_val[[i]],
-                          specRate = 2,
-                          environment = 0,
-                          fitnessBaseMortalityRatio = 1, 
-                          densityCut = 1,
-                          seed = 20250414,
-                          type = "base",
-                          protracted = 0,
-                          fission = 0,
-                          redQueen = 0,
-                          redQueenStrength = 0,
-                          airmat = NA,
-                          fitnessActsOn = "mortality",
-                          runs = rep(1:150 * 500),
-                          scenario = paste0("dd",
-                                            scenario_density[i],
-                                            "_disp",
-                                            scenario_dispersal[i],
-                                            "_sr2_e0_m1_cut1")
-  )
+# Initialize empty list for parameters
+params <- list()
+param_index <- 1
+
+# Nested loops for all combinations
+for (density in density_va) {
+  for (dispersal in dispersal_options) {
+    for (cut in densityCut_options) {
+      
+      # Format scenario names
+      scenario_density <- gsub("\\.", "-", as.character(density))
+      scenario_dispersal <- ifelse(dispersal == "global", "G", dispersal)
+      scenario_cut <- gsub("\\.", "-", as.character(cut))
+      
+      # Create parameter set
+      params[[param_index]] <- createCompletePar(
+        x = 256,
+        y = 256,
+        density = density,
+        dispersal = dispersal,
+        specRate = 2,
+        environment = 0,
+        fitnessBaseMortalityRatio = 1, 
+        densityCut = cut,  # Now using the variable cut
+        seed = 20250414,
+        type = "base",
+        protracted = 0,
+        fission = 0,
+        redQueen = 0,
+        redQueenStrength = 0,
+        airmat = NA,
+        fitnessActsOn = "mortality",
+        runs = rep(1:150 * 500),
+        scenario = paste0("dd",
+                        scenario_density,
+                        "_disp",
+                        scenario_dispersal,
+                        "_sr2_e0_m1_cut",
+                        scenario_cut)  # Updated scenario name to include cut value
+      )
+      
+      # Increment parameter index
+      param_index <- param_index + 1
+    }
   }
+}
 ```
 
 # run parallel

@@ -6,7 +6,7 @@ slim <- function(sim_out, batch){
     for (i in 1:length(sim_out$Output)) {
       sim_out$Output[[i]]$traitMat <- NULL
       sim_out$Output[[i]]$envMat <- NULL
-      sim_out$Output[[i]]$compMat <- NULL
+      # sim_out$Output[[i]]$compMat <- NULL
       sim_out$Output[[i]]$neutMat <- NULL
       sim_out$Output[[i]]$phylogeny <- NULL
       sim_out$Output[[i]]$phyloTXT <- NULL
@@ -16,7 +16,7 @@ slim <- function(sim_out, batch){
       for (i in 1:length(sim_out[[j]]$Output)) {
         sim_out[[j]]$Output[[i]]$traitMat <- NULL
         sim_out[[j]]$Output[[i]]$envMat <- NULL
-        sim_out[[j]]$Output[[i]]$compMat <- NULL
+        # sim_out[[j]]$Output[[i]]$compMat <- NULL
         sim_out[[j]]$Output[[i]]$neutMat <- NULL
         sim_out[[j]]$Output[[i]]$phylogeny <- NULL
         sim_out[[j]]$Output[[i]]$phyloTXT <- NULL
