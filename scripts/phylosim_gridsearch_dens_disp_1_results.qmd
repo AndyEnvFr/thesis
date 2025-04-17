@@ -4,7 +4,14 @@ format: html
 editor: visual
 ---
 
+```{r}
+#| warning: false
+library(PhyloSim)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+```
+
 # read in output
+
 ```{r}
 # Function for extracting the numeric value from dd (convert hyphen to decimal)
 extract_dd_value <- function(x) {
@@ -19,7 +26,7 @@ extract_dd_value <- function(x) {
 }
 
 # List files and sort based on dd values
-flist <- list.files("~/Uni/Master/MA/local/runs/slim/", pattern = "^20250416", full.names = TRUE)
+flist <- list.files("~/cyber_synch/local/runs/slim/", pattern = "^20250416", full.names = TRUE)
 
 # Get dd values for all files
 dd_values <- sapply(flist, extract_dd_value)
@@ -39,11 +46,21 @@ names(runs) <- filenames
 # Verify that the names of 'runs' match the scenario names inside the 'Model' list element
 all(names(runs) == sapply(runs, function(x) x$Model$scenario))
 ```
-```{r}
-#| fig-width: 4
-#| fig-height: 4
 
+```{r}
+#| fig-width: 8
+#| fig-height: 8
+
+par(mfrow = c(2,2), oma = c(0,4,0,0))
 sapply(runs,function(x) spec_time(sim_out = x, ymax = 55))
 ```
+
+
+
+
+
+
+
+
 
 

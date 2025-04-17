@@ -66,6 +66,3 @@ run_save_batch(params = params,
                cores = 30,
                slim = TRUE)
 ```
-
-
-
