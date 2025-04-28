@@ -80,22 +80,88 @@ save_out <- function(sim_out, path, batch = FALSE, slim = TRUE) {
 }
 
 # function for save batch runs saves interim results
-run_save_batch <-       function(params, 
+
+# outcommented version: the try catch error part seems to cause problems:
+# simulation batches never finish. Problem is not there, if try catch is exclud.
+
+        # run_save_batch__ <-       function(params,
+        #                                  save_path = "~/cyber_synch/local/runs/slim/",
+        #                                  cores = 1,
+        #                                  slim = TRUE) {
+        # 
+        #   # Load the parallel package if needed
+        #   if (!requireNamespace("parallel", quietly = TRUE)) {
+        #     stop("The 'parallel' package is required but not installed.")
+        #   }
+        # 
+        #   results <- parallel::mclapply(seq_along(params), function(param_index) {
+        #     tryCatch({
+        #       message("Processing parameter set ", param_index, "/", length(params))
+        #       current_params <- params[[param_index]]
+        # 
+        #       # Add param_index to results for traceability
+        #       result <- runSimulation(current_params)
+        #       result$param_index <- param_index
+        # 
+        #       save_out(sim_out = result,
+        #                path = save_path,
+        #                batch = FALSE,
+        #                slim = slim)
+        # 
+        #       return(result)
+        #     }, error = function(e) {
+        #       # Save which param_index failed
+        #       error_log <- data.frame(
+        #         param_indication = param_index,
+        #         error_msg = e$message,
+        #         timestamp = Sys.time()
+        #       )
+        #       saveRDS(error_log, paste0(save_path, "ERROR", param_index, ".rds"))
+        #       return(NULL)
+        #     })
+        #   }, mc.cores = cores)
+        # }
+        #   
+        # run_save_batch <-       function(params,
+        #                                  save_path = "~/cyber_synch/local/runs/slim/",
+        #                                  cores = 1,
+        #                                  slim = TRUE) {
+        # 
+        #   results <- parallel::mclapply(seq_along(params), function(param_index) {
+        #     
+        #       current_params <- params[[param_index]]
+        # 
+        #       # Add param_index to results for traceability
+        #       result <- runSimulation(current_params)
+        #     
+        #       save_out(sim_out = result,
+        #                path = save_path,
+        #                batch = FALSE,
+        #                slim = slim)
+        # 
+        #       return(result)},
+        #       mc.cores = cores)
+        # 
+        #   return(results)
+        # }
+
+
+
+run_save_batch <- function(params,
                                  save_path = "~/cyber_synch/local/runs/slim/",
                                  cores = 1,
                                  slim = TRUE) {
   
-  # Load the parallel package if needed
-  if (!requireNamespace("parallel", quietly = TRUE)) {
-    stop("The 'parallel' package is required but not installed.")
-  }
+  # Create a log file instead of using message()
+  log_file <- paste0(save_path, "batch_log_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".txt")
   
   results <- parallel::mclapply(seq_along(params), function(param_index) {
+    # Write to a file instead of using message
+    cat(paste0("Processing parameter set ", param_index, "/", length(params), "\n"), 
+        file = log_file, append = TRUE)
+    
     tryCatch({
-      message("Processing parameter set ", param_index, "/", length(params))
       current_params <- params[[param_index]]
-      
-      # Add param_index to results for traceability
       result <- runSimulation(current_params)
       result$param_index <- param_index
       
@@ -106,17 +172,12 @@ run_save_batch <-       function(params,
       
       return(result)
     }, error = function(e) {
-      # Save which param_index failed
-      error_log <- data.frame(
-        param_index = param_index,
-        error_msg = e$message,
-        timestamp = Sys.time()
-      )
-      saveRDS(error_log, paste0(save_path, "ERROR", param_index, ".rds"))
+      # Log error to file instead of creating separate files
+      cat(paste0("ERROR in param_index ", param_index, ": ", e$message, "\n"),
+          file = log_file, append = TRUE)
       return(NULL)
     })
   }, mc.cores = cores)
   
   return(results)
 }
-  
