@@ -181,3 +181,32 @@ run_save_batch <- function(params,
   
   return(results)
 }
+
+
+mortality <- function(out){ # computes mortality only if generations are consecutive
+  
+  if (!(1 %in% diff(out$Model$runs))) {
+    stop("No consecutive generations. Can't calculate mortality")
+  } 
+  
+  # create empty mortality matrix for all generations
+  for (i in 1:length(out$Output)) {
+    out$Output[[i]]$mortMat <- matrix(data = NA, nrow = out$Model$x, ncol = out$Model$y)
+  }
+  
+  idx <- which(diff(out$Model$runs) == 1) # generations pre mortality. idx+1 is post mort.
+  
+  for (i in idx) {
+    out$Output[[i+1]]$mortMat <-
+      ifelse((out$Output[[i]]$traitMat - out$Output[[i+1]]$traitMat) == 0, FALSE, TRUE)
+  }
+  
+  return(out)
+}
+
+mortality_batch <- function(out_batch){
+  for (runs in seq_along(out_batch)) {
+    out_batch[[runs]] <- mortality(out_batch[[runs]])
+  }
+  return(out_batch)
+}

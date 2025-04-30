@@ -48,10 +48,10 @@ all(names(runs) == sapply(runs, function(x) x$Model$scenario))
 ```
 
 ```{r}
-#| fig-width: 8
+#| fig-width: 16
 #| fig-height: 8
 
-par(mfrow = c(2,2), oma = c(0,4,0,0))
+par(mfrow = c(2,4), oma = c(0,4,0,0))
 sapply(runs,function(x) spec_time(sim_out = x, ymax = 55))
 ```
 

@@ -1,10 +1,8 @@
 ---
-title: "Phylo Sim exploration of density dependence"
+title: "generates a batch to compare mortality values"
 format: html
 editor: visual
 ---
-
-Here, I check the relationship between the *density* param and the species richness. Also, seed dispersal = (1, global). For this purpose the frequency of the output must not be every 50 generations for 100k generations.
 
 ```{r}
 #| warning: false
@@ -20,9 +18,9 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 #| echo: false
 
 # Define parameter values
-density_va <- c(0,1,2)
-dispersal_options <- list("global")  # Using a list to preserve types
-densityCut_options <- c(1,2)
+density_va <- 1
+dispersal_options <- list(1,"global")  # Using a list to preserve types
+mort_options <- c(1,10,20,50)
 
 # Initialize empty list for parameters
 parameters <- list()
@@ -31,26 +29,26 @@ param_index <- 1
 # Nested loops for all combinations
 for (density in density_va) {
   for (disp_idx in 1:length(dispersal_options)) {
-    for (cut in densityCut_options) {
+    for (mort in mort_options) {
       # Get dispersal value with proper type
       dispersal <- dispersal_options[[disp_idx]]
       
       # Format scenario names
       scenario_density <- gsub("\\.", "-", as.character(density))
       scenario_dispersal <- ifelse(identical(dispersal, "global"), "G", dispersal)
-      scenario_cut <- gsub("\\.", "-", as.character(cut))
+      scenario_mort <- gsub("\\.", "-", as.character(mort))
       
       # Create parameter set
       parameters[[param_index]] <- createCompletePar(
-        x = 256,
-        y = 256,
+        x = 50,
+        y = 50,
         density = density,
         dispersal = dispersal,  # Now using the properly typed variable
         specRate = 2,
         environment = 0,
-        fitnessBaseMortalityRatio = 1, 
-        densityCut = cut,
-        seed = 20250414,
+        fitnessBaseMortalityRatio = mort, 
+        densityCut = 1,
+        seed = 20250430,
         type = "base",
         protracted = 0,
         fission = 0,
@@ -58,13 +56,14 @@ for (density in density_va) {
         redQueenStrength = 0,
         airmat = NA,
         fitnessActsOn = "mortality",
-        runs = rep(1:10 * 10),
+        runs = sort(c((rep(1:20 * 1000) + 1), rep(1:20 * 1000))),
         scenario = paste0("dd",
                         scenario_density,
                         "_disp",
                         scenario_dispersal,
-                        "_sr2_e0_m1_cut",
-                        scenario_cut)
+                        "_sr2_e0_m",
+                        scenario_mort,
+                        "_cut1")
       )
       
       # Increment parameter index
@@ -105,5 +104,42 @@ for (density in density_va) {
 The implemented simulation batch function has no option to save interim results. Computation can still be paralleled in a safe way:
 
 ```{r}
-run_save_batch(params = all_params, save_path = "~/cyber_synch/local/runs/test/", cores = 7, slim = TRUE)
+mortality_runs <- runSimulationBatch(pars = parameters, parallel = 6)
+# saveRDS(mortality_runs, file = "~/cyber_synch/local/runs/fat/20250430_mortality")
 ```
+```{r}
+# read in with proper names
+# mortality_runs <- readRDS("~/cyber_synch/local/runs/fat/20250430_mortality")
+names <- sapply(mortality_runs, function(x) x$Model$scenario)
+names(mortality_runs) <- names
+nameshort <- paste0( "mort = ", sub(".*m([0-9]+).*", replacement = "\\1", x = names))
+```
+
+```{r}
+runs_mortmat <- mortality_batch(mortality_runs) # (if batch run: mortality_batch)
+```
+
+```{r}
+#| fig-height: 8
+#| fig-width: 16
+
+par(mfrow = c(2,4))
+sapply(runs_mortmat, function(x) image(x$Output[[40]]$specMat, main = x$Model$scenario))
+sapply(runs_mortmat, function(x) image(x$Output[[39]]$traitMat, main = x$Model$scenario))
+sapply(runs_mortmat, function(x) image(x$Output[[40]]$traitMat, main = x$Model$scenario))
+sapply(runs_mortmat, function(x) image(x$Output[[40]]$mortMat, main = x$Model$scenario))
+```
+```{r}
+resultmat <- matrix(NA, nrow = 20, ncol = 8)
+
+for (i in 1:(length(runs_mortmat[[1]]$Output)/2)) {
+  j <- i * 2
+  resultmat[i,] <- sapply(runs_mortmat, function(x) sum(x$Output[[j]]$mortMat))
+}
+
+matplot(resultmat, lwd = 2, type = "l", lty = 1)
+legend("bottomleft", legend = nameshort, col = c(1:length(names)), lwd = 2, bty = "n", ncol = 2)
+
+colMeans(resultmat)
+```
+

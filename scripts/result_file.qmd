@@ -46,7 +46,7 @@ names(runs) <- filenames
 # Verify that the names of 'runs' match the scenario names inside the 'Model' list element
 all(names(runs) == sapply(runs, function(x) x$Model$scenario))
 ```
-
+# species richness over time
 ```{r}
 #| fig-width: 8
 #| fig-height: 8
@@ -54,3 +54,24 @@ all(names(runs) == sapply(runs, function(x) x$Model$scenario))
 par(mfrow = c(2,2), oma = c(0,4,0,0))
 sapply(runs,function(x) spec_time(sim_out = x, ymax = 55))
 ```
+
+# mort mat
+
+```{r}
+runs_mortmat <- mortality(runs) # (if batch run: mortality_batch)
+```
+
+```{r}
+#| fig-height: 8
+#| fig-width: 8
+
+image(runs_mortmat$Output[[1]]$specMat)
+image(runs_mortmat$Output[[1]]$specMat)
+image(runs_mortmat$Output[[1]]$traitMat)
+image(runs_mortmat$Output[[2]]$traitMat)
+image(runs_mortmat$Output[[2]]$mortMat)
+```
+
+
+
+
