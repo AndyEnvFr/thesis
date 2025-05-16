@@ -1,0 +1,113 @@
+---
+title: "Phylo Sim exploration of density dependence"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+```
+
+# read in output
+
+```{r}
+# Function for extracting the numeric value from dd (convert hyphen to decimal)
+extract_dd_value <- function(x) {
+  # Extract filename from path and find the dd part
+  filename <- basename(x)
+  # Extract the dd value (after date_dd and before _disp)
+  dd_part <- sub(".*_dd([0-9.-]+)_.*", "\\1", filename)
+  # Convert hyphen to decimal point for sorting
+  dd_part <- gsub("-", ".", dd_part)
+  # Convert to numeric for proper sorting
+  as.numeric(dd_part)
+}
+
+# List files and sort based on dd values
+flist <- list.files("~/cyber_synch/local/runs/slim/", pattern = "2025", full.names = TRUE)
+
+# Get dd values for all files
+dd_values <- sapply(flist, extract_dd_value)
+
+# Sort file list based on numeric values
+sort_flist <- flist[order(dd_values)]
+
+# Modify the filenames to start from "dd" and assign them to 'filenames'
+filenames <- sub(pattern = ".*_dd", replacement = "dd", x = basename(sort_flist))
+
+# Load the runs using readRDS
+runs <- lapply(sort_flist, function(x) readRDS(file = x))
+
+# Assign the new names to the 'runs' list
+names(runs) <- filenames
+
+# Verify that the names of 'runs' match the scenario names inside the 'Model' list element
+all(names(runs) == sapply(runs, function(x) x$Model$scenario))
+```
+
+```{r}
+#| fig-width: 16
+#| fig-height: 8
+
+par(mfrow = c(2,4), oma = c(0,4,0,0))
+sapply(runs,function(x) spec_time(sim_out = x, ymax = 55))
+```
+
+
+```{r}
+#| fig-width: 8
+#| fig-height: 8
+
+simu_0_disp1 <- runs[["dd0_disp1_sr2_e0_m1_cut1"]]$Output[[500]]$specMat
+simu_05_disp1 <- runs[["dd0-5_disp1_sr2_e0_m1_cut1"]]$Output[[500]]$specMat
+simu_1_disp1 <- runs[["dd1_disp1_sr2_e0_m1_cut1"]]$Output[[500]]$specMat
+simu_15_disp1 <- runs[["dd1-5_disp1_sr2_e0_m1_cut1"]]$Output[[500]]$specMat
+sum(simu_0_disp1 != simu_05_disp1)
+sum(simu_05_disp1 != simu_1_disp1)
+sum(simu_1_disp1 != simu_15_disp1)
+sum(simu_05_disp1 != simu_15_disp1)
+simu_0_dispG <- runs[["dd0_dispG_sr2_e0_m1_cut1"]]$Output[[500]]$specMat
+simu_05_dispG <- runs[["dd0-5_dispG_sr2_e0_m1_cut1"]]$Output[[500]]$specMat
+simu_1_dispG <- runs[["dd1_dispG_sr2_e0_m1_cut1"]]$Output[[500]]$specMat
+simu_15_dispG <- runs[["dd1-5_dispG_sr2_e0_m1_cut1"]]$Output[[500]]$specMat
+sum(simu_0_dispG != simu_05_dispG)
+sum(simu_05_dispG != simu_1_dispG)
+sum(simu_1_dispG != simu_15_dispG)
+sum(simu_05_dispG != simu_15_dispG)
+
+
+simu_0 <- runs[["dd0_disp1_sr2_e0_m1_cut1"]]$Output[[500]]$compMat
+simu_05 <- runs[["dd0-5_disp1_sr2_e0_m1_cut1"]]$Output[[500]]$compMat
+simu_1 <- runs[["dd1_disp1_sr2_e0_m1_cut1"]]$Output[[500]]$compMat
+simu_15 <- runs[["dd1-5_disp1_sr2_e0_m1_cut1"]]$Output[[500]]$compMat
+sum(simu_0 != simu_05)
+sum(simu_0 != simu_1)
+sum(simu_0 != simu_15)
+
+
+
+
+simu_0 <- runs[["dd0_dispG_sr2_e0_m1_cut5"]]$Output[[500]]$specMat
+simu_05 <- runs[["dd0-5_dispG_sr2_e0_m1_cut5"]]$Output[[500]]$specMat
+simu_1 <- runs[["dd1_dispG_sr2_e0_m1_cut5"]]$Output[[500]]$specMat
+simu_15 <- runs[["dd1-5_dispG_sr2_e0_m1_cut5"]]$Output[[500]]$specMat
+sum(simu_0 != simu_05)
+sum(simu_05 != simu_1)
+sum(simu_1 != simu_15)
+sum(simu_05 != simu_15)
+
+
+
+
+simu_0 <- runs[["dd0_disp1_sr2_e0_m1_cut5"]]$Output[[500]]$specMat
+simu_05 <- runs[["dd0-5_disp1_sr2_e0_m1_cut5"]]$Output[[500]]$specMat
+simu_1 <- runs[["dd1_disp1_sr2_e0_m1_cut5"]]$Output[[500]]$specMat
+simu_15 <- runs[["dd1-5_disp1_sr2_e0_m1_cut5"]]$Output[[500]]$specMat
+sum(simu_0 != simu_05)
+sum(simu_05 != simu_1)
+sum(simu_1 != simu_15)
+sum(simu_05 != simu_15)
+```
+

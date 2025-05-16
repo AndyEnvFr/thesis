@@ -48,7 +48,7 @@ saveRDS(simu, "/home/andy/cyber_synch/local/runs/20250414_dd_1")
 ```
 
 ```{r}
-tst <- readRDS("~/Uni/Master/MA/local/runs/fat/20250414_dd_1")
+simu <- readRDS("~/cyber_synch/local/runs/fat/20250414_dd_1")
 ```
 
 ### Access results

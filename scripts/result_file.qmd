@@ -1,0 +1,77 @@
+---
+title: "Phylo Sim exploration of density dependence"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+```
+
+# read in output
+
+```{r}
+# Function for extracting the numeric value from dd (convert hyphen to decimal)
+extract_dd_value <- function(x) {
+  # Extract filename from path and find the dd part
+  filename <- basename(x)
+  # Extract the dd value (after date_dd and before _disp)
+  dd_part <- sub(".*_dd([0-9.-]+)_.*", "\\1", filename)
+  # Convert hyphen to decimal point for sorting
+  dd_part <- gsub("-", ".", dd_part)
+  # Convert to numeric for proper sorting
+  as.numeric(dd_part)
+}
+
+# List files and sort based on dd values
+flist <- list.files("~/cyber_synch/local/runs/slim/", pattern = "^20250416", full.names = TRUE)
+
+# Get dd values for all files
+dd_values <- sapply(flist, extract_dd_value)
+
+# Sort file list based on numeric values
+sort_flist <- flist[order(dd_values)]
+
+# Modify the filenames to start from "dd" and assign them to 'filenames'
+filenames <- sub(pattern = ".*_dd", replacement = "dd", x = basename(sort_flist))
+
+# Load the runs using readRDS
+runs <- lapply(sort_flist, function(x) readRDS(file = x))
+
+# Assign the new names to the 'runs' list
+names(runs) <- filenames
+
+# Verify that the names of 'runs' match the scenario names inside the 'Model' list element
+all(names(runs) == sapply(runs, function(x) x$Model$scenario))
+```
+# species richness over time
+```{r}
+#| fig-width: 8
+#| fig-height: 8
+
+par(mfrow = c(2,2), oma = c(0,4,0,0))
+sapply(runs,function(x) spec_time(sim_out = x, ymax = 55))
+```
+
+# mort mat
+
+```{r}
+runs_mortmat <- mortality(runs) # (if batch run: mortality_batch)
+```
+
+```{r}
+#| fig-height: 8
+#| fig-width: 8
+
+image(runs_mortmat$Output[[1]]$specMat)
+image(runs_mortmat$Output[[1]]$specMat)
+image(runs_mortmat$Output[[1]]$traitMat)
+image(runs_mortmat$Output[[2]]$traitMat)
+image(runs_mortmat$Output[[2]]$mortMat)
+```
+
+
+
+
