@@ -96,9 +96,17 @@ While Yenni provides a simple theoretical argumentation, Schroeder shows that un
 			this can be explained through spill-over or persistence effects of pathogens
 		
 
-
-
-
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Schroeder 2020: second read-through
+Questions
+	explain the contradictions that rare species have higher negative PSF and common species lower (how it is predicted by JC but contradicted by empirical studies)
+		this made think that PSF drives abundance, instead of vice versa
+	With a simulation approach they want to find out, which microbial traits allow for
+		high species diversity while PSF are negative
+		positive correlation between abundance ~ PSF
+Answers
+	spill-over effect: common species experience higher pathogen loads compared to rare species
+		because pathogens that prefer
 
 
 
