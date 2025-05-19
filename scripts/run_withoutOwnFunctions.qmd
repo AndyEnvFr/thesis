@@ -10,7 +10,8 @@ Here, I check the relationship between the *density* param and the species richn
 #| warning: false
 library(PhyloSim)
 library(parallel)
-source("~/cyber_synch/git_synch/scripts/functions.R")
+# source("~/cyber_synch/git_synch/scripts/functions.R")
+source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
 ### define params and run model
@@ -20,9 +21,10 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 #| echo: false
 
 # Define parameter values
-density_options <- c(0,1)
+density_options <- c(0,1,2)
 dispersal_options <- list(1, "global")  # Using a list to preserve types
 densityCut_options <- c(1,2)
+fitnessBaseMortalityRatio_options <- c(1, 10)  # Adding options for fitnessBaseMortalityRatio
 
 # Initialize empty list for parameters
 params <- list()
@@ -32,43 +34,48 @@ param_index <- 1
 for (density in density_options) {
   for (disp_idx in 1:length(dispersal_options)) {
     for (cut in densityCut_options) {
-      # Get dispersal value with proper type
-      dispersal <- dispersal_options[[disp_idx]]
-      
-      # Format scenario names
-      scenario_density <- gsub("\\.", "-", as.character(density))
-      scenario_dispersal <- ifelse(identical(dispersal, "global"), "G", dispersal)
-      scenario_cut <- gsub("\\.", "-", as.character(cut))
-      
-      # Create parameter set
-      params[[param_index]] <- createCompletePar(
-        x = 50,
-        y = 50,
-        density = density,
-        dispersal = dispersal,  # Now using the properly typed variable
-        specRate = 2,
-        environment = 0,
-        fitnessBaseMortalityRatio = 1, 
-        densityCut = cut,
-        seed = 20250414,
-        type = "base",
-        protracted = 0,
-        fission = 0,
-        redQueen = 0,
-        redQueenStrength = 0,
-        airmat = NA,
-        fitnessActsOn = "mortality",
-        runs = rep(1:20 * 100),
-        scenario = paste0("dd",
-                        scenario_density,
-                        "_disp",
-                        scenario_dispersal,
-                        "_sr2_e0_m1_cut",
-                        scenario_cut)
-      )
-      
-      # Increment parameter index
-      param_index <- param_index + 1
+      for (fbmr in fitnessBaseMortalityRatio_options) {  # New loop for fitnessBaseMortalityRatio
+        # Get dispersal value with proper type
+        dispersal <- dispersal_options[[disp_idx]]
+        
+        # Format scenario names
+        scenario_density <- gsub("\\.", "-", as.character(density))
+        scenario_dispersal <- ifelse(identical(dispersal, "global"), "G", dispersal)
+        scenario_cut <- gsub("\\.", "-", as.character(cut))
+        scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
+        
+        # Create parameter set
+        params[[param_index]] <- createCompletePar(
+          x = 50,
+          y = 50,
+          density = density,
+          dispersal = dispersal,  # Using the properly typed variable
+          specRate = 2,
+          environment = 0,
+          fitnessBaseMortalityRatio = fbmr,  # Now using the loop variable
+          densityCut = cut,
+          seed = 20250414,
+          type = "base",
+          protracted = 0,
+          fission = 0,
+          redQueen = 0,
+          redQueenStrength = 0,
+          airmat = NA,
+          fitnessActsOn = "mortality",
+          runs = rep(1:20 * 100),
+          scenario = paste0("dd",
+                          scenario_density,
+                          "_disp",
+                          scenario_dispersal,
+                          "_sr2_e0_m",
+                          scenario_fbmr,  # Including fbmr in scenario name
+                          "_cut",
+                          scenario_cut)
+        )
+        
+        # Increment parameter index
+        param_index <- param_index + 1
+      }
     }
   }
 }
@@ -77,18 +84,22 @@ for (density in density_options) {
 # run parallel
 
 ```{r}
-runs <- runSimulationBatch(params, parallel = 8)
+runs <- runSimulationBatch(params, parallel = 5)
 ```
+
 ```{r}
 namelist <- numeric()
 for (i in 1:length(params)) {
   name <- paste0(
     "dd",
     (ifelse(runs[[i]]$Model$density == TRUE, "T", "F")),
+    runs[[i]]$Model$compStrength,
     "_disp",
     (ifelse(is.numeric(runs[[i]]$Model$dispersal), "1", "G")),
     "_cut",
-    runs[[i]]$Model$densityCut
+    runs[[i]]$Model$densityCut,
+    "_fbmr",
+    runs[[i]]$Model$fitnessBaseMortalityRatio
   )
   namelist[i] <- name
 }
@@ -99,24 +110,155 @@ for (i in 1:length(runs)) {
 }
 names(mat_list) <- namelist
 
-sum(mat_list[["ddF_disp1_cut1"]] != mat_list[["ddF_disp1_cut2"]])
-sum(mat_list[["ddF_disp1_cut1"]] != mat_list[["ddF_dispG_cut1"]])
-sum(mat_list[["ddF_disp1_cut1"]] != mat_list[["ddF_dispG_cut2"]])
-sum(mat_list[["ddF_dispG_cut1"]] != mat_list[["ddF_dispG_cut2"]])
-sum(mat_list[["ddF_dispG_cut1"]] != mat_list[["ddT_dispG_cut1"]])
-sum(mat_list[["ddF_dispG_cut2"]] != mat_list[["ddT_dispG_cut2"]])
-sum(mat_list[["ddF_disp1_cut1"]] != mat_list[["ddT_disp1_cut1"]])
-sum(mat_list[["ddT_disp1_cut1"]] != mat_list[["ddT_dispG_cut1"]])
-sum(mat_list[["ddT_disp1_cut1"]] != mat_list[["ddT_disp1_cut2"]])
-sum(mat_list[["ddT_dispG_cut1"]] != mat_list[["ddT_dispG_cut2"]])
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddF_disp1_cut1_fbmr10"]])
+
+
+
+sum(mat_list$ddF1_disp1_cut1_fbmr1 != mat_list$ddT1_disp1_cut1_fbmr1)
+sum(mat_list$ddF1_disp1_cut1_fbmr1 != mat_list$ddT2_disp1_cut1_fbmr1)
+sum(mat_list$ddT1_disp1_cut1_fbmr1 != mat_list$ddT2_disp1_cut1_fbmr1)
+
+sum(mat_list$ddF1_disp1_cut1_fbmr10 != mat_list$ddT1_disp1_cut1_fbmr10)
+sum(mat_list$ddF1_disp1_cut1_fbmr10 != mat_list$ddT2_disp1_cut1_fbmr10) # this is weird: while ddF != ddT1, ddF == ddT2
+sum(mat_list$ddT1_disp1_cut1_fbmr10 != mat_list$ddT2_disp1_cut1_fbmr10)
+
+sum(mat_list$ddF1_dispG_cut1_fbmr1 != mat_list$ddT1_dispG_cut1_fbmr1)
+sum(mat_list$ddF1_dispG_cut1_fbmr1 != mat_list$ddT2_dispG_cut1_fbmr1)
+sum(mat_list$ddT1_dispG_cut1_fbmr1 != mat_list$ddT2_dispG_cut1_fbmr1)
+
+sum(mat_list$ddF1_dispG_cut1_fbmr10 != mat_list$ddT1_dispG_cut1_fbmr10)
+sum(mat_list$ddF1_dispG_cut1_fbmr10 != mat_list$ddT2_dispG_cut1_fbmr10) # this is weird: while ddF != ddT1, ddF == ddT2
+sum(mat_list$ddT1_dispG_cut1_fbmr10 != mat_list$ddT2_dispG_cut1_fbmr10)
+
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddF_disp1_cut2_fbmr10"]]) # cut param still no difference
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddF_dispG_cut1_fbmr1"]])
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddF_dispG_cut2_fbmr1"]]) # cut param still no difference
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddF_dispG_cut1_fbmr10"]])
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddT_disp1_cut1_fbmr1"]])
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddT_disp1_cut1_fbmr10"]])
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddT_dispG_cut1_fbmr1"]])
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddT_dispG_cut1_fbmr10"]])
+
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddT_disp1_cut1_fbmr10"]])
+sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddT_disp1_cut1_fbmr1"]])
+# there is a difference between density on and off only when fbmr > 1!
+
+sum(mat_list[["ddF_dispG_cut1_fbmr1"]] != mat_list[["ddT_dispG_cut1_fbmr10"]])
+sum(mat_list[["ddF_dispG_cut1_fbmr1"]] != mat_list[["ddT_dispG_cut1_fbmr1"]])
+# in the global case there is a difference even when fbmr == 1
 ```
-densityCut makes no difference at all.
-density(0,1) only differ in global scenario, however, no difference in cut:
-*sum(mat_list[["ddF_dispG_cut1"]] != mat_list[["ddT_dispG_cut1"]])
-[1] 2212
-sum(mat_list[["ddF_dispG_cut2"]] != mat_list[["ddT_dispG_cut2"]])
-[1] 2212*
+## plot fbmr | dispersal
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+
+par(mfrow = c(1,2))
+
+image(mat_list$ddF1_disp1_cut1_fbmr1, main = "ddF1_disp1_cut1_fbmr1")
+image(mat_list$ddF1_disp1_cut1_fbmr1, main = "ddF1_disp1_cut1_fbmr1")
+
+image(mat_list$ddF_disp1_cut1_fbmr10, main = "ddF_disp1_cut1_fbmr10")
+
+image(mat_list$ddF_disp1_cut2_fbmr1, main = "ddF_disp1_cut2_fbmr1")
+image(mat_list$ddF_disp1_cut2_fbmr10, main = "ddF_disp1_cut2_fbmr10")
+
+image(mat_list$ddF_dispG_cut1_fbmr1, main = "ddF_dispG_cut1_fbmr1")
+image(mat_list$ddF_dispG_cut1_fbmr10, main = "ddF_dispG_cut1_fbmr10")
+
+image(mat_list$ddF_dispG_cut2_fbmr1, main = "ddF_dispG_cut2_fbmr1")
+image(mat_list$ddF_dispG_cut2_fbmr10, main = "ddF_dispG_cut2_fbmr10")
+```
+## plot dd | dispersal
+
+```{r}
+
+#| fig-width: 15
+#| fig-height: 5
+
+par(mfrow = c(2,3))
+
+# local cut1 fbmr1
+image(mat_list$ddF1_disp1_cut1_fbmr1, main = "ddF1_disp1_cut1_fbmr1")
+image(mat_list$ddT1_disp1_cut1_fbmr1, main = "ddT1_disp1_cut1_fbmr1")
+image(mat_list$ddT2_disp1_cut1_fbmr1, main = "ddT2_disp1_cut1_fbmr1")
+# local cut1 fbmr1
+image(mat_list_start$ddF1_disp1_cut1_fbmr1, main = "Start: ddF1_disp1_cut1_fbmr1")
+image(mat_list_start$ddT1_disp1_cut1_fbmr1, main = "Start: ddT1_disp1_cut1_fbmr1")
+image(mat_list_start$ddT2_disp1_cut1_fbmr1, main = "Start: ddT2_disp1_cut1_fbmr1")
+
+# local cut1 fbmr10
+image(mat_list$ddF1_disp1_cut1_fbmr10, main = "ddF1_disp1_cut1_fbmr10")
+image(mat_list$ddT1_disp1_cut1_fbmr10, main = "ddT1_disp1_cut1_fbmr10")
+image(mat_list$ddT2_disp1_cut1_fbmr10, main = "ddT2_disp1_cut1_fbmr10")
+
+# local cut1 fbmr10
+image(mat_list_start$ddF1_disp1_cut1_fbmr10, main = "ddF1_disp1_cut1_fbmr10")
+image(mat_list_start$ddT1_disp1_cut1_fbmr10, main = "ddT1_disp1_cut1_fbmr10")
+image(mat_list_start$ddT2_disp1_cut1_fbmr10, main = "ddT2_disp1_cut1_fbmr10")
+
+# local cut2 fbmr1
+image(mat_list$ddF1_disp1_cut2_fbmr1, main = "ddF1_disp1_cut2_fbmr1")
+image(mat_list$ddT1_disp1_cut2_fbmr1, main = "ddT1_disp1_cut2_fbmr1")
+image(mat_list$ddT2_disp1_cut2_fbmr1, main = "ddT2_disp1_cut2_fbmr1")
+
+# local cut2 fbmr1
+image(mat_list_start$ddF1_disp1_cut2_fbmr1, main = "ddF1_disp1_cut2_fbmr1")
+image(mat_list_start$ddT1_disp1_cut2_fbmr1, main = "ddT1_disp1_cut2_fbmr1")
+image(mat_list_start$ddT2_disp1_cut2_fbmr1, main = "ddT2_disp1_cut2_fbmr1")
+
+# local cut2 fbmr10
+image(mat_list$ddF1_disp1_cut2_fbmr10, main = "ddF1_disp1_cut2_fbmr10")
+image(mat_list$ddT1_disp1_cut2_fbmr10, main = "ddT1_disp1_cut2_fbmr10")
+image(mat_list$ddT2_disp1_cut2_fbmr10, main = "ddT2_disp1_cut2_fbmr10")
+# local cut2 fbmr10
+image(mat_list_start$ddF1_disp1_cut2_fbmr10, main = "ddF1_disp1_cut2_fbmr10")
+image(mat_list_start$ddT1_disp1_cut2_fbmr10, main = "ddT1_disp1_cut2_fbmr10")
+image(mat_list_start$ddT2_disp1_cut2_fbmr10, main = "ddT2_disp1_cut2_fbmr10")
+
+# global cut1 fbmr1
+image(mat_list$ddF1_dispG_cut1_fbmr1, main = "ddF1_dispG_cut1_fbmr1")
+image(mat_list$ddT1_dispG_cut1_fbmr1, main = "ddT1_dispG_cut1_fbmr1")
+image(mat_list$ddT2_dispG_cut1_fbmr1, main = "ddT2_dispG_cut1_fbmr1")
+
+# global cut1 fbmr1
+image(mat_list_start$ddF1_dispG_cut1_fbmr1, main = "ddF1_dispG_cut1_fbmr1")
+image(mat_list_start$ddT1_dispG_cut1_fbmr1, main = "ddT1_dispG_cut1_fbmr1")
+image(mat_list_start$ddT2_dispG_cut1_fbmr1, main = "ddT2_dispG_cut1_fbmr1")
+
+# global cut1 fbmr10
+image(mat_list$ddF1_dispG_cut1_fbmr10, main = "ddF1_dispG_cut1_fbmr10")
+image(mat_list$ddT1_dispG_cut1_fbmr10, main = "ddT1_dispG_cut1_fbmr10")
+image(mat_list$ddT2_dispG_cut1_fbmr10, main = "ddT2_dispG_cut1_fbmr10")
+
+# global cut1 fbmr10
+image(mat_list_start$ddF1_dispG_cut1_fbmr10, main = "ddF1_dispG_cut1_fbmr10")
+image(mat_list_start$ddT1_dispG_cut1_fbmr10, main = "ddT1_dispG_cut1_fbmr10")
+image(mat_list_start$ddT2_dispG_cut1_fbmr10, main = "ddT2_dispG_cut1_fbmr10")
+
+# global cut2 fbmr1
+image(mat_list$ddF1_dispG_cut2_fbmr1, main = "ddF1_dispG_cut2_fbmr1")
+image(mat_list$ddT1_dispG_cut2_fbmr1, main = "ddT1_dispG_cut2_fbmr1")
+image(mat_list$ddT2_dispG_cut2_fbmr1, main = "ddT2_dispG_cut2_fbmr1")
+
+# global cut2 fbmr1
+image(mat_list_start$ddF1_dispG_cut2_fbmr1, main = "ddF1_dispG_cut2_fbmr1")
+image(mat_list_start$ddT1_dispG_cut2_fbmr1, main = "ddT1_dispG_cut2_fbmr1")
+image(mat_list_start$ddT2_dispG_cut2_fbmr1, main = "ddT2_dispG_cut2_fbmr1")
+
+# global cut2 fbmr10
+image(mat_list$ddF1_dispG_cut2_fbmr10, main = "ddF1_dispG_cut2_fbmr10")
+image(mat_list$ddT1_dispG_cut2_fbmr10, main = "ddT1_dispG_cut2_fbmr10")
+image(mat_list$ddT2_dispG_cut2_fbmr10, main = "ddT2_dispG_cut2_fbmr10")
+
+# global cut2 fbmr10
+image(mat_list_start$ddF1_dispG_cut2_fbmr10, main = "ddF1_dispG_cut2_fbmr10")
+image(mat_list_start$ddT1_dispG_cut2_fbmr10, main = "ddT1_dispG_cut2_fbmr10")
+image(mat_list_start$ddT2_dispG_cut2_fbmr10, main = "ddT2_dispG_cut2_fbmr10")
+
+```
+somehow cutoff works only if ddT = 1 not if ddT = 2. For local and global
 
 
 
 
+densityCut makes no difference at all. density(0,1) only differ in global scenario, however, no difference in cut: *sum(mat_list\[\["ddF_dispG_cut1"\]\] != mat_list\[\["ddT_dispG_cut1"\]\]) \[1\] 2212 sum(mat_list\[\["ddF_dispG_cut2"\]\] != mat_list\[\["ddT_dispG_cut2"\]\]) \[1\] 2212*
