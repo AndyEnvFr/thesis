@@ -1,0 +1,4 @@
+if fitnessBaseMortalityRatio > 1, density dependece applies. However, there is still bad behaviour
+	0) The same problem as before: in local with fbmr = 1: ddT(1,2) == ddF while in global with fbmr = 1: ddT(1,2) == ddF. However, for fbmr 1 the only problem is 1)
+	1) In local scenario: density = 0 != density = 1 BUT density = 0 != density = 2. I.e., If density > 1, there is no more density effect
+	
