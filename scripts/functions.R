@@ -1,5 +1,35 @@
 library(PhyloSim)
 
+#### extract name ####
+
+run_name <- function(runs, batch = TRUE){
+  if (batch == TRUE) {
+    namelist <- numeric()
+    for (i in 1:length(runs)) {
+      name <- paste0("dd",ifelse(runs[[i]]$Model$density == TRUE, "T", "F"),
+                     runs[[i]]$Model$compStrength,
+                     "_disp", ifelse(runs[[i]]$Model$dispersal == "global", "G",
+                                     runs[[i]]$Model$dispersal),
+                     "_sr", runs[[i]]$Model$specRate,
+                     "_e", ifelse(runs[[i]]$Model$environment == TRUE, "T", "F"),
+                     "_fbmr", runs[[i]]$Model$fitnessBaseMortalityRatio,
+                     "_dc", runs[[i]]$Model$densityCut)
+      namelist[i] <- name
+    }
+  } else {
+      namelist <- paste0("dd", ifelse(runs$Model$density == TRUE, "T", "F"),
+                     runs$Model$compStrength,
+                     "_disp", ifelse(runs$Model$dispersal == "global", "G",
+                                     runs$Model$dispersal),
+                     "_sr", runs$Model$specRate,
+                     "_e", ifelse(runs$Model$environment == TRUE, "T", "F"),
+                     "_fbmr", runs$Model$fitnessBaseMortalityRatio,
+                     "_dc", runs$Model$densityCut)
+  }
+  return(namelist)
+}
+
+
 # function to reduce size and keep only species matrix
 slim <- function(sim_out, batch){
   if (batch == FALSE) {
@@ -32,6 +62,15 @@ spec_time <- function(sim_out, thinning_factor = NULL, ymax) {
   sr_simu <- sapply(1:length(sim_out$Output),
                     function(x) PhyloSim::specRich(simu = sim_out,
                                                    which.result = x))
+  maintitle <- paste0("dd",ifelse(sim_out$Model$density == TRUE, "T", "F"),
+                      sim_out$Model$compStrength,
+                      "_disp", ifelse(sim_out$Model$dispersal == "global", "G",
+                                      sim_out$Model$dispersal),
+                      "_sr", sim_out$Model$specRate,
+                      "_e", ifelse(sim_out$Model$environment == TRUE, "T", "F"),
+                      "_fbmr", sim_out$Model$fitnessBaseMortalityRatio,
+                      "_dc", sim_out$Model$densityCut)
+  
   
   if (!is.null(thinning_factor) &&
       is.numeric(thinning_factor) &&
@@ -45,10 +84,10 @@ spec_time <- function(sim_out, thinning_factor = NULL, ymax) {
   
   if (is.numeric(ymax)) {
     plot(sr_simu, type = "l", ylim = c(0, ymax),
-         ylab = "richness", xlab = "start : end", main = sim_out$Model$scenario)
+         ylab = "richness", xlab = "start : end", main = maintitle)
   } else {
     plot(sr_simu, type = "l", ylim = c(0, max(sr_simu)),
-         ylab = "richness", xlab = "start : end", main = sim_out$Model$scenario)
+         ylab = "richness", xlab = "start : end", main = maintitle)
   }
 }
 
@@ -194,9 +233,7 @@ mortality <- function(out){ # computes mortality only if generations are consecu
     out$Output[[i]]$mortMat <- matrix(data = NA, nrow = out$Model$x, ncol = out$Model$y)
   }
   
-  idx <- which(diff(out$Model$runs) == 1) # generations pre mortality. idx+1 is post mort.
-  
-  for (i in idx) {
+  for (i in 1:(length(out$Model) -1)) {
     out$Output[[i+1]]$mortMat <-
       ifelse((out$Output[[i]]$traitMat - out$Output[[i+1]]$traitMat) == 0, FALSE, TRUE)
   }
@@ -209,4 +246,150 @@ mortality_batch <- function(out_batch){
     out_batch[[runs]] <- mortality(out_batch[[runs]])
   }
   return(out_batch)
+}
+
+
+
+#### calculate id mat ####
+# each individuum gets its personal ID based on the trait values
+run_id_in <- function(runs){
+  rXc <- (runs$Model$x * runs$Model$y) # dimension
+  id_list <- list() # stores unique id values. Will be used max once per individuum
+  id_list <- lapply(1:length(runs$Output), function(x) as.integer(c(1:rXc) + x * rXc))
+  
+  # create empty id matrix for all generations
+  for (i in 1:length(runs$Output)) {
+    runs$Output[[i]]$idMat <- matrix(data = NA, nrow = runs$Model$x, ncol = runs$Model$y)
+  }
+  
+  # fill id at the first time step
+  runs$Output[[1]]$idMat[1:rXc] <- 1:rXc
+  
+  # if trait values remain the same in next generation (i.e., survived) the ind.
+  # keeps the number else it gets a new unique number from the id_list
+  for (i in 2:length(runs$Output)) {
+    runs$Output[[i]]$idMat <-
+      ifelse((runs$Output[[i - 1]]$traitMat - runs$Output[[i]]$traitMat) == 0,
+             runs$Output[[i - 1]]$idMat,  # return original if TRUE,
+             id_list[[i]]) # return new unique id
+  }
+  return(runs)
+}
+
+run_id <- function(runs, batch = TRUE){
+  if (batch){
+    for (run in seq_along(runs)) {
+      runs[[run]] <- run_id_in(runs = runs[[run]])
+    }
+  } else {
+    runs <- run_id_in(runs = runs)
+  }
+  return(runs)
+}
+
+
+# create function to enlargen matrix: torus
+# it is probably easier to intially enlargen the matrix, instead of jumping to the other side of the matrix each time the neighborhood radius transgresses the matrix edges.
+torus_in <- function(matrix, max_neighborhood_radius) {
+  r <- max_neighborhood_radius
+  
+  mrow <- dim(matrix)[1]
+  mcol <- dim(matrix)[2]
+  mbig <- matrix(data = NA, nrow = mrow + 2 * r, ncol = mcol + 2 * r)
+  big_r <- dim(mbig)[1]
+  big_c <- dim(mbig)[2]
+  
+  # inner part of bigmat: edges of matrix in bigmatrix
+  str_r <- r + 1
+  end_r <- big_r - r
+  str_c <- r + 1
+  end_c <- big_c - r
+  
+  mbig[c(str_r:end_r), c(str_c:end_c)] <- matrix
+  
+  # ! comments relate to bigmat (e.g., upper-wrap in bigmat = lower rows in matrix)
+  # outer part of bigmat: wraped matrix
+  # upper wrap
+  mbig[c(1:r), c(str_c:end_c)] <-
+    matrix[c((mrow - r + 1):mrow), c(1:mcol)]
+  # lower wrap
+  mbig[c((big_r - r + 1):big_r), c(str_c:end_c)] <-
+    matrix[c(1:r), c(1:mcol)]
+  # left wrap
+  mbig[c(str_r:end_r), c(1:r)] <-
+    matrix[c(1:mrow), c((mcol - r + 1):mcol)]
+  # right wrap
+  mbig[c(str_r:end_r), c((big_c - r + 1):big_c)] <-
+    matrix[c(1:mrow), c(1:r)]
+  
+  # diagonals
+  # upper-left
+  mbig[c(1:r), c(1:r)] <-
+    matrix[c((mrow - r + 1):mrow), c((mcol - r + 1):mcol)]
+  # upper-right
+  mbig[c(1:r), c((big_c - r + 1):big_c)] <-
+    matrix[c((mrow - r + 1):mrow), c(1:r)]
+  # lower-left
+  mbig[c((big_r - r + 1):big_r), c(1:r)] <-
+    matrix[c(1:r), c((mcol - r + 1):mcol)]
+  # lower-right
+  mbig[c((big_r - r + 1):big_r), c((big_c - r + 1):big_c)] <-
+    matrix[c(1:r), c(1:r)]
+  
+  return(mbig)
+}
+
+torus <- function(run, overwrite = FALSE, max_neighborhood_radius = NULL) {
+  if (is.null(max_neighborhood_radius)) {
+    r <- run$Model$densityCut
+  } else {r <- max_neighborhood_radius}
+  
+  # calculate mortalities by default, if not available
+  if (!is.matrix(run$Output[[1]]$mortMat)) {
+    run <- mortality(run)
+  }
+  
+  # calculate id by default, if not available
+  if (!is.matrix(run$Output[[1]]$idMat)) {
+    run <- run_id_in(run)
+  }
+  
+  if (overwrite) {
+    for (i in 1:length(run$Output)) {
+      run$Output[[i]]$specMat <- torus_in(matrix = run$Output[[i]]$specMat, r)
+      run$Output[[i]]$traitMat <- torus_in(matrix = run$Output[[i]]$traitMat, r)
+      run$Output[[i]]$envMat <- torus_in(matrix = run$Output[[i]]$envMat, r)
+      run$Output[[i]]$compMat <- torus_in(matrix = run$Output[[i]]$compMat, r)
+      run$Output[[i]]$neutMat <- torus_in(matrix = run$Output[[i]]$neutMat, r)
+      run$Output[[i]]$mortMat <- torus_in(matrix = run$Output[[i]]$mortMat, r)
+      run$Output[[i]]$idMat <- torus_in(matrix = run$Output[[i]]$idMat, r)
+
+    }
+  } else {
+    for (i in 1:length(run$Output)) {
+      run$Output[[i]]$specMatBig <- torus_in(matrix = run$Output[[i]]$specMat, r)
+      run$Output[[i]]$traitMatBig <- torus_in(matrix = run$Output[[i]]$traitMat, r)
+      run$Output[[i]]$envMatBig <- torus_in(matrix = run$Output[[i]]$envMat, r)
+      run$Output[[i]]$compMatBig <- torus_in(matrix = run$Output[[i]]$compMat, r)
+      run$Output[[i]]$neutMatBig <- torus_in(matrix = run$Output[[i]]$neutMat, r)
+      run$Output[[i]]$mortMatBig <- torus_in(matrix = run$Output[[i]]$mortMat, r)
+      run$Output[[i]]$idMatBig <- torus_in(matrix = run$Output[[i]]$idMat, r)
+    }
+  }
+  return(run)
+}
+
+torus_batch <- function(batch, overwrite = FALSE, max_neighborhood_radius){
+  if (overwrite){
+  warning("matrix was overwritten from bigger torus matrix; names of matrices remain the same\n")
+    }
+  
+  if (is.null(max_neighborhood_radius)) {
+    warning("no neighborhood radius defined. Using densityCut value")
+  }
+  
+  for (runs in seq_along(batch)) {
+    batch[[runs]] <- torus(batch[[runs]], overwrite, max_neighborhood_radius)
+  }
+  return(batch)
 }

@@ -1,0 +1,53 @@
+---
+title: "runs to tbl"
+author: "ai"
+format: html
+editor: visual
+---
+
+# load
+
+```{r}
+#| warning: false
+library(PhyloSim)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+```{r}
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
+```
+
+# get names
+```{r}
+nm <- run_name(runs = runs, batch = TRUE)
+names(runs) <- nm
+```
+
+# get mortMat, idMat and torus
+```{r}
+# by default when computing the torus mort and id mat will be calculated
+runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
+```
+
+# calculate cdd
+this should be a function that return for every cell the identity of neighbours. \\
+The simpler method probably results in following cols: \\
+focal_ID, focal_status(alive/dead), neighbor_ID, neighbor_identity(con/het) \\
+and also should include the exponential decay function:
+exp01_N, exp02_N, ... \\
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
