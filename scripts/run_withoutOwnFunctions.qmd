@@ -20,9 +20,9 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 #| echo: false
 
 # Define parameter values
-density_options <- c(0,1)
-dispersal_options <- list(1, "global")  # Using a list to preserve types
-densityCut_options <- c(1,2)
+density_options <- c(1)
+dispersal_options <- list(1, 4, "global")  # Using a list to preserve types
+densityCut_options <- c(1)
 
 # Initialize empty list for parameters
 params <- list()
@@ -56,7 +56,7 @@ for (density in density_options) {
         fission = 0,
         redQueen = 0,
         redQueenStrength = 0,
-        airmat = NA,
+        airmat = 1,
         fitnessActsOn = "mortality",
         runs = rep(1:20 * 100),
         scenario = paste0("dd",
@@ -78,15 +78,19 @@ for (density in density_options) {
 
 ```{r}
 runs <- runSimulationBatch(params, parallel = 8)
+# run <- runSimulation(params[[1]])
 ```
+
 ```{r}
 namelist <- numeric()
-for (i in 1:length(params)) {
+for (i in 1:length(runs)) {
   name <- paste0(
     "dd",
     (ifelse(runs[[i]]$Model$density == TRUE, "T", "F")),
+    "_cs",
+    runs[[i]]$Model$compStrength,
     "_disp",
-    (ifelse(is.numeric(runs[[i]]$Model$dispersal), "1", "G")),
+    (ifelse(!is.numeric(runs[[i]]$Model$dispersal), "G", runs[[i]]$Model$dispersal)),
     "_cut",
     runs[[i]]$Model$densityCut
   )
@@ -99,23 +103,31 @@ for (i in 1:length(runs)) {
 }
 names(mat_list) <- namelist
 
-sum(mat_list[["ddF_disp1_cut1"]] != mat_list[["ddF_disp1_cut2"]])
-sum(mat_list[["ddF_disp1_cut1"]] != mat_list[["ddF_dispG_cut1"]])
-sum(mat_list[["ddF_disp1_cut1"]] != mat_list[["ddF_dispG_cut2"]])
-sum(mat_list[["ddF_dispG_cut1"]] != mat_list[["ddF_dispG_cut2"]])
-sum(mat_list[["ddF_dispG_cut1"]] != mat_list[["ddT_dispG_cut1"]])
-sum(mat_list[["ddF_dispG_cut2"]] != mat_list[["ddT_dispG_cut2"]])
-sum(mat_list[["ddF_disp1_cut1"]] != mat_list[["ddT_disp1_cut1"]])
-sum(mat_list[["ddT_disp1_cut1"]] != mat_list[["ddT_dispG_cut1"]])
-sum(mat_list[["ddT_disp1_cut1"]] != mat_list[["ddT_disp1_cut2"]])
-sum(mat_list[["ddT_dispG_cut1"]] != mat_list[["ddT_dispG_cut2"]])
+# only differences are between disp1 and dispG
+sum(mat_list[["ddT_cs1_disp1_cut1"]] != mat_list[["ddT_cs1_disp4_cut1"]])
+sum(mat_list[["ddT_cs1_disp1_cut1"]] != mat_list[["ddT_cs1_dispG_cut1"]])
+sum(mat_list[["ddT_cs1_disp4_cut1"]] != mat_list[["ddT_cs1_dispG_cut1"]])
+
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddF_cs1_dispG_cut1"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddF_cs1_dispG_cut2"]])
+
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs1_dispG_cut1"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs1_dispG_cut2"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs2_disp1_cut1"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs2_disp1_cut2"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs2_dispG_cut1"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs2_dispG_cut2"]])
 ```
-densityCut makes no difference at all.
-density(0,1) only differ in global scenario, however, no difference in cut:
-*sum(mat_list[["ddF_dispG_cut1"]] != mat_list[["ddT_dispG_cut1"]])
-[1] 2212
-sum(mat_list[["ddF_dispG_cut2"]] != mat_list[["ddT_dispG_cut2"]])
-[1] 2212*
+
+densityCut makes no difference at all. density(0,1) only differ in global scenario, however, no difference in cut
+
+
+
+
+
+
+
+
 
 
 
