@@ -393,3 +393,42 @@ torus_batch <- function(batch, overwrite = FALSE, max_neighborhood_radius){
   }
   return(batch)
 }
+
+#### von Neumann nieghbor coord ####
+
+vNeumann <- function(focal_coord_x, focal_coord_y, order){
+  
+  # ensure matrix includes all neighbors
+  if ((focal_coord_x - order) < 1 | (focal_coord_y - order) < 1){
+    stop("Error: neighbours out of boundary")
+  }
+  # ensure order is min 1
+  if (order < 1){
+    stop("Error: order must be minimum 1")
+  }
+  
+  # create xy matrix with coordinates of all neighbors
+  fx <- focal_coord_x
+  fy <- focal_coord_y
+
+  # get manhatten distances and all combinations
+  grid_coord <- expand.grid(dx = -order:order, dy = -order:order)
+  manhatten <- abs(grid_coord$dx) + abs(grid_coord$dy)
+  
+  # filter von Neumann nieghborhood
+  valid_coords <- grid_coord[manhatten <= order & manhatten > 0, ]
+  
+  # Calculate neighbor coordinates
+  x_coords <- fx + valid_coords$dx
+  y_coords <- fy + valid_coords$dy
+  
+  # Calculate Euclidean distances
+  euclidean_dist <- sqrt(valid_coords$dx^2 + valid_coords$dy^2)
+  
+  # Create result matrix
+  result <- matrix(c(x_coords, y_coords, euclidean_dist), 
+                   ncol = 3, byrow = FALSE)
+  colnames(result) <- c("x", "y", "euclidean_dist")
+  
+  return(result)
+}
