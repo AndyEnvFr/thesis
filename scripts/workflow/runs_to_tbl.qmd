@@ -259,6 +259,7 @@ names(tab_list) <- names(runz)
 stopCluster(cl)
 
 saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250520_mortality")
+saveRDS(runtime, "~/cyber_synch/local/runs/tabular/20250520_mortality_runtime")
 # good to name it like the model output
 # which is stored in "cyber_synch/local/runs/fat/"
 ```
