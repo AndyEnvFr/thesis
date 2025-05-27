@@ -1,0 +1,62 @@
+---
+title: "test_mort"
+author: "ai"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+# library(parallel)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+# load
+
+```{r}
+mort <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
+
+names <- sapply(mort, function(x) x$Model$scenario)
+names(mort) <- names
+nameshort <- paste0("mort = ", sub(".*m([0-9]+).*", replacement = "\\1", x = names))
+```
+
+```{r}
+runs_mortmat <- mortality_batch(mort) # (if batch run: mortality_batch)
+```
+
+```{r}
+#| fig-height: 8
+#| fig-width: 16
+
+runtime <- length(runs_mortmat[[1]]$Output)
+
+# pdf("~/cyber_synch/local/figures/20250520_mort_spec.pdf", width = 16, height = 8)
+par(mfrow = c(2, 4))
+sapply(runs_mortmat, function(x) image(x$Output[[runtime]]$specMat, main = paste0(x$Model$scenario, "_spec")))
+sapply(runs_mortmat, function(x) image(x$Output[[runtime]]$mortMat, main = paste0(x$Model$scenario, "_mort")))
+# dev.off()
+```
+
+```{r}
+#| fig-height: 8
+#| fig-width: 16
+
+
+resultmat <- matrix(NA,
+  nrow = length(runs_mortmat[[1]]$Output) / 2,
+  ncol = length(runs_mortmat)
+)
+
+for (i in 1:(length(runs_mortmat[[1]]$Output) / 2)) {
+  j <- i * 2
+  resultmat[i, ] <- sapply(runs_mortmat, function(x) sum(x$Output[[j]]$mortMat))
+}
+
+matplot(resultmat, lwd = 1, type = "l", main = "sum of deaths")
+legend("bottomleft", legend = names, col = 1:length(names), lwd = 1, bty = "n", ncol = 4, lty = 1:length(runs_mortmat))
+
+colMeans(resultmat)
+```

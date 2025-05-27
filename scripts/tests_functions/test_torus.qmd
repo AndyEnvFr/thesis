@@ -1,0 +1,54 @@
+---
+title: "torus_test"
+author: "ai"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+# library(parallel)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+#load data
+```{r}
+mort <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
+
+names <- sapply(mort, function(x) x$Model$scenario)
+names(mort) <- names
+nameshort <- paste0("mort = ", sub(".*m([0-9]+).*", replacement = "\\1", x = names))
+```
+
+#test the inner torus function
+```{r}
+test <- matrix(1, 5, 10)
+test[c(2:(dim(test)[1] - 1)), c(2:(dim(test)[2] - 1))] <- 2
+test[c(3:(dim(test)[1] - 2)), c(3:(dim(test)[2] - 2))] <- 3
+image(test)
+
+image(torus_in(matrix = test, max_neighborhood_radius = 3), col = heat.colors(10))
+```
+
+# test the rest of the torus function with real data
+
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+
+
+test <- torus(mort$dd0_disp1_sr2_e0_m1_cut1, max_neighborhood_radius = 20)
+# try <- torus(mort$dd0_disp1_sr2_e0_m1_cut1, max_neighborhood_radius = 20, overwrite = TRUE)
+
+par(mfrow = c(1,2))
+image(test$Output[[20]]$specMat)
+image(test$Output[[20]]$specMatBig) # looks good
+
+test <- torus_batch(mort, max_neighborhood_radius = 20)
+image(test$dd0_disp1_sr2_e0_m1_cut1$Output[[20]]$traitMat)
+image(test$dd0_disp1_sr2_e0_m1_cut1$Output[[20]]$traitMatBig) # looks good
+image(test$dd2_dispG_sr2_e0_m10_cut4$Output[[20]]$specMat)
+image(test$dd2_dispG_sr2_e0_m10_cut4$Output[[20]]$specMatBig) # looks good
+```

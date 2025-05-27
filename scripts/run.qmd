@@ -1,0 +1,91 @@
+---
+title: "Phylo Sim exploration of density dependence"
+format: html
+editor: visual
+---
+
+Here, I check the relationship between the *density* param and the species richness. Also, seed dispersal = (1, global). For this purpose the frequency of the output must not be every 50 generations for 100k generations.
+
+```{r}
+#| warning: false
+library(PhyloSim)
+# source("~/cyber_synch/git_synch/scripts/functions.R")
+source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+### define params and run model
+
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+density_options <- c(0, 1, 2)
+dispersal_options <- list(1, "global")  # Using a list to preserve types
+densityCut_options <- c(1, 2)
+fitnessBaseMortalityRatio_options <- c(1, 10)
+
+# Initialize empty list for parameters
+params <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (density in density_options) {
+  for (dispersal_type in dispersal_options) {
+    for (cut in densityCut_options) {
+      for (fbmr in fitnessBaseMortalityRatio_options) {
+        # Format scenario components
+        scenario_density <- gsub("\\.", "-", as.character(density))
+        scenario_dispersal <- ifelse(identical(dispersal_type, "global"), "G", dispersal_type)
+        scenario_cut <- gsub("\\.", "-", as.character(cut))
+        scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
+        
+        # Set airmat value properly
+        airmat_value <- ifelse(fbmr == 1, 1, NA)
+        
+        # Create parameter set
+        params[[param_index]] <- createCompletePar(
+          x = 50,
+          y = 50,
+          density = density,
+          dispersal = dispersal_type,
+          specRate = 2,
+          environment = 0,
+          fitnessBaseMortalityRatio = fbmr,
+          densityCut = cut,
+          seed = 20250414,
+          type = "base",
+          protracted = 0,
+          fission = 0,
+          redQueen = 0,
+          redQueenStrength = 0,
+          airmat = airmat_value,
+          fitnessActsOn = "mortality",
+          runs = rep(1:20 * 100),
+          scenario = paste0("dd", scenario_density,
+                          "_disp", scenario_dispersal,
+                          "_sr2_e0_m", scenario_fbmr,
+                          "_cut", scenario_cut)
+        )
+        
+        # Increment parameter index
+        param_index <- param_index + 1
+      }
+    }
+  }
+}
+
+```
+
+# run parallel
+
+```{r}
+runs <- runSimulationBatch(params, parallel = 8)
+# run <- runSimulation(params[[1]])
+```
+
+# save
+
+```{r}
+saveRDS(runs, "~/cyber_synch/local/runs/fat/20250520_mortality")
+```

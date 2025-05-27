@@ -1,101 +1,32 @@
 ---
-title: "Phylo Sim exploration of density dependence"
+title: "fbmr"
+author: "ai"
 format: html
 editor: visual
 ---
 
-Here, I check the relationship between the *density* param and the species richness. Also, seed dispersal = (1, global). For this purpose the frequency of the output must not be every 50 generations for 100k generations.
-
+# load
 ```{r}
 #| warning: false
 library(PhyloSim)
-library(parallel)
 # source("~/cyber_synch/git_synch/scripts/functions.R")
 source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
-### define params and run model
-
 ```{r}
-#| eval: true
-#| echo: false
-
-# Define parameter values
-density_options <- c(0,1,2)
-dispersal_options <- list(1, "global")  # Using a list to preserve types
-densityCut_options <- c(1,2)
-fitnessBaseMortalityRatio_options <- c(1, 10)  # Adding options for fitnessBaseMortalityRatio
-
-# Initialize empty list for parameters
-params <- list()
-param_index <- 1
-
-# Nested loops for all combinations
-for (density in density_options) {
-  for (disp_idx in 1:length(dispersal_options)) {
-    for (cut in densityCut_options) {
-      for (fbmr in fitnessBaseMortalityRatio_options) {  # New loop for fitnessBaseMortalityRatio
-        # Get dispersal value with proper type
-        dispersal <- dispersal_options[[disp_idx]]
-        
-        # Format scenario names
-        scenario_density <- gsub("\\.", "-", as.character(density))
-        scenario_dispersal <- ifelse(identical(dispersal, "global"), "G", dispersal)
-        scenario_cut <- gsub("\\.", "-", as.character(cut))
-        scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
-        
-        # Create parameter set
-        params[[param_index]] <- createCompletePar(
-          x = 50,
-          y = 50,
-          density = density,
-          dispersal = dispersal,  # Using the properly typed variable
-          specRate = 2,
-          environment = 0,
-          fitnessBaseMortalityRatio = fbmr,  # Now using the loop variable
-          densityCut = cut,
-          seed = 20250414,
-          type = "base",
-          protracted = 0,
-          fission = 0,
-          redQueen = 0,
-          redQueenStrength = 0,
-          airmat = NA,
-          fitnessActsOn = "mortality",
-          runs = rep(1:20 * 100),
-          scenario = paste0("dd",
-                          scenario_density,
-                          "_disp",
-                          scenario_dispersal,
-                          "_sr2_e0_m",
-                          scenario_fbmr,  # Including fbmr in scenario name
-                          "_cut",
-                          scenario_cut)
-        )
-        
-        # Increment parameter index
-        param_index <- param_index + 1
-      }
-    }
-  }
-}
-```
-
-# run parallel
-
-```{r}
-runs <- runSimulationBatch(params, parallel = 5)
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
 ```
 
 ```{r}
 namelist <- numeric()
-for (i in 1:length(params)) {
+for (i in 1:length(runs)) {
   name <- paste0(
     "dd",
     (ifelse(runs[[i]]$Model$density == TRUE, "T", "F")),
+    "_cs",
     runs[[i]]$Model$compStrength,
     "_disp",
-    (ifelse(is.numeric(runs[[i]]$Model$dispersal), "1", "G")),
+    (ifelse(!is.numeric(runs[[i]]$Model$dispersal), "G", runs[[i]]$Model$dispersal)),
     "_cut",
     runs[[i]]$Model$densityCut,
     "_fbmr",
@@ -110,6 +41,25 @@ for (i in 1:length(runs)) {
 }
 names(mat_list) <- namelist
 
+# only differences are between disp1 and dispG
+sum(mat_list[["ddT_cs1_disp1_cut1"]] != mat_list[["ddT_cs1_disp4_cut1"]])
+sum(mat_list[["ddT_cs1_disp1_cut1"]] != mat_list[["ddT_cs1_dispG_cut1"]])
+sum(mat_list[["ddT_cs1_disp4_cut1"]] != mat_list[["ddT_cs1_dispG_cut1"]])
+
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddF_cs1_dispG_cut1"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddF_cs1_dispG_cut2"]])
+
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs1_dispG_cut1"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs1_dispG_cut2"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs2_disp1_cut1"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs2_disp1_cut2"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs2_dispG_cut1"]])
+sum(mat_list[["ddF_cs1_disp1_cut1"]] != mat_list[["ddT_cs2_dispG_cut2"]])
+```
+
+densityCut makes no difference at all. density(0,1) only differ in global scenario, however, no difference in cut
+
+```{r}
 sum(mat_list[["ddF_disp1_cut1_fbmr1"]] != mat_list[["ddF_disp1_cut1_fbmr10"]])
 
 
@@ -147,7 +97,9 @@ sum(mat_list[["ddF_dispG_cut1_fbmr1"]] != mat_list[["ddT_dispG_cut1_fbmr10"]])
 sum(mat_list[["ddF_dispG_cut1_fbmr1"]] != mat_list[["ddT_dispG_cut1_fbmr1"]])
 # in the global case there is a difference even when fbmr == 1
 ```
-## plot fbmr | dispersal
+
+## plot fbmr \| dispersal
+
 ```{r}
 #| fig-width: 10
 #| fig-height: 5
@@ -168,7 +120,8 @@ image(mat_list$ddF_dispG_cut1_fbmr10, main = "ddF_dispG_cut1_fbmr10")
 image(mat_list$ddF_dispG_cut2_fbmr1, main = "ddF_dispG_cut2_fbmr1")
 image(mat_list$ddF_dispG_cut2_fbmr10, main = "ddF_dispG_cut2_fbmr10")
 ```
-## plot dd | dispersal
+
+## plot dd \| dispersal
 
 ```{r}
 
@@ -256,9 +209,7 @@ image(mat_list_start$ddT1_dispG_cut2_fbmr10, main = "ddT1_dispG_cut2_fbmr10")
 image(mat_list_start$ddT2_dispG_cut2_fbmr10, main = "ddT2_dispG_cut2_fbmr10")
 
 ```
+
 somehow cutoff works only if ddT = 1 not if ddT = 2. For local and global
 
-
-
-
-densityCut makes no difference at all. density(0,1) only differ in global scenario, however, no difference in cut: *sum(mat_list\[\["ddF_dispG_cut1"\]\] != mat_list\[\["ddT_dispG_cut1"\]\]) \[1\] 2212 sum(mat_list\[\["ddF_dispG_cut2"\]\] != mat_list\[\["ddT_dispG_cut2"\]\]) \[1\] 2212*
+densityCut makes no difference at all. density(0,1) only differ in global scenario, however, no difference in cut:
