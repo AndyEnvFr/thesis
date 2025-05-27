@@ -21,7 +21,14 @@ Type inference in c++: auto and decltype = automatic deduction of the data type 
 		instead of "std::set<std::string>::iterator it = st.begin()" one can write "auto it = st.begin()"
 	
 pointer
-	this -> m_species = new Species* [xdim]; Species* points towards the species class, thus defines the type of data that will be stored in the array being allocated
+	this -> m is an abbreviation for (*this).m
+		other ways to use this within a struct or class
+			void set_directly (int new_m) {m = new_m; } // ohne this
+			void set_this1 (int new_m) {this[0].m = new_m;} // a pointer is an array and can be used like one
+			void set_this2 (int new_m) {(*this).m = new_m;} // explicit
+			void set_this3 (int new_m) {this -> m = new_m;} // newer operator 
+		in all cases did we change m to new_m
+		m_species = new Species* [xdim]; Species* points towards the species class, thus defines the type of data that will be stored in the array being allocated
 		creates an array, where each element is a pointer
 		m_species: m stands for member, because it is a member_variable
 		this-> is a pointer and points towards the current object instance
@@ -129,7 +136,21 @@ friend function
 		member function of another class as friend functions
 			...https://www.geeksforgeeks.org/friend-class-function-cpp/...
 			
-
+overloading
+	define multiple operators with the same name but with different functions depending on the fed input
+	it is a form of compile time polymorphism
+	function overloading
+		is triggered by different parameter lists
+			number of params: void print(int x); void print(int x, int y);
+			class of params: void print (char x);
+			order of params: void print (char x, int y); void print(int y, char x);
+		care: the return type alone (void) is not enough. The compiler decides on which overload to use, when the function is called and the return type is not part of the call signature
+	operator overloading
+		in standard c++ the compiler knows how to use + when adding two ints. However, when we define our custom classes like a complex number, the compiler doesn't know how to add those classes
+		Operator overloading allows to define that behavoiur
+		uses the "operator" keyword followed by the symbol we want to overload: operator+
+		
+		
 
 header files =
 	contains declarations of functions: class GlobalEnvironment { … 

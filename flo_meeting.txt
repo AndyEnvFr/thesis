@@ -1,0 +1,6 @@
+15:49 22/05/2025
+
+meeting Florian
+
+diagnostic functions
+	transform to tabular: how to do proper parallelization ? How I did it: library(parallel); parallelize each parameterset in one batch

@@ -1,3 +1,11 @@
+model
+  with fbmr: why dd2 == dd0 in local scenario ? why not in global?
+  without fbmr: why dd0 != dd(1,2) in global but dd0 == d(1,2) in local
+  why in dd0: local : fbmrOn != fbmr Off but global: fbmrOn == fbmr Off
+
+diagnostic functions
+  implemented in R but slow. Implement in c?
+
 questions:
 	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17)
 		what they mean?
@@ -9,9 +17,6 @@ Schroeder paper:
 	does it claim CDD ~ N ?
 	are mut. more host spec. than pathogens?
 	
-Phylosim:
-	do some runs and check how outputs behave
-	for each output create a model summary
 	
 	Phylogeny
 		one can look at CDD strength across taxa: binary distinction between con- and het- and checking of one taxa is affected more by CDD
@@ -20,3 +25,4 @@ Phylosim:
 			Zhu et al 2015
 			Webb et al 2006
 			Lebrija-Trejos et al 2014
+			
