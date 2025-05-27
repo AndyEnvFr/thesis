@@ -1,0 +1,112 @@
+---
+title: "runs to tbl"
+author: "ai"
+format: html
+editor: visual
+---
+
+# load
+
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+# source("~/cyber_synch/git_synch/scripts/functions.R")
+source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+```{r}
+# runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
+runs <- readRDS("~/Uni/Master/MA/local/runs/fat/20250520_mortality")
+```
+
+# get names
+```{r}
+nm <- run_name(runs = runs, batch = TRUE)
+names(runs) <- nm
+```
+
+```{r}
+# continue only with first to make it quick
+runs <- runs[1:2]
+```
+
+# get mortMat, idMat and torus
+
+```{r}
+# by default when computing the torus mort and id mat will be calculated
+# also, the generations will get the name of the run (e.g., if 40 generations
+# are runned until year 200000, then the last generation = run$output["200000"]
+# keep in mind that from now on, the matrices are not of original size any longer
+runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
+```
+
+# transform matrix in df
+
+```{r}
+# Function to get circular neighborhood offsets
+get_circular_offsets <- function(neighborhood_radius) {
+  offsets <- data.frame()
+  
+  for (dx in -neighborhood_radius:neighborhood_radius) {
+    y_lims <- floor(sqrt(neighborhood_radius^2 - dx^2))
+    for (dy in -y_lims:y_lims) {
+      # Skip the center cell (0, 0)
+      if (!(dx == 0 && dy == 0)) {
+        offsets <- rbind(offsets, data.frame(
+          dx = dx,
+          dy = dy
+        ))
+      }
+    }
+  }
+  return(offsets) # return a df with the moves needed for all matrix shifts to compare all neighbors
+}
+
+# do the computation for one run to parallelize
+# for now assume that every two consecutive generations are one census
+#   this requires in run params: sort(c(rep(1:20 * 100), rep(1:20 * 100)+1)
+run_to_tab <- function(run, radius = NULL){
+  
+  # if no radius is given take density_cut
+  if(is.null(radius)){radius <- run$Model$densityCut}
+  r <- radius
+  
+  lx <- dim(run$Output[[1]]$specMat)[1]
+  ly <- dim(run$Output[[1]]$specMat)[2]
+  
+  # get every second generation
+  cen <- names(run$Output)[seq(2, length(names(run$Output)), by = 2)]
+  for (i in cen) {
+    
+    # generate a matrix for summing up conspecific neighbors (by mat addition)
+    # convert back to original (i.e., small) size
+    con <- matrix(NA, dim(run$Output[[1]]$specMat)-radius*2)
+    
+    # to the start add then the offsets
+    sx <- c( (1 + r) , (lx - r) ) # starting x-coord of original mat in bigmat
+    sy <- c( (1 + r) , (ly - r) ) # starting y-coord of original mat in bigmat
+       
+    # get actual inner mat
+    inner <- run$Output[[i]]$specMat[c(sx[1] : sx[2]), c(sy[1] : sy[2])]
+    
+     for (xy in 1:nrow(offsets)) {
+       # get pair of yx coordinates
+       xshift <- offsets[xy,1]
+       yshift <- offsets[xy,2]
+       
+       X <- sx + test[xy,1]
+       Y <- sy + test[xy,2]
+       
+       # crucial part: compare shifted big- and original matrix
+       ifelse(run$Output[[i]]$specMat[c(X[1] : X[2]) , c(Y[1] : Y[2])] == inner,
+              )
+
+     }
+  }
+}
+
+
+
+```
+
