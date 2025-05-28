@@ -354,6 +354,9 @@ torus <- function(run, overwrite = FALSE, max_neighborhood_radius = NULL) {
     run <- run_id_in(run)
   }
   
+  # add generation names in run$Output[["200000"]]
+  names(run$Output) <- run$Model$runs
+  
   if (overwrite) {
     for (i in 1:length(run$Output)) {
       run$Output[[i]]$specMat <- torus_in(matrix = run$Output[[i]]$specMat, r)
