@@ -20,13 +20,13 @@ library(PhyloSim)
 #| echo: false
 
 # Define parameter values
-density_options <- c(0, 1)
+density_options <- c(1)
 dispersal_options <- list(1, "global")  # Using a list to preserve types
 densityCut_options <- c(1,4)
-fitnessBaseMortalityRatio_options <- c(1, 10, 50)
+fitnessBaseMortalityRatio_options <- c(1,10,50)
 
 # Initialize empty list for parameters
-params <- list()
+params2 <- list()
 param_index <- 1
 
 # Generate all parameter combinations
@@ -41,7 +41,7 @@ for (density in density_options) {
         scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
         
         # Create parameter set
-        params[[param_index]] <- createCompletePar(
+        params2[[param_index]] <- createCompletePar(
           x = 100,
           y = 100,
           density = density,
@@ -58,7 +58,61 @@ for (density in density_options) {
           redQueenStrength = 0,
           airmat = 0,
           fitnessActsOn = "mortality",
-          runs = sort(c(rep(1:5 * 100), rep(1:5 * 100) + 1, 1, 2)),
+          runs = c(1, 2, sort( c( ((1:10 * 10)^2), ((1:10 * 10)^2) + 1 ))),
+          scenario = paste0("dd", scenario_density,
+                          "_disp", scenario_dispersal,
+                          "_sr2_e0_m", scenario_fbmr,
+                          "_cut", scenario_cut)
+        )
+        
+        # Increment parameter index
+        param_index <- param_index + 1
+      }
+    }
+  }
+}
+
+# ------------------------------------------again for dd 0 -----------------
+# Define parameter values
+density_options <- c(0)
+dispersal_options <- list(1, "global")  # Using a list to preserve types
+densityCut_options <- c(1)
+fitnessBaseMortalityRatio_options <- c(1)
+
+# Initialize empty list for parameters
+params1 <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (density in density_options) {
+  for (dispersal_type in dispersal_options) {
+    for (cut in densityCut_options) {
+      for (fbmr in fitnessBaseMortalityRatio_options) {
+        # Format scenario components
+        scenario_density <- gsub("\\.", "-", as.character(density))
+        scenario_dispersal <- ifelse(identical(dispersal_type, "global"), "G", dispersal_type)
+        scenario_cut <- gsub("\\.", "-", as.character(cut))
+        scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
+        
+        # Create parameter set
+        params1[[param_index]] <- createCompletePar(
+          x = 100,
+          y = 100,
+          density = density,
+          dispersal = dispersal_type,
+          specRate = 2,
+          environment = 0,
+          fitnessBaseMortalityRatio = fbmr,
+          densityCut = cut,
+          seed = 20250414,
+          type = "base",
+          protracted = 0,
+          fission = 0,
+          redQueen = 0,
+          redQueenStrength = 0,
+          airmat = 0,
+          fitnessActsOn = "mortality",
+          runs = c(1, 2, sort( c( ((1:10 * 10)^2), ((1:10 * 10)^2) + 1 ))),
           scenario = paste0("dd", scenario_density,
                           "_disp", scenario_dispersal,
                           "_sr2_e0_m", scenario_fbmr,
@@ -77,36 +131,14 @@ for (density in density_options) {
 # run parallel
 
 ```{r}
-partest <- createCompletePar(
-          x = 50,
-          y = 50,
-          density = 0,
-          dispersal = 1,
-          specRate = 2,
-          environment = 0,
-          fitnessBaseMortalityRatio = 10,
-          densityCut = 1,
-          seed = 20250414,
-          type = "base",
-          protracted = 0,
-          fission = 0,
-          redQueen = 0,
-          redQueenStrength = 0,
-          airmat = 0,
-          fitnessActsOn = "mortality",
-          runs = sort(c((1:5 * 100), (1:5 * 100) + 1, 1, 2)),
-          scenario = "test"
-        )
+cl <- parallel::makeCluster(14)
+doParallel::registerDoParallel(cl, 14)
+runs <- runSimulationBatch(c(params1, params2), parallel = 14, backup = FALSE)
+
+run <- runSimulation(params[[1]])
+
+saveRDS(runs, "~/cyber_synch/local/runs/fat/20250528_fbmr")
+
+# run <- runSimulation(partest)object.size(params)
 ```
 
-
-```{r}
-# runs <- runSimulationBatch(params[16:18], parallel = 3)
-run <- runSimulation(partest)
-```
-
-# save
-
-```{r}
-saveRDS(runs, "~/cyber_synch/local/runs/fat/20250520_mortality")
-```
