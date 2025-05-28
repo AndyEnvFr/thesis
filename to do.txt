@@ -3,6 +3,9 @@ model
   without fbmr: why dd0 != dd(1,2) in global but dd0 == d(1,2) in local
   why in dd0: local : fbmrOn != fbmr Off but global: fbmrOn == fbmr Off
 
+diagnostic functions
+  implemented in R but slow. Implement in c?
+
 questions:
 	“not only report local stabilizing or destabilizing CDD but also the possible impacts stabilizing or destabilizing CDD might have on fitness or competitive hierarchies in a community (e.g., Hülsmann et al. 2024).” ([LaManna et al., 2024, p. 17)
 		what they mean?
