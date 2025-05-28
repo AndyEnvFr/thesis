@@ -1,9 +1,11 @@
 ---
-title: "runs to tbl"
+title: "conN: a function for calculating the conspecific neighbourhood density"
 author: "ai"
 format: html
 editor: visual
 ---
+
+optimized version because it operates with matrix addition instead of looping through every focal cell
 
 # load
 
@@ -25,11 +27,6 @@ runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
 ```{r}
 nm <- run_name(runs = runs, batch = TRUE)
 names(runs) <- nm
-```
-
-```{r}
-# continue only with first to make it quick
-runs <- runs[20:21]
 ```
 
 # get mortMat, idMat and torus
@@ -115,7 +112,6 @@ get_con_neigh <- function(run, radius = NULL, offsets = NULL){
 }
 ```
 
-
 ```{r}
 # test function
 # offsets <- get_circular_offsets(1)
@@ -131,9 +127,10 @@ get_con_neigh <- function(run, radius = NULL, offsets = NULL){
 ```
 
 # Run in parallel
+
 ```{r}
 
-cl <- makeCluster(5) # make cluster with core nb
+cl <- makeCluster(24) # make cluster with core nb
 
 # export cluster with necessary functions
 clusterExport(cl, c("runz", "get_con_neigh", "get_circular_offsets"))
@@ -145,7 +142,8 @@ parallel_function <- function(run){
 }
 
 #
-parallel_result <- parLapply(cl, X = runz, fun = parallel_function)
+runz <- parLapply(cl, X = runz, fun = parallel_function)
+saveRDS(runz, "~/cyber_synch/local/runs/fat/20250520_conN")
 ```
 
 ```{r}
@@ -158,7 +156,3 @@ parallel_result <- parLapply(cl, X = runz, fun = parallel_function)
 # image(df1[nrow(df1):1, ], main = "con - Flipped Vertically")
 # image(df2[nrow(df2):1, ], main = "spec - Flipped Vertically")
 ```
-
-
-
-

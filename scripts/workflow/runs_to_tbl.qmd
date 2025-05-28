@@ -12,365 +12,79 @@ editor: visual
 library(PhyloSim)
 library(parallel)
 library(dplyr)
-library(ggplot2)
-library(mgcv)
 source("~/cyber_synch/git_synch/scripts/functions.R")
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_conN")
 ```
 
-# get names
-
+# transform matrix in df - parallel
 ```{r}
-nm <- run_name(runs = runs, batch = TRUE)
-names(runs) <- nm
-# [] instead of [[]] filters and returns a list instead of a single list element
-# runs <- runs[grep(pattern = "dc1", x = names(runs))]
-# runs <- runs[1]
-```
+# define which generations are a census
+# Assume years/generations/runs are same in batch
 
-```{r}
-test <- mortality_batch(runs)
-```
-
-
-# get mortMat, idMat and torus
-
-```{r}
-# by default when computing the torus mort and id mat will be calculated
-# keep in mind that from now on, the matrices are not of original size any longer
-runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
-```
-
-# transform matrix in df
-
-## define which generations are a census
-```{r}
-# check the structure of the census
-# I define: if > 1% of individuals are alive in the next generation,
-# this will be included in the census
-
-# if run a batch, the first param set is representative for all other
-# generations <- runz[[1]]$Model$runs
-# diff(generations) # get an idea of the temporal dimensions in generations
-
-# check survival rates between generations
-# if no survivor in the current generation, this will be the start of a new
-surv_rates <- as.data.frame(matrix(data = NA,
-                                   nrow = length(runz),
-                                   ncol = length(runz[[1]]$Output)),
-                            row.names = names(runz))
-colnames(surv_rates) <- paste0("surv_",
-                               (0:(length(runz[[1]]$Output)-1)),
-                               ":",
-                               (1:(length(runz[[1]]$Output))))
-
-for (par in names(runz)) {
-for (i in 1:(length(runz[[par]]$Output)-1)) {
-  surv_rates[par, i + 1] <- sum(runz[[par]]$Output[[i]]$idMat == runz[[par]]$Output[[i + 1]]$idMat) /
-          length(runz[[par]]$Output[[i]]$idMat)
-}
-}
-# no survivor between every second generation,
-# hence this will be the start of the second generation
-
-# visualize surv rates to see if they are homogenuous across the batch
-# image(t(as.matrix(surv_rates)))
-
-# transform in vector for indexing census
-# define survival treshold for census definition
-min_surv <- 0.2
-# define list with census index for each parameter combination
-census_idx <- list()
-
-# get the census idx based on min. survival rate
-for (par in names(runz)) {
-  census_idx[[par]] <- which(surv_rates[par,] >= min_surv)
-}
-
-```
-
-## tabularize census data
-### without parrallelization
-Informations from matrices are stored in df Neighbor-distance are euclidian (sqrt((x2-x1)\^2 + (y2-y1)\^2)) and apply on Von Neumann neighborhoods of order = densityCut
-```{r}
-
-# # create list[[par]] and fill in df with focal and neighbor id and traits for every census
-# tab_list <- list()
-# 
-# # !!! ASSUMPTION: NEIGHBORHOOD RADIUS = DENSITYCUT !!!
-# for (par in names(runz)) {
-#   
-#   # which generation to look at. census interval = i-1 : i
-#   census_idx_loop <- census_idx[[par]]
-#   
-#   edge <- runz[[par]]$Model$densityCut # get torus edge size
-#   
-#   # get position of inner matrix in bigger matrix
-#   x_coord <- (1 : (dim(runz[[par]]$Output[[1]]$idMat)[1] - edge * 2)) + edge
-#   y_coord <- (1 : (dim(runz[[par]]$Output[[1]]$idMat)[2] - edge * 2)) + edge
-#   
-# # (re)create running index for each param set
-# run <- 1
-#   
-# # create empty df with focal and neighbor id and traits for every census
-# tab_join <- data.frame(focal_id = NA,
-#                        census = NA,
-#                        mort_census_start = NA,
-#                        mort_census_end = NA,
-#                        neighbor_id = NA,
-#                        distance = NA,
-#                        het_con = NA)
-# 
-#   for (cil in census_idx_loop) {
-#   for (x in x_coord) {
-#     for (y in y_coord) {
-# 
-#       # get focal information
-#       # empty vector stores focal info. Vector is faster then df
-#       # here order is crucial:
-#       # [1] = census, [2] = focal_id, [3] = mort_start, [4] = mort_end
-#       vec_focal <- rep(NA, 4)
-#       vec_focal[1] <- cil
-#       vec_focal[2] <- runz[[par]]$Output[[cil]]$idMat[x,y]
-#       vec_focal[3] <- runz[[par]]$Output[[cil - 1]]$mortMat[x,y]
-#       vec_focal[4] <- runz[[par]]$Output[[cil]]$mortMat[x,y]
-#       
-#       # get neighbor information
-#       # apply vNeuman to get the neighbor coord and distances from focal cell
-#       neighbors <- vNeumann(focal_coord_x = x, focal_coord_y = y, order = edge)
-#       for (n in 1:nrow(neighbors)) {
-#         nx <- neighbors[n,1]
-#         ny <- neighbors[n,2]
-#         nd <- neighbors[n,3]
-#         vec_joint <- vec_focal # [5] = id, [6] = distance, [7] = het_con
-#         vec_joint[5] <- runz[[par]]$Output[[cil]]$idMat[nx,ny]
-#         vec_joint[6] <- nd
-#         # focal species == neighbor species ?
-#         vec_joint[7] <-
-#           ifelse((runz[[par]]$Output[[cil]]$specMat[x,y] ==
-#                     runz[[par]]$Output[[cil]]$specMat[nx,ny]),
-#                  "con", "het")
-#         
-#         # combine focal and nieghbor information
-#         tab_join[run,] <- vec_joint
-#         run <- run + 1
-#       }
-#       }
-#     }
-#   }
-#   tab_list[[pat]] <- tab_join
-# }
-```
-
-### parrallelization of param sets
-```{r}
-# Detect number of cores (leave one free for system)
-# !!! LEAVE SOME CLUSTER ALSO FOR YOUR COLLEGUES
-# num_cores <- detectCores() - 1
-num_cores <- length(runz) # no point in unsing more cores then this
-
-# Create cluster
-cl <- makeCluster(num_cores)
-
-# Export necessary objects and functions to cluster
-clusterExport(cl, c("runz", "census_idx", "vNeumann"))
-
-# Function to process a single parameter set
-process_parameter <- function(par) {
+mat_to_tab <- function(run){
   
-  # which generation to look at. census interval = i-1 : i
-  census_idx_loop <- census_idx[[par]]
+  r <- run$Model$densityCut # neighb. radius
   
-  edge <- runz[[par]]$Model$densityCut # get torus edge size
+  # census start (where neighbour. denisty is measured)
+  census <- as.character(run$Model$runs)
+  cen_idx <- seq(1, length(names(runs[[1]]$Output)), by = 2)
   
-  # get position of inner matrix in bigger matrix
-  x_coord <- (1 : (dim(runz[[par]]$Output[[1]]$idMat)[1] - edge * 2)) + edge
-  y_coord <- (1 : (dim(runz[[par]]$Output[[1]]$idMat)[2] - edge * 2)) + edge
+  # get bigmat size
+  big <- dim(run$Output[[1]]$specMat)
   
-  # Pre-calculate total number of rows needed for specific param set
-  neigh_nb <- nrow(vNeumann(focal_coord_x = x_coord[1],
-                       focal_coord_y = y_coord[1],
-                       order = edge))
-  total_neighbors <-
-    length(census_idx_loop) *
-    length(x_coord) *
-    length(y_coord) *
-    neigh_nb
+  # get position of original(i.e., inner) matrix
+  in_x <- c(1 + r, (big[1] - r))
+  in_y <- c(1 + r, (big[2] - r))
+  in_dim <- big - r * 2
   
-  # Pre-allocate dataframe with correct size
-  tab_join <- data.frame(
-    census = integer(total_neighbors),
-    focal_id = integer(total_neighbors),
-    mort_census_start = numeric(total_neighbors),
-    mort_census_end = numeric(total_neighbors),
-    neighbor_id = integer(total_neighbors),
-    distance = numeric(total_neighbors),
-    het_con = character(total_neighbors)
-    )
-  
-  # (re)create running index for each param set
-  run <- 1
-  
-  for (cil in census_idx_loop) {
-    for (x in x_coord) {
-      for (y in y_coord) {
-        # get focal information
-        # need this pre-vector, as it will be repeated across the final df
-        # here order is crucial:
-        # [1] = census, [2] = focal_id, [3] = mort_start, [4] = mort_end
-        vec_focal <- rep(NA, 4)
-        vec_focal[1] <- cil
-        vec_focal[2] <- runz[[par]]$Output[[cil]]$idMat[x,y]
-        vec_focal[3] <- runz[[par]]$Output[[cil - 1]]$mortMat[x,y]
-        vec_focal[4] <- runz[[par]]$Output[[cil]]$mortMat[x,y]
-        
-        # get neighbor information
-        # apply vNeuman to get the neighbor coord and distances from focal cell
-        neighbors <- vNeumann(focal_coord_x = x, focal_coord_y = y, order = edge)
-        
-        for (n in 1:nrow(neighbors)) {
-          nx <- neighbors[n,1]
-          ny <- neighbors[n,2]
-          nd <- neighbors[n,3]
+  # create empty df
+    res <- data.frame(
+      "census" = NA,
+      "focal_id" = NA,
+      "mort" = NA,
+      "con" = NA)
+    
+    for (c in seq_along(cen_idx)) {
+      
+      # create interim result df. later cbind it to res
+      interim <- data.frame(
+        census = integer(in_dim[1] * in_dim[2]),
+        focal_id = integer(in_dim[1] * in_dim[2]),
+        mort = numeric(in_dim[1] * in_dim[2]),
+        con = integer(in_dim[1] * in_dim[2])
+        )
+      
+      interim$census <- census[cen_idx[c]]
+      
+      sprint <- 1
+      
+      for (x in (in_x[1] : in_x[2])) {
+        for (y in (in_y[1] : in_y[2])) {
+          interim$focal_id[sprint] = run$Output[[cen_idx[c]]]$idMat[x,y]
+          interim$con[sprint] = run$Output[[cen_idx[c]]]$conNeighMat[(x - r), (y - r)]
+          interim$mort[sprint] = run$Output[[cen_idx[c] + 1]]$mortMat[x,y]
           
-          # repeat focal vector for all neigh
-          tab_join$census[run] <- vec_focal[1]
-          tab_join$focal_id[run] <- vec_focal[2]
-          tab_join$mort_census_start[run] <- vec_focal[3]
-          tab_join$mort_census_end[run] <- vec_focal[4]
-          # new information for each neighbor
-          tab_join$neighbor_id[run] <- runz[[par]]$Output[[cil]]$idMat[nx,ny]
-          tab_join$distance[run] <- nd
-          tab_join$het_con[run] <- ifelse(
-            (runz[[par]]$Output[[cil]]$specMat[x,y] ==
-               runz[[par]]$Output[[cil]]$specMat[nx,ny]),
-            "con", "het" # focal species == neighbor species ?
-          )
-          run <- run + 1
+          sprint <- sprint + 1
         }
       }
+      
+      res <- rbind(res,interim)
     }
-  }
-  return(tab_join)
-  }
+    return(res[-1,]) # del initialzier NA in res df
+    }
 
-# Run in parallel across parameter sets
-runtime <- system.time({
-  tab_list <- parLapply(cl, names(runz), process_parameter)
-})
-
-# Name the list elements
-names(tab_list) <- names(runz)
-
-# Stop cluster
-stopCluster(cl)
-
-saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250527_mortality")
-saveRDS(runtime, "~/cyber_synch/local/runs/tabular/20250527_mortality_runtime")
-# good to name it like the model output
-# which is stored in "cyber_synch/local/runs/fat/"
 ```
 
-
-# load in data
+### run in parallel
 ```{r}
-# tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250520_mortality")
-tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250526_mortality")
+cl <- makeCluster(24)
+clusterExport(cl, c("mat_to_tab", "runs"))
+res <- parLapply(cl = cl, X = runs, fun = mat_to_tab)
 ```
-
-# add the exponential decay cols
-```{r}
-
-# modified it by distance * 10, because my distances are much lower (factor 10)
-# because of grids
-exponential_decay <- function(distance, mu){ return(exp(-((1/mu) * distance * 10))) }
-
-# choose mu
-mu_val <- seq(1,25,2)
-
-
-# visualize the function
-# dist_val <- seq(1,5,.1)
-# mu_val <- seq(1,25,2)
-# decay_names = paste0("exp ", mu_val)
-# 
-# val_df <- expand.grid(dist_val, mu_val) %>% rename(dist_val = Var1,
-#                                                    mu_val = Var2)
-# val_df <- val_df %>% mutate(res = exponential_decay(distance = dist_val, mu = mu_val))
-# 
-# ggplot(data = val_df, mapping = aes(x = dist_val, y = res, colour = mu_val, group = mu_val)) +
-#   scale_color_continuous(type = "viridis", name = "decay constant") +
-#   geom_line(linewidth = 2)
-
-for (i in 1:length(tab_list)){
-  for (mu in mu_val) {
-    decay_names = paste0("exp", mu)
-    tab_list[[i]] <- tab_list[[i]] %>% 
-    mutate(!!decay_names := exponential_decay(distance = distance, mu = mu))
-  }
-}
-
-# overwrite the old file
-# saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250526_mortality")
-```
-
-# Model mortality as a function of neighborhood
-```{r}
-# if needed read in data
-# tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250520_mortality")
-```
-
-
-```{r}
-# loop through different exponential decay function
-
-df <- tab_list[[1]] %>%
-  mutate(het_con = as.factor(het_con), # case_when(het_con == "het" ~ TRUE, .default = FALSE),
-         census = as.factor(census),
-         mort_census_end = as.logical(mort_census_end)) %>%
-           select(census, mort_census_end, het_con, starts_with("exp"))
-
-# get exp col names. Assume same names across batch
-decay <- df %>% select(starts_with("exp")) %>%  colnames()
-
-res_mod <- list()
-run <- 1
-for (dc in decay) {
-  form <- as.formula(paste0("mort_census_end ~ s(het_con) +
-                            s(", dc,") + s(census)"))
-  
-  mod = gam(form,
-            family = binomial,
-            data = df,
-            method = "REML")
-  
-  res_mod[[run]] <- mod
-  run <- run + 1
-}
-
-
-mod <- gam(mort_census_end ~ het_con + s(exp1, k = 1) + census,
-           family = binomial, data = df, method = "REML")
-
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
