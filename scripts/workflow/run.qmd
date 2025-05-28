@@ -8,9 +8,9 @@ Here, I check the relationship between the *density* param and the species richn
 
 ```{r}
 #| warning: false
+source("~/cyber_synch/git_synch/scripts/functions.R")
 library(PhyloSim)
-# source("~/cyber_synch/git_synch/scripts/functions.R")
-source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
 ### define params and run model
@@ -20,10 +20,10 @@ source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 #| echo: false
 
 # Define parameter values
-density_options <- c(0, 1, 2)
+density_options <- c(0, 1)
 dispersal_options <- list(1, "global")  # Using a list to preserve types
-densityCut_options <- c(1, 2)
-fitnessBaseMortalityRatio_options <- c(1, 10)
+densityCut_options <- c(1,4)
+fitnessBaseMortalityRatio_options <- c(1, 10, 50)
 
 # Initialize empty list for parameters
 params <- list()
@@ -40,13 +40,10 @@ for (density in density_options) {
         scenario_cut <- gsub("\\.", "-", as.character(cut))
         scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
         
-        # Set airmat value properly
-        airmat_value <- ifelse(fbmr == 1, 1, NA)
-        
         # Create parameter set
         params[[param_index]] <- createCompletePar(
-          x = 50,
-          y = 50,
+          x = 100,
+          y = 100,
           density = density,
           dispersal = dispersal_type,
           specRate = 2,
@@ -59,9 +56,9 @@ for (density in density_options) {
           fission = 0,
           redQueen = 0,
           redQueenStrength = 0,
-          airmat = airmat_value,
+          airmat = 0,
           fitnessActsOn = "mortality",
-          runs = rep(1:20 * 100),
+          runs = sort(c(rep(1:5 * 100), rep(1:5 * 100) + 1, 1, 2)),
           scenario = paste0("dd", scenario_density,
                           "_disp", scenario_dispersal,
                           "_sr2_e0_m", scenario_fbmr,
@@ -80,8 +77,32 @@ for (density in density_options) {
 # run parallel
 
 ```{r}
-runs <- runSimulationBatch(params, parallel = 8)
-# run <- runSimulation(params[[1]])
+partest <- createCompletePar(
+          x = 50,
+          y = 50,
+          density = 0,
+          dispersal = 1,
+          specRate = 2,
+          environment = 0,
+          fitnessBaseMortalityRatio = 10,
+          densityCut = 1,
+          seed = 20250414,
+          type = "base",
+          protracted = 0,
+          fission = 0,
+          redQueen = 0,
+          redQueenStrength = 0,
+          airmat = 0,
+          fitnessActsOn = "mortality",
+          runs = sort(c((1:5 * 100), (1:5 * 100) + 1, 1, 2)),
+          scenario = "test"
+        )
+```
+
+
+```{r}
+# runs <- runSimulationBatch(params[16:18], parallel = 3)
+run <- runSimulation(partest)
 ```
 
 # save
