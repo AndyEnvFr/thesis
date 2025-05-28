@@ -10,6 +10,7 @@ Here, I check the relationship between the *density* param and the species richn
 #| warning: false
 source("~/cyber_synch/git_synch/scripts/functions.R")
 library(PhyloSim)
+library(parallel)
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
@@ -42,8 +43,8 @@ for (density in density_options) {
         
         # Create parameter set
         params2[[param_index]] <- createCompletePar(
-          x = 100,
-          y = 100,
+          x = 50,
+          y = 50,
           density = density,
           dispersal = dispersal_type,
           specRate = 2,
@@ -96,8 +97,8 @@ for (density in density_options) {
         
         # Create parameter set
         params1[[param_index]] <- createCompletePar(
-          x = 100,
-          y = 100,
+          x = 50,
+          y = 50,
           density = density,
           dispersal = dispersal_type,
           specRate = 2,
@@ -131,8 +132,6 @@ for (density in density_options) {
 # run parallel
 
 ```{r}
-cl <- parallel::makeCluster(14)
-doParallel::registerDoParallel(cl, 14)
 runs <- runSimulationBatch(c(params1, params2), parallel = 14, backup = FALSE)
 
 run <- runSimulation(params[[1]])
@@ -141,4 +140,3 @@ saveRDS(runs, "~/cyber_synch/local/runs/fat/20250528_fbmr")
 
 # run <- runSimulation(partest)object.size(params)
 ```
-
