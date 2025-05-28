@@ -11,6 +11,9 @@ editor: visual
 #| warning: false
 library(PhyloSim)
 library(parallel)
+library(dplyr)
+library(ggplot2)
+library(mgcv)
 source("~/cyber_synch/git_synch/scripts/functions.R")
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
@@ -24,7 +27,15 @@ runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
 ```{r}
 nm <- run_name(runs = runs, batch = TRUE)
 names(runs) <- nm
+# [] instead of [[]] filters and returns a list instead of a single list element
+runs <- runs[grep(pattern = "dc1", x = names(runs))]
+# runs <- runs[1]
 ```
+
+```{r}
+test <- mortality_batch(runs)
+```
+
 
 # get mortMat, idMat and torus
 
@@ -258,19 +269,82 @@ names(tab_list) <- names(runz)
 # Stop cluster
 stopCluster(cl)
 
-saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250520_mortality")
-saveRDS(runtime, "~/cyber_synch/local/runs/tabular/20250520_mortality_runtime")
+saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250526_mortality")
+saveRDS(runtime, "~/cyber_synch/local/runs/tabular/20250526_mortality_runtime")
 # good to name it like the model output
 # which is stored in "cyber_synch/local/runs/fat/"
 ```
 
 
+# load in data
+```{r}
+tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250520_mortality")
+tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250526_mortality")
+```
 
-
-# calculate cdd
-
-this should be a function that return for every cell the identity of neighbours. \\ The simpler method probably results in following cols: \\ focal_ID, focal_status(alive/dead), neighbor_ID, neighbor_identity(con/het) \\ and also should include the exponential decay function: exp01_N, exp02_N, ... \\
-
+# add the exponential decay cols
 ```{r}
 
+# modified it by distance * 10, because my distances are much lower (factor 10)
+# because of grids
+exponential_decay <- function(distance, mu){ return(exp(-((1/mu) * distance * 10))) }
+
+# choose mu
+mu_val <- seq(1,25,2)
+
+
+# visualize the function
+# dist_val <- seq(1,5,.1)
+# mu_val <- seq(1,25,2)
+# decay_names = paste0("exp ", mu_val)
+# 
+# val_df <- expand.grid(dist_val, mu_val) %>% rename(dist_val = Var1,
+#                                                    mu_val = Var2)
+# val_df <- val_df %>% mutate(res = exponential_decay(distance = dist_val, mu = mu_val))
+# 
+# ggplot(data = val_df, mapping = aes(x = dist_val, y = res, colour = mu_val, group = mu_val)) +
+#   scale_color_continuous(type = "viridis", name = "decay constant") +
+#   geom_line(linewidth = 2)
+
+for (i in 1:length(tab_list)){
+  for (mu in mu_val) {
+    decay_names = paste0("exp", mu)
+    tab_list[[i]] <- tab_list[[i]] %>% 
+    mutate(!!decay_names := exponential_decay(distance = distance, mu = mu))
+  }
+}
+
+# overwrite the old file
+# saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250520_mortality")
+```
+
+# Model mortality as a function of neighborhood
+```{r}
+# if needed read in data
+tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250520_mortality")
+```
+
+
+```{r}
+# loop through different exponential decay function
+df <- tab_list[[1]] %>% mutate(het_con = case_when(
+  het_con == "het" ~ 1, .default = 0))
+
+
+#get exp col names. Assume same names across batch
+decay <- df %>% select(starts_with("exp")) %>%  colnames
+
+res_mod <- list()
+run <- 1
+for (dc in decay) {
+  form <- as.formula(paste0("mort_census_end ~ s(het_con) + s(", dc,") + s(census)"))
+  
+  mod = gam(form,
+            family = binomial,
+            data = df,
+            method = "REML")
+  
+  res_mod[[run]] <- mod
+  run <- run + 1
+}
 ```
