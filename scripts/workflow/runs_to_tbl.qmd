@@ -28,7 +28,7 @@ runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
 nm <- run_name(runs = runs, batch = TRUE)
 names(runs) <- nm
 # [] instead of [[]] filters and returns a list instead of a single list element
-runs <- runs[grep(pattern = "dc1", x = names(runs))]
+# runs <- runs[grep(pattern = "dc1", x = names(runs))]
 # runs <- runs[1]
 ```
 
@@ -269,8 +269,8 @@ names(tab_list) <- names(runz)
 # Stop cluster
 stopCluster(cl)
 
-saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250526_mortality")
-saveRDS(runtime, "~/cyber_synch/local/runs/tabular/20250526_mortality_runtime")
+saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250527_mortality")
+saveRDS(runtime, "~/cyber_synch/local/runs/tabular/20250527_mortality_runtime")
 # good to name it like the model output
 # which is stored in "cyber_synch/local/runs/fat/"
 ```
@@ -278,7 +278,7 @@ saveRDS(runtime, "~/cyber_synch/local/runs/tabular/20250526_mortality_runtime")
 
 # load in data
 ```{r}
-tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250520_mortality")
+# tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250520_mortality")
 tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250526_mortality")
 ```
 
@@ -315,29 +315,33 @@ for (i in 1:length(tab_list)){
 }
 
 # overwrite the old file
-# saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250520_mortality")
+# saveRDS(tab_list, "~/cyber_synch/local/runs/tabular/20250526_mortality")
 ```
 
 # Model mortality as a function of neighborhood
 ```{r}
 # if needed read in data
-tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250520_mortality")
+# tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250520_mortality")
 ```
 
 
 ```{r}
 # loop through different exponential decay function
-df <- tab_list[[1]] %>% mutate(het_con = case_when(
-  het_con == "het" ~ 1, .default = 0))
 
+df <- tab_list[[1]] %>%
+  mutate(het_con = as.factor(het_con), # case_when(het_con == "het" ~ TRUE, .default = FALSE),
+         census = as.factor(census),
+         mort_census_end = as.logical(mort_census_end)) %>%
+           select(census, mort_census_end, het_con, starts_with("exp"))
 
-#get exp col names. Assume same names across batch
-decay <- df %>% select(starts_with("exp")) %>%  colnames
+# get exp col names. Assume same names across batch
+decay <- df %>% select(starts_with("exp")) %>%  colnames()
 
 res_mod <- list()
 run <- 1
 for (dc in decay) {
-  form <- as.formula(paste0("mort_census_end ~ s(het_con) + s(", dc,") + s(census)"))
+  form <- as.formula(paste0("mort_census_end ~ s(het_con) +
+                            s(", dc,") + s(census)"))
   
   mod = gam(form,
             family = binomial,
@@ -347,4 +351,30 @@ for (dc in decay) {
   res_mod[[run]] <- mod
   run <- run + 1
 }
+
+
+mod <- gam(mort_census_end ~ het_con + s(exp1, k = 1) + census,
+           family = binomial, data = df, method = "REML")
+
 ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

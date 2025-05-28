@@ -233,7 +233,7 @@ mortality <- function(out){ # computes mortality only if generations are consecu
     out$Output[[i]]$mortMat <- matrix(data = NA, nrow = out$Model$x, ncol = out$Model$y)
   }
   
-  for (i in 1:(length(out$Model) -1)) {
+  for (i in 1:(length(out$Output) -1)) {
     out$Output[[i+1]]$mortMat <-
       ifelse((out$Output[[i]]$traitMat - out$Output[[i+1]]$traitMat) == 0, FALSE, TRUE)
   }
@@ -354,9 +354,6 @@ torus <- function(run, overwrite = FALSE, max_neighborhood_radius = NULL) {
     run <- run_id_in(run)
   }
   
-  # add generation names in run$Output[["200000"]]
-  names(run$Output) <- run$Model$runs
-  
   if (overwrite) {
     for (i in 1:length(run$Output)) {
       run$Output[[i]]$specMat <- torus_in(matrix = run$Output[[i]]$specMat, r)
@@ -435,3 +432,5 @@ vNeumann <- function(focal_coord_x, focal_coord_y, order){
   
   return(result)
 }
+
+

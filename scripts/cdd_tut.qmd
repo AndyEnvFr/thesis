@@ -4,6 +4,7 @@ author: "ai"
 format: html
 editor: visual
 ---
+
 ```{r}
 #| warning: false
 library(PhyloSim)
@@ -12,18 +13,13 @@ library(tidyverse)
 source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
-
 ## 2 Calculating neighborhood densities
-weight by distance within a radius (age not possible in phylosim)
-caution: *diagonal bias*
-option: linear function or exponential function
-To assess which shape parameters of the exponential decay function are most appropriate for the data set, we fit models with multiple combinations of decay function values and *compare models using log likelihood*.
+
+weight by distance within a radius (age not possible in phylosim) caution: *diagonal bias* option: linear function or exponential function To assess which shape parameters of the exponential decay function are most appropriate for the data set, we fit models with multiple combinations of decay function values and *compare models using log likelihood*.
 
 ### 2.3 Data format explanation
-probably I need to give each tree a unique ID and decrease the census interval to be able to compare the same tree at different neighborhoods
-Do I need species code, when phylogeny already accounts for similarities?
-census number is needed for the statistical model
 
+probably I need to give each tree a unique ID and decrease the census interval to be able to compare the same tree at different neighborhoods Do I need species code, when phylogeny already accounts for similarities? census number is needed for the statistical model
 
 ### 2.4 Define exponential decay function
 
@@ -56,43 +52,23 @@ Need to define upper threshold limit that includes neighbors. This could be the 
 
 Here, I apply the exponential functions. As we have multiple census intervals, we need to do multiple calculations.
 
-1) generate a 3 col tiblle with: i = index of focal individual, j = index of neighbor, d = distance i_j
-2) add species information: sp_i, sp_j
-3) add index of relatedness between i and j (in the tutorial comparison type: het / con)
-4) add exponential decay value: loop through all val_mu and create a col for each mu. Calculate the exponential decay with eponential_decay()
+1)  generate a 3 col tiblle with: i = index of focal individual, j = index of neighbor, d = distance i_j
+2)  add species information: sp_i, sp_j
+3)  add index of relatedness between i and j (in the tutorial comparison type: het / con)
+4)  add exponential decay value: loop through all val_mu and create a col for each mu. Calculate the exponential decay with eponential_decay()
+
 ```{r}
 
 ```
 
-
-
 ### 2.6 Calculate neighborhood density
 
-For each focal tree the neighborhood densities are calculated for con- and heterospecifics.
-(Maybe start with het/con and then inlcude continuous phylogeny)
+For each focal tree the neighborhood densities are calculated for con- and heterospecifics. (Maybe start with het/con and then inlcude continuous phylogeny)
 
-The idea is to have a tibble at the end with cols:
-  - i (focal tree id),
-  - comparison_type (con / het OR continuous phylogenic similarity),
-  - nodecay_N,
-  - exp01_N, exp02_N, ...
+The idea is to have a tibble at the end with cols: - i (focal tree id), - comparison_type (con / het OR continuous phylogenic similarity), - nodecay_N, - exp01_N, exp02_N, ...
 
 Once we have a tibble that segregates between het/con, we can pivot_longer the tibble to unify het/con (p.16)
-
 
 ### 2.7 Model mortality as a function of neighborhood density
 
 For now, let's prepare the tibble. Then we can start the modelling.
-
-
-
-
-
-
-
-
-
-
-
-
-
