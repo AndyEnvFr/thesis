@@ -22,9 +22,9 @@ library(parallel)
 
 # Define parameter values
 density_options <- c(1)
-dispersal_options <- list(1, "global")  # Using a list to preserve types
+dispersal_options <- list(1)  # Using a list to preserve types
 densityCut_options <- c(1,4)
-fitnessBaseMortalityRatio_options <- c(1,10,50)
+fitnessBaseMortalityRatio_options <- c(1,10,20)
 
 # Initialize empty list for parameters
 params2 <- list()
@@ -59,7 +59,7 @@ for (density in density_options) {
           redQueenStrength = 0,
           airmat = 0,
           fitnessActsOn = "mortality",
-          runs = c(1, 2, sort( c( ((1:10 * 10)^2), ((1:10 * 10)^2) + 1 ))),
+          runs = c(1, 2, sort( c( ((1:10 * 50)^2), ((1:10 * 50)^2) + 1 ))),
           scenario = paste0("dd", scenario_density,
                           "_disp", scenario_dispersal,
                           "_sr2_e0_m", scenario_fbmr,
@@ -132,11 +132,15 @@ for (density in density_options) {
 # run parallel
 
 ```{r}
-runs <- runSimulationBatch(c(params1, params2), parallel = 14, backup = FALSE)
+runs <- runSimulationBatch(params2, parallel = 6)
 
-run <- runSimulation(params[[1]])
+# run <- runSimulation(params[[1]])
 
 saveRDS(runs, "~/cyber_synch/local/runs/fat/20250528_fbmr")
 
 # run <- runSimulation(partest)object.size(params)
 ```
+
+
+
+
