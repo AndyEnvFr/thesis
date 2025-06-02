@@ -1,0 +1,83 @@
+---
+title: "stats_cdd"
+author: "ai"
+format: html
+editor: visual
+---
+
+Here, I want to calculate the change in mortality from 0 to 1 neighbor.
+
+```{r}
+library(dplyr)
+library(lattice)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+```
+
+```{r}
+# read in data
+tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250528_fbmr")
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr_conN")
+```
+
+```{r}
+# transform census as numeric
+tab_list <- lapply(tab_list, function(x){
+  return(x %>% mutate(census = as.numeric(census)))
+})
+```
+
+# calculate the change in probability(mortality) from 0 to 1 neighbor
+```{r}
+mort_change <- sapply(res, function(x){
+  fm <- glm(formula = "mort ~ con", family = binomial(), data = x)
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  # y = m * x + b
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  # return(c(mort0, mort1))
+  return(mort1 - mort0)
+}
+)
+```
+
+#get species richness
+```{r}
+sr <- spec_time(runs = runs, plot = FALSE, batch = TRUE)
+
+# for now: get mean of last 6 records
+sr <- sapply(sr, function(x) mean(x$spec_rich[(nrow(x) - 6) : nrow(x)]))
+```
+
+# plot results
+```{r}
+# combine results
+df <- data.frame(sr = sr, mc = mort_change)
+
+# get dd, fbmr, dc values
+df$dd <- sub("ddT([0-9.]+).*", x = rownames(df), replacement = "\\1") %>%
+  ifelse(nchar(.) > 5 , "0", .) %>% as.numeric()
+df$fbmr <- sub(".*fbmr([0-9]+)_dc.*", x = rownames(df), replacement = "\\1") %>% 
+  as.numeric()
+df$dc <- sub(".*dc([0-9]+).*", x = rownames(df), replacement = "\\1") %>% 
+  as.numeric()
+```
+
+
+```{r}
+xyplot(sr ~ dd | fbmr, groups = dc, pch = 16, col = c(1:2), cex = 1.5, df,
+       key = list(text = list(c("1","4")),
+                  points = list(pch = 16, col = c(1:2), cex = 1.5),
+                  title = "denstiy cut", cex.title = 1))
+xyplot(mc ~ dd | fbmr, groups = dc, pch = 16, col = c(1:2), cex = 1.5, df,
+       key = list(text = list(c("1","4")),
+                  points = list(pch = 16, col = c(1:2), cex = 1.5),
+                  title = "denstiy cut", cex.title = 1))
+```
+
+
+
+
+

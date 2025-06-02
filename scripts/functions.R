@@ -56,43 +56,99 @@ slim <- function(sim_out, batch){
   return(sim_out)
 }
 
-# function to plot species richness over time
-spec_time <- function(sim_out, thinning_factor = NULL, ymax) {
+
+
+
+# function to plot species richness over time -----------------------------------
+sr <- function(run){
   
-  sr_simu <- sapply(1:length(sim_out$Output),
-                    function(x) PhyloSim::specRich(simu = sim_out,
+  # get species richness for all results
+  sr <- sapply(1:length(run$Output),
+                    function(x) PhyloSim::specRich(simu = run,
                                                    which.result = x))
-  maintitle <- paste0("dd",ifelse(sim_out$Model$density == TRUE, "T", "F"),
-                      sim_out$Model$compStrength,
-                      "_disp", ifelse(sim_out$Model$dispersal == "global", "G",
-                                      sim_out$Model$dispersal),
-                      "_sr", sim_out$Model$specRate,
-                      "_e", ifelse(sim_out$Model$environment == TRUE, "T", "F"),
-                      "_fbmr", sim_out$Model$fitnessBaseMortalityRatio,
-                      "_dc", sim_out$Model$densityCut)
+  # get year of result
+  yr <- run$Model$runs
   
-  
-  if (!is.null(thinning_factor) &&
-      is.numeric(thinning_factor) &&
-      thinning_factor > 1) {
-    idx <- seq(1, length(sr_simu), thinning_factor)
-    sr_simu <- sr_simu[idx]
-  } else if (!is.null(thinning_factor) &&
-             is.numeric(thinning_factor)) {
-    warning("thinning factor must be > 1 for effective thinning")
+  return(data.frame(year = yr, spec_rich = sr))
+}
+
+spec_time <- function(runs, thinning_factor = NULL, ymax = NULL, plot = TRUE, batch = TRUE) {
+
+  if (!batch){ # single run
+    
+      result <- sr(run = runs) # calculate sr for every year
+      
+      main <- run_name(runs = runs, batch = FALSE) # get plot titles
+      
+      if (!is.null(thinning_factor) && # thinning factor
+          is.numeric(thinning_factor) &&
+          thinning_factor > 1) {
+        idx <- seq(1, nrow(result), thinning_factor)
+        result <- result[idx,]
+      } else if (!is.null(thinning_factor) &&
+                 is.numeric(thinning_factor)) {
+        warning("thinning factor must be > 1 for effective thinning")
+      }
+      
+      # ymax i.e., ylim applies only for batch, to make runs comparable
+      
+      if (plot){
+        plot(result, type = "b", ylab = "richness", xlab = "start : end",
+             main = main)
+      }
+      
+      return(result)
   }
   
-  if (is.numeric(ymax)) {
-    plot(sr_simu, type = "l", ylim = c(0, ymax),
-         ylab = "richness", xlab = "start : end", main = maintitle)
-  } else {
-    plot(sr_simu, type = "l", ylim = c(0, max(sr_simu)),
-         ylab = "richness", xlab = "start : end", main = maintitle)
+  if (batch){ # for batch
+    
+    results <- lapply(runs, sr) # for all runs in batch
+    
+    if (!is.null(thinning_factor) && # thinning factor
+        is.numeric(thinning_factor) &&
+        thinning_factor > 1) {
+      idx <- seq(1, nrow(results[[1]]), thinning_factor)
+      for (i in 1:length(results)) {
+        results[[i]] <- results[[i]][idx, ]
+      }
+    } else if (!is.null(thinning_factor) &&
+               is.numeric(thinning_factor)) {
+      warning("thinning factor must be > 1 for effective thinning")
+    }
+
+    for (run in names(results)) {
+      
+      if (is.numeric(ymax) & plot) {
+        plot(results[[run]]$spec_rich ~ results[[run]]$year,
+           type = "b",
+           cex = .4,
+           ylim = c(0, ymax),
+           ylab = "richness",
+           xlab = "start : end",
+           main = run)
+        } else if(plot) {
+          plot(results[[run]]$spec_rich ~ results[[run]]$year,
+               type = "b",
+               cex = .4,
+           ylim = c(0, max(results[[run]]$spec_rich)),
+           ylab = "richness",
+           xlab = "start : end",
+           main = run)
+        }
+    }
+  
+    return(results)
   }
 }
 
 
-# function to save the output either batch or single. 
+
+
+
+
+
+
+# function to save the output either batch or single. --------------------------
 save_out <- function(sim_out, path, batch = FALSE, slim = TRUE) {
   if (slim) {
     sim_out <- slim(sim_out = sim_out, batch = batch)

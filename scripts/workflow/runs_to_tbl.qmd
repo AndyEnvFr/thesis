@@ -17,10 +17,11 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_conN")
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr_conN")
 ```
 
 # transform matrix in df - parallel
+
 ```{r}
 # define which generations are a census
 # Assume years/generations/runs are same in batch
@@ -80,15 +81,10 @@ mat_to_tab <- function(run){
 ```
 
 ### run in parallel
+
 ```{r}
-cl <- makeCluster(24)
+cl <- makeCluster(length(runs))
 clusterExport(cl, c("mat_to_tab", "runs"))
 res <- parLapply(cl = cl, X = runs, fun = mat_to_tab)
+saveRDS(res, "~/cyber_synch/local/runs/tabular/20250528_fbmr")
 ```
-
-
-
-
-
-
-

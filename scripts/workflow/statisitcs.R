@@ -4,9 +4,11 @@ res_glm <- lapply(res, function(x){
   return(x %>% mutate(census = as.numeric(census)))
 })
 
+coeflist <- list()
 results <- lapply(res, function(x)){
   fm1 <- glm(formula = "mort ~ con + census", family = binomial(), data = x)
-  coeflist <- 
+  coeflist <- summary(fm1)
+  coeflist$coefficients["con",]
 }
 
 
