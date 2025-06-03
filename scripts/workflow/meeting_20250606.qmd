@@ -173,3 +173,18 @@ runs <- runSimulationBatch(params, parallel = 8)
 run <- runSimulation(params[[1]])
 # Error in FUN(X[[i]], ...) : numbers of left and right parentheses in Newick string not equal
 ```
+
+# how to continue
+
+- impact of CDD on
+    - alpha diversity
+      - mean of last years (when equilibreium seems reached)
+    - beta diversity ?
+      - cut map into pieces and check alpha div in each piece
+    - abundance
+      - at final year ?
+      - mean of last years ?
+      
+- implement destabilizing CDD
+  - how strong should it be ? as stabilizing CDD
+  - compare estimate: stab CDD VS stab + destab. CDD

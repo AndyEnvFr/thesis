@@ -161,7 +161,6 @@ sr5 <- spec_time(runs = run5, plot = FALSE, batch = TRUE)
 rm(run5)
 ```
 
-
 ```{r}
 # for now: get mean of last 20 records
 sr <- sapply(sr, function(x) mean(x$spec_rich[(nrow(x) - 20) : nrow(x)]))
@@ -245,6 +244,14 @@ df_all <- rbind(df,df1,df2,df3,df3,df5)
 saveRDS(df_all, "~/cyber_synch/local/runs/tabular/20250602_all")
 ```
 
+
+```{r}
+# read in data
+
+df_all <- readRDS("~/cyber_synch/local/runs/tabular/20250602_all")
+```
+
+
 ```{r}
 df_dc1 <- df_all %>%  filter(dc == 1)
 
@@ -257,6 +264,7 @@ xyplot(mc ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc1, type = "p",  aut
        #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
        #            title = "seeds", cex.title = 1))
 ```
+
 ```{r}
 df_dc4 <- df_all %>%  filter(dc == 4)
 
