@@ -1,0 +1,175 @@
+---
+title: "Live Demo - Meeting"
+format: html
+editor: visual
+---
+
+```{r}
+#| warning: false
+source("~/cyber_synch/git_synch/scripts/functions.R")
+library(PhyloSim)
+library(parallel)
+# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+# dd issue in global and local
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+density_options <- c(0,1,1.1, 1.2)
+dispersal_options <- list(1,"global")  # Using a list to preserve types
+densityCut_options <- c(1)
+fitnessBaseMortalityRatio_options <- c(10)
+
+# Initialize empty list for parameters
+params <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (density in density_options) {
+  for (dispersal_type in dispersal_options) {
+    for (cut in densityCut_options) {
+      for (fbmr in fitnessBaseMortalityRatio_options) {
+        
+        # Format scenario components
+        scenario_density <- gsub("\\.", "-", as.character(density))
+        scenario_dispersal <- ifelse(identical(dispersal_type, "global"), "G", dispersal_type)
+        scenario_cut <- gsub("\\.", "-", as.character(cut))
+        scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
+        
+        # Create parameter set
+        params[[param_index]] <- createCompletePar(
+          x = 50,
+          y = 50,
+          density = density,
+          dispersal = dispersal_type,
+          specRate = 2,
+          environment = 0,
+          fitnessBaseMortalityRatio = fbmr,
+          densityCut = cut,
+          seed = 20250414,
+          type = "base",
+          protracted = 0,
+          fission = 0,
+          redQueen = 0,
+          redQueenStrength = 0,
+          airmat = 0,
+          fitnessActsOn = "mortality",
+          runs = 10000,
+          scenario = paste0("dd", scenario_density,
+                          "_disp", scenario_dispersal,
+                          "_sr2_e0_m", scenario_fbmr,
+                          "_cut", scenario_cut)
+        )
+        
+        # Increment parameter index
+        param_index <- param_index + 1
+      }
+    }
+  }
+}
+```
+
+```{r}
+runs <- runSimulationBatch(params, parallel = 8)
+# saveRDS(runs, "~/cyber_synch/local/runs/fat/20250528_fbmr")
+```
+
+```{r}
+names(runs) <- run_name(runs = runs, batch = TRUE)
+print(names(runs))
+```
+
+
+## global and local models difference in dd = 1.2
+### Looks OK for global but not for local
+### see also: https://github.com/TheoreticalEcology/EcoPhyloSim/issues/96
+```{r}
+#|fig-width: 5  
+#|fig-height: 15 
+
+par(mfrow = c(2,2))
+
+# dispersal = 1
+image(runs$ddF1_disp1_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs)[1])
+image(runs$ddT1_disp1_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs)[3])
+image(runs$ddT1.1_disp1_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs)[5])
+image(runs$ddT1.2_disp1_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs)[7])
+
+# dispersal = global
+image(runs$ddF1_dispG_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs)[2])
+image(runs$ddT1_dispG_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs)[4])
+image(runs$ddT1.1_dispG_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs)[6])
+image(runs$ddT1.2_dispG_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs)[8])
+
+```
+
+
+# runs issue
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+density_options <- c(0,1,1.1, 1.2)
+dispersal_options <- list(1,"global")  # Using a list to preserve types
+densityCut_options <- c(1)
+fitnessBaseMortalityRatio_options <- c(10)
+
+# Initialize empty list for parameters
+params <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (density in density_options) {
+  for (dispersal_type in dispersal_options) {
+    for (cut in densityCut_options) {
+      for (fbmr in fitnessBaseMortalityRatio_options) {
+        
+        # Format scenario components
+        scenario_density <- gsub("\\.", "-", as.character(density))
+        scenario_dispersal <- ifelse(identical(dispersal_type, "global"), "G", dispersal_type)
+        scenario_cut <- gsub("\\.", "-", as.character(cut))
+        scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
+        
+        # Create parameter set
+        params[[param_index]] <- createCompletePar(
+          x = 50,
+          y = 50,
+          density = density,
+          dispersal = dispersal_type,
+          specRate = 2,
+          environment = 0,
+          fitnessBaseMortalityRatio = fbmr,
+          densityCut = cut,
+          seed = 20250414,
+          type = "base",
+          protracted = 0,
+          fission = 0,
+          redQueen = 0,
+          redQueenStrength = 0,
+          airmat = 0,
+          fitnessActsOn = "mortality",
+          runs = c(1,10000), # c(7,10000)
+          scenario = paste0("dd", scenario_density,
+                          "_disp", scenario_dispersal,
+                          "_sr2_e0_m", scenario_fbmr,
+                          "_cut", scenario_cut)
+        )
+        
+        # Increment parameter index
+        param_index <- param_index + 1
+      }
+    }
+  }
+}
+```
+
+```{r}
+runs <- runSimulationBatch(params, parallel = 8)
+# Error in unserialize(socklist[[n]]) : error reading from connection
+run <- runSimulation(params[[1]])
+# Error in FUN(X[[i]], ...) : numbers of left and right parentheses in Newick string not equal
+```
