@@ -30,6 +30,9 @@ run_name <- function(runs, batch = TRUE){
 }
 
 
+
+
+
 # function to reduce size and keep only species matrix
 slim <- function(sim_out, batch){
   if (batch == FALSE) {
@@ -493,3 +496,129 @@ vNeumann <- function(focal_coord_x, focal_coord_y, order){
 }
 
 
+
+# ------------------------ conspecific neighbors
+
+# Function to get circular neighborhood offsets
+get_circular_offsets <- function(neigh_radius) {
+  offsets <- data.frame()
+  
+  for (dx in -neigh_radius:neigh_radius) {
+    y_lims <- floor(sqrt(neigh_radius^2 - dx^2))
+    for (dy in -y_lims:y_lims) {
+      # Skip the center cell (0, 0)
+      if (!(dx == 0 && dy == 0)) {
+        offsets <- rbind(offsets, data.frame(
+          dx = dx,
+          dy = dy
+        ))
+      }
+    }
+  }
+  return(offsets) # return a df with the moves needed for all matrix shifts to compare all neighbors
+}
+
+# do the computation for one run to parallelize
+# for now assume that every two consecutive generations are one census
+#   this requires in run params: sort(c(rep(1:20 * 100), rep(1:20 * 100)+1)
+get_con_neigh <- function(run, radius = NULL, offsets = NULL){
+  
+  # if no radius is given take density_cut
+  if(is.null(radius)){radius <- run$Model$densityCut}
+  r <- radius
+  
+  # if no offsets are given, calculate them
+  if(is.null(offsets)){offsets <- get_circular_offsets(neigh_radius = r)}
+  
+  lx <- dim(run$Output[[1]]$specMat)[1]
+  ly <- dim(run$Output[[1]]$specMat)[2]
+  
+  # get every second generation
+  census <- names(run$Output)[seq(1, length(names(run$Output)), by = 2)]
+  for (cen in census) {
+    
+    # to the start add then the offsets
+    sx <- c( (1 + r) , (lx - r) ) # starting x-coord of original mat in bigmat
+    sy <- c( (1 + r) , (ly - r) ) # starting y-coord of original mat in bigmat
+    
+    # generate a matrix for summing up conspecific neighbors (by mat addition)
+    # convert back to original (i.e., small) size
+    con <- matrix(0, lx - r * 2, ly - r * 2)
+    
+    # get actual inner mat
+    inner <- run$Output[[cen]]$specMat[c(sx[1] : sx[2]), c(sy[1] : sy[2])]
+    
+    for (xy in 1:nrow(offsets)) {
+      # get offset coordinates
+      xshift <- offsets[xy,1]
+      yshift <- offsets[xy,2]
+      
+      # add offsets
+      X <- sx + xshift
+      Y <- sy + yshift
+      
+      # crucial part: compare shifted big- and original matrix
+      con <- con + ifelse(run$Output[[cen]]$specMat[c(X[1] : X[2]) ,
+                                                    c(Y[1] : Y[2])] == inner,
+                          1, 0)
+      
+    }
+    run$Output[[cen]]$conNeighMat <- con 
+  }
+  return(run)
+}
+
+
+
+# ----------------------- matrix to table -------------------------------
+mat_to_tab <- function(run){
+  
+  r <- run$Model$densityCut # neighb. radius
+  
+  # census start (where neighbour. denisty is measured)
+  census <- as.character(run$Model$runs)
+  cen_idx <- seq(1, length(names(runs[[1]]$Output)), by = 2)
+  
+  # get bigmat size
+  big <- dim(run$Output[[1]]$specMat)
+  
+  # get position of original(i.e., inner) matrix
+  in_x <- c(1 + r, (big[1] - r))
+  in_y <- c(1 + r, (big[2] - r))
+  in_dim <- big - r * 2
+  
+  # create empty df
+  res <- data.frame(
+    "census" = NA,
+    "focal_id" = NA,
+    "mort" = NA,
+    "con" = NA)
+  
+  for (c in seq_along(cen_idx)) {
+    
+    # create interim result df. later cbind it to res
+    interim <- data.frame(
+      census = integer(in_dim[1] * in_dim[2]),
+      focal_id = integer(in_dim[1] * in_dim[2]),
+      mort = numeric(in_dim[1] * in_dim[2]),
+      con = integer(in_dim[1] * in_dim[2])
+    )
+    
+    interim$census <- census[cen_idx[c]]
+    
+    sprint <- 1
+    
+    for (x in (in_x[1] : in_x[2])) {
+      for (y in (in_y[1] : in_y[2])) {
+        interim$focal_id[sprint] = run$Output[[cen_idx[c]]]$idMat[x,y]
+        interim$con[sprint] = run$Output[[cen_idx[c]]]$conNeighMat[(x - r), (y - r)]
+        interim$mort[sprint] = run$Output[[cen_idx[c] + 1]]$mortMat[x,y]
+        
+        sprint <- sprint + 1
+      }
+    }
+    
+    res <- rbind(res,interim)
+  }
+  return(res[-1,]) # del initialzier NA in res df
+}

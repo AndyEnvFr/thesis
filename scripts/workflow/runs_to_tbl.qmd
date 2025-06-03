@@ -17,74 +17,18 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr_conN")
+# runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr_conN")
+# runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_01_conN")
+# runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_02_conN")
+# runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_03_conN")
+# runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_04_conN")
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_05_conN")
 ```
 
 # transform matrix in df - parallel
-
-```{r}
-# define which generations are a census
-# Assume years/generations/runs are same in batch
-
-mat_to_tab <- function(run){
-  
-  r <- run$Model$densityCut # neighb. radius
-  
-  # census start (where neighbour. denisty is measured)
-  census <- as.character(run$Model$runs)
-  cen_idx <- seq(1, length(names(runs[[1]]$Output)), by = 2)
-  
-  # get bigmat size
-  big <- dim(run$Output[[1]]$specMat)
-  
-  # get position of original(i.e., inner) matrix
-  in_x <- c(1 + r, (big[1] - r))
-  in_y <- c(1 + r, (big[2] - r))
-  in_dim <- big - r * 2
-  
-  # create empty df
-    res <- data.frame(
-      "census" = NA,
-      "focal_id" = NA,
-      "mort" = NA,
-      "con" = NA)
-    
-    for (c in seq_along(cen_idx)) {
-      
-      # create interim result df. later cbind it to res
-      interim <- data.frame(
-        census = integer(in_dim[1] * in_dim[2]),
-        focal_id = integer(in_dim[1] * in_dim[2]),
-        mort = numeric(in_dim[1] * in_dim[2]),
-        con = integer(in_dim[1] * in_dim[2])
-        )
-      
-      interim$census <- census[cen_idx[c]]
-      
-      sprint <- 1
-      
-      for (x in (in_x[1] : in_x[2])) {
-        for (y in (in_y[1] : in_y[2])) {
-          interim$focal_id[sprint] = run$Output[[cen_idx[c]]]$idMat[x,y]
-          interim$con[sprint] = run$Output[[cen_idx[c]]]$conNeighMat[(x - r), (y - r)]
-          interim$mort[sprint] = run$Output[[cen_idx[c] + 1]]$mortMat[x,y]
-          
-          sprint <- sprint + 1
-        }
-      }
-      
-      res <- rbind(res,interim)
-    }
-    return(res[-1,]) # del initialzier NA in res df
-    }
-
-```
-
-### run in parallel
-
 ```{r}
 cl <- makeCluster(length(runs))
 clusterExport(cl, c("mat_to_tab", "runs"))
 res <- parLapply(cl = cl, X = runs, fun = mat_to_tab)
-saveRDS(res, "~/cyber_synch/local/runs/tabular/20250528_fbmr")
+saveRDS(res, "~/cyber_synch/local/runs/tabular/20250602_05")
 ```

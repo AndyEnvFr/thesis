@@ -14,9 +14,13 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-# read in data
+# read in tabular data
 tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250528_fbmr")
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr_conN")
+tab_list1 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_01")
+tab_list2 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_02")
+tab_list3 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_03")
+tab_list4 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_04")
+tab_list5 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_05")
 ```
 
 ```{r}
@@ -24,11 +28,32 @@ runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr_conN")
 tab_list <- lapply(tab_list, function(x){
   return(x %>% mutate(census = as.numeric(census)))
 })
+
+tab_list1 <- lapply(tab_list1, function(x){
+  return(x %>% mutate(census = as.numeric(census)))
+})
+
+tab_list2 <- lapply(tab_list2, function(x){
+  return(x %>% mutate(census = as.numeric(census)))
+})
+
+tab_list3 <- lapply(tab_list3, function(x){
+  return(x %>% mutate(census = as.numeric(census)))
+})
+
+tab_list4 <- lapply(tab_list4, function(x){
+  return(x %>% mutate(census = as.numeric(census)))
+})
+
+tab_list5 <- lapply(tab_list5, function(x){
+  return(x %>% mutate(census = as.numeric(census)))
+})
 ```
 
 # calculate the change in probability(mortality) from 0 to 1 neighbor
+
 ```{r}
-mort_change <- sapply(res, function(x){
+mort_change <- sapply(tab_list, function(x){
   fm <- glm(formula = "mort ~ con", family = binomial(), data = x)
   
   sfm <- summary(fm)$coefficients
@@ -39,22 +64,124 @@ mort_change <- sapply(res, function(x){
   
   # return(c(mort0, mort1))
   return(mort1 - mort0)
-}
-)
+})
+
+mort_change1 <- sapply(tab_list1, function(x){
+  fm <- glm(formula = "mort ~ con", family = binomial(), data = x)
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  # y = m * x + b
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  # return(c(mort0, mort1))
+  return(mort1 - mort0)
+})
+
+mort_change2 <- sapply(tab_list2, function(x){
+  fm <- glm(formula = "mort ~ con", family = binomial(), data = x)
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  # y = m * x + b
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  # return(c(mort0, mort1))
+  return(mort1 - mort0)
+})
+
+mort_change3 <- sapply(tab_list3, function(x){
+  fm <- glm(formula = "mort ~ con", family = binomial(), data = x)
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  # y = m * x + b
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  # return(c(mort0, mort1))
+  return(mort1 - mort0)
+})
+
+mort_change4 <- sapply(tab_list4, function(x){
+  fm <- glm(formula = "mort ~ con", family = binomial(), data = x)
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  # y = m * x + b
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  # return(c(mort0, mort1))
+  return(mort1 - mort0)
+})
+
+mort_change5 <- sapply(tab_list5, function(x){
+  fm <- glm(formula = "mort ~ con", family = binomial(), data = x)
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  # y = m * x + b
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  # return(c(mort0, mort1))
+  return(mort1 - mort0)
+})
 ```
 
 #get species richness
-```{r}
-sr <- spec_time(runs = runs, plot = FALSE, batch = TRUE)
 
-# for now: get mean of last 6 records
-sr <- sapply(sr, function(x) mean(x$spec_rich[(nrow(x) - 6) : nrow(x)]))
+```{r}
+# read in matrix data for sr calculation, then delete, because heavy
+run <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr")
+sr <- spec_time(runs = run, plot = FALSE, batch = TRUE)
+rm(run)
+
+run1 <- readRDS("~/cyber_synch/local/runs/fat/20250602_01")
+sr1 <- spec_time(runs = run1, plot = FALSE, batch = TRUE)
+rm(run1)
+
+run2 <- readRDS("~/cyber_synch/local/runs/fat/20250602_02")
+sr2 <- spec_time(runs = run2, plot = FALSE, batch = TRUE)
+rm(run2)
+
+run3 <- readRDS("~/cyber_synch/local/runs/fat/20250602_03")
+sr3 <- spec_time(runs = run3, plot = FALSE, batch = TRUE)
+rm(run3)
+
+run4 <- readRDS("~/cyber_synch/local/runs/fat/20250602_04")
+sr4 <- spec_time(runs = run4, plot = FALSE, batch = TRUE)
+rm(run4)
+
+run5 <- readRDS("~/cyber_synch/local/runs/fat/20250602_05")
+sr5 <- spec_time(runs = run5, plot = FALSE, batch = TRUE)
+rm(run5)
+```
+
+
+```{r}
+# for now: get mean of last 20 records
+sr <- sapply(sr, function(x) mean(x$spec_rich[(nrow(x) - 20) : nrow(x)]))
+sr1 <- sapply(sr1, function(x) mean(x$spec_rich[(nrow(x) - 20) : nrow(x)]))
+sr2 <- sapply(sr2, function(x) mean(x$spec_rich[(nrow(x) - 20) : nrow(x)]))
+sr3 <- sapply(sr3, function(x) mean(x$spec_rich[(nrow(x) - 20) : nrow(x)]))
+sr4 <- sapply(sr4, function(x) mean(x$spec_rich[(nrow(x) - 20) : nrow(x)]))
+sr5 <- sapply(sr5, function(x) mean(x$spec_rich[(nrow(x) - 20) : nrow(x)]))
 ```
 
 # plot results
+
 ```{r}
 # combine results
 df <- data.frame(sr = sr, mc = mort_change)
+df1 <- data.frame(sr = sr1, mc = mort_change1)
+df2 <- data.frame(sr = sr2, mc = mort_change2)
+df3 <- data.frame(sr = sr3, mc = mort_change3)
+df4 <- data.frame(sr = sr4, mc = mort_change4)
+df5 <- data.frame(sr = sr5, mc = mort_change5)
 
 # get dd, fbmr, dc values
 df$dd <- sub("ddT([0-9.]+).*", x = rownames(df), replacement = "\\1") %>%
@@ -63,21 +190,81 @@ df$fbmr <- sub(".*fbmr([0-9]+)_dc.*", x = rownames(df), replacement = "\\1") %>%
   as.numeric()
 df$dc <- sub(".*dc([0-9]+).*", x = rownames(df), replacement = "\\1") %>% 
   as.numeric()
-```
 
+# get dd, fbmr, dc values
+df1$dd <- sub("ddT([0-9.]+).*", x = rownames(df1), replacement = "\\1") %>%
+  ifelse(nchar(.) > 5 , "0", .) %>% as.numeric()
+df1$fbmr <- sub(".*fbmr([0-9]+)_dc.*", x = rownames(df1), replacement = "\\1") %>% 
+  as.numeric()
+df1$dc <- sub(".*dc([0-9]+).*", x = rownames(df1), replacement = "\\1") %>% 
+  as.numeric()
+
+# get dd, fbmr, dc values
+df2$dd <- sub("ddT([0-9.]+).*", x = rownames(df2), replacement = "\\1") %>%
+  ifelse(nchar(.) > 5 , "0", .) %>% as.numeric()
+df2$fbmr <- sub(".*fbmr([0-9]+)_dc.*", x = rownames(df2), replacement = "\\1") %>% 
+  as.numeric()
+df2$dc <- sub(".*dc([0-9]+).*", x = rownames(df2), replacement = "\\1") %>% 
+  as.numeric()
+
+# get dd, fbmr, dc values
+df3$dd <- sub("ddT([0-9.]+).*", x = rownames(df3), replacement = "\\1") %>%
+  ifelse(nchar(.) > 5 , "0", .) %>% as.numeric()
+df3$fbmr <- sub(".*fbmr([0-9]+)_dc.*", x = rownames(df3), replacement = "\\1") %>% 
+  as.numeric()
+df3$dc <- sub(".*dc([0-9]+).*", x = rownames(df3), replacement = "\\1") %>% 
+  as.numeric()
+
+# get dd, fbmr, dc values
+df4$dd <- sub("ddT([0-9.]+).*", x = rownames(df4), replacement = "\\1") %>%
+  ifelse(nchar(.) > 5 , "0", .) %>% as.numeric()
+df4$fbmr <- sub(".*fbmr([0-9]+)_dc.*", x = rownames(df4), replacement = "\\1") %>% 
+  as.numeric()
+df4$dc <- sub(".*dc([0-9]+).*", x = rownames(df4), replacement = "\\1") %>% 
+  as.numeric()
+
+# get dd, fbmr, dc values
+df5$dd <- sub("ddT([0-9.]+).*", x = rownames(df5), replacement = "\\1") %>%
+  ifelse(nchar(.) > 5 , "0", .) %>% as.numeric()
+df5$fbmr <- sub(".*fbmr([0-9]+)_dc.*", x = rownames(df5), replacement = "\\1") %>% 
+  as.numeric()
+df5$dc <- sub(".*dc([0-9]+).*", x = rownames(df5), replacement = "\\1") %>% 
+  as.numeric()
+```
 
 ```{r}
-xyplot(sr ~ dd | fbmr, groups = dc, pch = 16, col = c(1:2), cex = 1.5, df,
-       key = list(text = list(c("1","4")),
-                  points = list(pch = 16, col = c(1:2), cex = 1.5),
-                  title = "denstiy cut", cex.title = 1))
-xyplot(mc ~ dd | fbmr, groups = dc, pch = 16, col = c(1:2), cex = 1.5, df,
-       key = list(text = list(c("1","4")),
-                  points = list(pch = 16, col = c(1:2), cex = 1.5),
-                  title = "denstiy cut", cex.title = 1))
+# combine the 5 df
+df$seed <- 0
+df1$seed <- 1
+df2$seed <- 2
+df3$seed <- 3
+df4$seed <- 4
+df5$seed <- 5
+
+df_all <- rbind(df,df1,df2,df3,df3,df5)
 ```
 
+```{r}
+df_dc1 <- df_all %>%  filter(dc == 1)
 
+xyplot(sr ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc1, type = "p", auto.key = TRUE)
+       # key = list(text = list(c("1","4")),
+       #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
+       #            title = "seeds", cex.title = 1))
+xyplot(mc ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc1, type = "p",  auto.key = TRUE)
+       # key = list(text = list(c("1","4")),
+       #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
+       #            title = "seeds", cex.title = 1))
+```
+```{r}
+df_dc4 <- df_all %>%  filter(dc == 4)
 
-
-
+xyplot(sr ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc4, type = "p", auto.key = TRUE)
+       # key = list(text = list(c("1","4")),
+       #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
+       #            title = "seeds", cex.title = 1))
+xyplot(mc ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc4, type = "p",  auto.key = TRUE)
+       # key = list(text = list(c("1","4")),
+       #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
+       #            title = "seeds", cex.title = 1))
+```

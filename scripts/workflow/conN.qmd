@@ -18,7 +18,8 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_05")
+
 # runs <- readRDS("~/Uni/Master/MA/local/runs/fat/20250520_mortality")
 ```
 
@@ -40,97 +41,11 @@ runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
 ```
 
 # transform matrix in df
-
 ```{r}
-# Function to get circular neighborhood offsets
-get_circular_offsets <- function(neigh_radius) {
-  offsets <- data.frame()
-  
-  for (dx in -neigh_radius:neigh_radius) {
-    y_lims <- floor(sqrt(neigh_radius^2 - dx^2))
-    for (dy in -y_lims:y_lims) {
-      # Skip the center cell (0, 0)
-      if (!(dx == 0 && dy == 0)) {
-        offsets <- rbind(offsets, data.frame(
-          dx = dx,
-          dy = dy
-        ))
-      }
-    }
-  }
-  return(offsets) # return a df with the moves needed for all matrix shifts to compare all neighbors
-}
-
-# do the computation for one run to parallelize
-# for now assume that every two consecutive generations are one census
-#   this requires in run params: sort(c(rep(1:20 * 100), rep(1:20 * 100)+1)
-get_con_neigh <- function(run, radius = NULL, offsets = NULL){
-  
-  # if no radius is given take density_cut
-  if(is.null(radius)){radius <- run$Model$densityCut}
-  r <- radius
-  
-  # if no offsets are given, calculate them
-  if(is.null(offsets)){offsets <- get_circular_offsets(neigh_radius = r)}
-  
-  lx <- dim(run$Output[[1]]$specMat)[1]
-  ly <- dim(run$Output[[1]]$specMat)[2]
-  
-  # get every second generation
-  census <- names(run$Output)[seq(1, length(names(run$Output)), by = 2)]
-  for (cen in census) {
-    
-    # to the start add then the offsets
-    sx <- c( (1 + r) , (lx - r) ) # starting x-coord of original mat in bigmat
-    sy <- c( (1 + r) , (ly - r) ) # starting y-coord of original mat in bigmat
-    
-    # generate a matrix for summing up conspecific neighbors (by mat addition)
-    # convert back to original (i.e., small) size
-    con <- matrix(0, lx - r * 2, ly - r * 2)
-    
-    # get actual inner mat
-    inner <- run$Output[[cen]]$specMat[c(sx[1] : sx[2]), c(sy[1] : sy[2])]
-    
-     for (xy in 1:nrow(offsets)) {
-       # get offset coordinates
-       xshift <- offsets[xy,1]
-       yshift <- offsets[xy,2]
-       
-       # add offsets
-       X <- sx + xshift
-       Y <- sy + yshift
-       
-       # crucial part: compare shifted big- and original matrix
-       con <- con + ifelse(run$Output[[cen]]$specMat[c(X[1] : X[2]) ,
-                                                   c(Y[1] : Y[2])] == inner,
-                           1, 0)
-
-     }
-    run$Output[[cen]]$conNeighMat <- con 
-  }
-  return(run)
-}
-```
-
-```{r}
-# test function
-# offsets <- get_circular_offsets(1)
-# try <- get_con_neigh(run = runz[[2]], radius = 1, offsets = offsets)
-# 
-# 
-# df1 <- try$Output$`2000`$conNeighMat[c(1:10), c(1:10)]
-# df2 <- try$Output$`2000`$specMat[c(2:11), c(2:11)]
-# 
-# par(mfrow = c(1,2))
-# image(df1[nrow(df1):1, ], main = "con - Flipped Vertically")
-# image(df2[nrow(df2):1, ], main = "spec - Flipped Vertically")
-```
 
 # Run in parallel
 
-```{r}
-
-cl <- makeCluster(24) # make cluster with core nb
+cl <- makeCluster(length(runz)) # make cluster with core nb
 
 # export cluster with necessary functions
 clusterExport(cl, c("runz", "get_con_neigh", "get_circular_offsets"))
@@ -143,16 +58,6 @@ parallel_function <- function(run){
 
 #
 runz <- parLapply(cl, X = runz, fun = parallel_function)
-saveRDS(runz, "~/cyber_synch/local/runs/fat/20250520_conN")
+saveRDS(runz, "~/cyber_synch/local/runs/fat/20250602_05_conN")
 ```
 
-```{r}
-# test function
-
-# df1 <- parallel_result$ddT2_disp1_sr2_eF_fbmr10_dc4$Output$`1000`$conNeighMat[c(1:20), c(1:20)]
-# df2 <- parallel_result$ddT2_disp1_sr2_eF_fbmr10_dc4$Output$`1000`$specMat[c(5:25), c(5:25)]
-# 
-# par(mfrow = c(1,2))
-# image(df1[nrow(df1):1, ], main = "con - Flipped Vertically")
-# image(df2[nrow(df2):1, ], main = "spec - Flipped Vertically")
-```
