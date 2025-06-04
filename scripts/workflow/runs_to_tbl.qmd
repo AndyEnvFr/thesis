@@ -26,6 +26,7 @@ runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_05_conN")
 ```
 
 # transform matrix in df - parallel
+
 ```{r}
 cl <- makeCluster(length(runs))
 clusterExport(cl, c("mat_to_tab", "runs"))

@@ -18,7 +18,7 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_05")
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr")
 
 # runs <- readRDS("~/Uni/Master/MA/local/runs/fat/20250520_mortality")
 ```
@@ -41,6 +41,7 @@ runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
 ```
 
 # transform matrix in df
+
 ```{r}
 
 # Run in parallel
@@ -52,12 +53,11 @@ clusterExport(cl, c("runz", "get_con_neigh", "get_circular_offsets"))
 
 parallel_function <- function(run){
   offset <- get_circular_offsets(neigh_radius = run$Model$densityCut)
-  result <- get_con_neigh(run = run, radius = run$Model$densityCut)
+  result <- get_con_neigh(run = run, radius = run$Model$densityCut, undo_torus = TRUE)
   return(result)
 }
 
 #
 runz <- parLapply(cl, X = runz, fun = parallel_function)
-saveRDS(runz, "~/cyber_synch/local/runs/fat/20250602_05_conN")
+# saveRDS(runz, "~/cyber_synch/local/runs/fat/20250602_05_conN")
 ```
-
