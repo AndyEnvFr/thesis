@@ -180,4 +180,6 @@ virtual functions = impacts the behaviour of a function
 	2) Allowing overriding in derived classes
 		i think 1) says this implicitly: a derived class (dog, cat) can override the makesound() function
 	3) ensuring proper function call in inheritance classes
-		
+
+base (e.g., std::vector<base> v;)
+	base would be a user-defined class, struct, or a fundamental C++ type (like int, double, std::string, etc.)
