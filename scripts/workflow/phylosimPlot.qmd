@@ -17,6 +17,9 @@ filelist <- grep(pattern = "conN",
                  value = TRUE)[-1]
 
 runs <- lapply(filelist, function(x) readRDS(x))
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr")
+
+names(runs) <- run_name(runs)
 ```
 
 ```{r}
@@ -54,8 +57,8 @@ rac(runs[[2]]$ddF1_disp1_sr2_eF_fbmr10_dc1, which.result = NULL, plot = "line")
 rac: nice implementation. allows to track abundances and check for rarities
 
 ```{r}
-plotTraitDistribution(runs[[2]]$ddF1_disp1_sr2_eF_fbmr10_dc1, type = "all")
-plotTraitDistribution(runs[[2]]$ddF1_disp1_sr2_eF_fbmr10_dc1, type = "hist")
+plotTraitDistribution(runs$ddF1_disp1_sr2_eF_fbmr10_dc1, type = "all")
+plotTraitDistribution(runs$ddF1_disp1_sr2_eF_fbmr10_dc1, type = "hist")
 ```
 
 

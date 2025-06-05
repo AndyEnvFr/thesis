@@ -375,6 +375,9 @@ get_con_neigh <- function(run, radius = NULL, offsets = NULL, undo_torus = TRUE)
   if(is.null(radius)){radius <- run$Model$densityCut}
   r <- radius
   
+  # if no offets are given, calculate them with r
+  if(is.null(offsets)){offsets <- get_circular_offsets(r)}
+  
   # if no offsets are given, calculate them
   if(is.null(offsets)){offsets <- get_circular_offsets(neigh_radius = r)}
   
@@ -443,7 +446,7 @@ mat_to_tab <- function(run){
   
   # census start (where neighbour. denisty is measured)
   census <- as.character(run$Model$runs)
-  cen_idx <- seq(1, length(names(runs[[1]]$Output)), by = 2)
+  cen_idx <- seq(1, length(names(run$Output)), by = 2)
   
   # get bigmat size
   big <- dim(run$Output[[1]]$specMat)
@@ -456,7 +459,8 @@ mat_to_tab <- function(run){
   # create empty df
   res <- data.frame(
     "census" = NA,
-    "focal_id" = NA,
+    "ind_id" = NA,
+    "spec_id" = NA,
     "mort" = NA,
     "con" = NA)
   
@@ -465,7 +469,8 @@ mat_to_tab <- function(run){
     # create interim result df. later cbind it to res
     interim <- data.frame(
       census = integer(in_dim[1] * in_dim[2]),
-      focal_id = integer(in_dim[1] * in_dim[2]),
+      ind_id = integer(in_dim[1] * in_dim[2]),
+      spec_id = integer(in_dim[1] * in_dim[2]),
       mort = numeric(in_dim[1] * in_dim[2]),
       con = integer(in_dim[1] * in_dim[2])
     )
@@ -476,7 +481,8 @@ mat_to_tab <- function(run){
     
     for (x in (in_x[1] : in_x[2])) {
       for (y in (in_y[1] : in_y[2])) {
-        interim$focal_id[sprint] = run$Output[[cen_idx[c]]]$idMat[x,y]
+        interim$ind_id[sprint] = run$Output[[cen_idx[c]]]$idMat[x,y]
+        interim$spec_id[sprint] = run$Output[[cen_idx[c]]]$specMat[x,y]
         interim$con[sprint] = run$Output[[cen_idx[c]]]$conNeighMat[(x - r), (y - r)]
         interim$mort[sprint] = run$Output[[cen_idx[c] + 1]]$mortMat[x,y]
         

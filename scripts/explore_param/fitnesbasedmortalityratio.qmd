@@ -1,0 +1,117 @@
+---
+title: "Live Demo - Meeting"
+format: html
+editor: visual
+---
+
+# First: sorry for confusion & false alarm !
+
+# OK to open issues for suggestions on docu and code ? Or does it feel like spam ?
+
+```{r}
+#| warning: false
+source("~/cyber_synch/git_synch/scripts/functions.R")
+library(PhyloSim)
+library(parallel)
+# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+# dd issue in global and local
+
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+density_options <- c(1)
+dispersal_options <- list(1)  # Using a list to preserve types
+densityCut_options <- c(1)
+fitnessBaseMortalityRatio_options <- c(2,50)
+
+# Initialize empty list for parameters
+params <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (density in density_options) {
+  for (dispersal_type in dispersal_options) {
+    for (cut in densityCut_options) {
+      for (fbmr in fitnessBaseMortalityRatio_options) {
+        
+        # Format scenario components
+        scenario_density <- gsub("\\.", "-", as.character(density))
+        scenario_dispersal <- ifelse(identical(dispersal_type, "global"), "G", dispersal_type)
+        scenario_cut <- gsub("\\.", "-", as.character(cut))
+        scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
+        
+        # Create parameter set
+        params[[param_index]] <- createCompletePar(
+          x = 50,
+          y = 50,
+          density = density,
+          dispersal = dispersal_type,
+          specRate = 2,
+          environment = 0,
+          fitnessBaseMortalityRatio = fbmr,
+          densityCut = cut,
+          seed = 20250414,
+          type = "base",
+          protracted = 0,
+          fission = 0,
+          redQueen = 0,
+          redQueenStrength = 0,
+          airmat = 0,
+          fitnessActsOn = "mortality",
+          runs = c(sort( c( ((1000:1050 * 5)), ((1000:1050 * 5)) + 1 ))),
+          scenario = paste0("dd", scenario_density,
+                          "_disp", scenario_dispersal,
+                          "_sr2_e0_m", scenario_fbmr,
+                          "_cut", scenario_cut)
+        )
+        
+        # Increment parameter index
+        param_index <- param_index + 1
+      }
+    }
+  }
+}
+```
+
+```{r}
+runs <- runSimulationBatch(params, parallel = 2)
+```
+
+```{r}
+names(runs) <- run_name(runs = runs, batch = TRUE)
+# print(names(runs))
+```
+
+```{r}
+runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
+
+cl <- makeCluster(length(runz)) # make cluster with core nb
+clusterExport(cl, c("runz", "get_con_neigh", "get_circular_offsets"))
+parallel_function <- function(run){
+  result <- get_con_neigh(run = run, radius = run$Model$densityCut, undo_torus = TRUE)
+  return(result)
+}
+runz <- parLapply(cl, X = runz, fun = parallel_function)
+```
+
+```{r}
+cl <- makeCluster(length(runz))
+clusterExport(cl, c("mat_to_tab", "runz"))
+res <- parLapply(cl = cl, X = runz, fun = mat_to_tab)
+```
+
+```{r}
+tab_list <- lapply(res, function(x){
+  return(x %>% mutate(census = as.numeric(census)))
+})
+
+fm1 <- glm(formula = "mort ~ con", family = binomial(), data = tab_list[[1]])
+fm2 <- glm(formula = "mort ~ con", family = binomial(), data = tab_list[[2]])
+
+summary(fm1)
+summary(fm2)
+```

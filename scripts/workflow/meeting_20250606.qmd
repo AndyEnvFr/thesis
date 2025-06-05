@@ -202,18 +202,18 @@ fitnessBasedMortRat = 10, (20)
 
 # Open Questions
 
-Traits
-  env trait
-  comp trait
-  neutr trait
-  environment
+Neutral trait?
+  is this the random trait in the trait evolution?
+  
+Mortality?
+  how do individuals die?
+  **In my simulation, each generation L2 cells are sequentially chosen at random. The individual within the chosen cell dies and is replaced by the offspring of another individual**
+  what is fitness based mortality ratio?
 
-Density
-  based on Competition trait and relatedness [Thesis fig 2.2]
+What is compStrength ?
   
-Mortality
-  what drives mortality ?
-  
+Effect of DD on ?
+  fitness -> colonization ?
 
 # how to continue
 
@@ -232,3 +232,12 @@ Mortality
 - implement destabilizing CDD
   - how strong should it be ? as stabilizing CDD
   - compare estimate: stab CDD VS stab + destab. CDD
+  
+  
+  
+  
+  
+  
+
+
+  
