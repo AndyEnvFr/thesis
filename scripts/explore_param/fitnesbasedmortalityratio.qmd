@@ -1,10 +1,12 @@
 ---
-title: "Phylo Sim exploration of density dependence"
+title: "Live Demo - Meeting"
 format: html
 editor: visual
 ---
 
-Here, I check the relationship between the *density* param and the species richness. Also, seed dispersal = (1, global). For this purpose the frequency of the output must not be every 50 generations for 100k generations.
+# First: sorry for confusion & false alarm !
+
+# OK to open issues for suggestions on docu and code ? Or does it feel like spam ?
 
 ```{r}
 #| warning: false
@@ -14,20 +16,20 @@ library(parallel)
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
-### define params and run model
+# dd issue in global and local
 
 ```{r}
 #| eval: true
 #| echo: false
 
 # Define parameter values
-density_options <- c(0, .2, .4, .6, .8, 1)
+density_options <- c(1)
 dispersal_options <- list(1)  # Using a list to preserve types
-densityCut_options <- c(1,4)
-fitnessBaseMortalityRatio_options <- c(10, 20)
+densityCut_options <- c(1)
+fitnessBaseMortalityRatio_options <- c(2,50)
 
 # Initialize empty list for parameters
-params5 <- list()
+params <- list()
 param_index <- 1
 
 # Generate all parameter combinations
@@ -35,6 +37,7 @@ for (density in density_options) {
   for (dispersal_type in dispersal_options) {
     for (cut in densityCut_options) {
       for (fbmr in fitnessBaseMortalityRatio_options) {
+        
         # Format scenario components
         scenario_density <- gsub("\\.", "-", as.character(density))
         scenario_dispersal <- ifelse(identical(dispersal_type, "global"), "G", dispersal_type)
@@ -42,7 +45,7 @@ for (density in density_options) {
         scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
         
         # Create parameter set
-        params5[[param_index]] <- createCompletePar(
+        params[[param_index]] <- createCompletePar(
           x = 50,
           y = 50,
           density = density,
@@ -51,7 +54,7 @@ for (density in density_options) {
           environment = 0,
           fitnessBaseMortalityRatio = fbmr,
           densityCut = cut,
-          seed = 0520250602, # 20250414, [01:05]20250602
+          seed = 20250414,
           type = "base",
           protracted = 0,
           fission = 0,
@@ -59,7 +62,7 @@ for (density in density_options) {
           redQueenStrength = 0,
           airmat = 0,
           fitnessActsOn = "mortality",
-          runs = c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 ))),
+          runs = c(sort( c( ((1000:1050 * 5)), ((1000:1050 * 5)) + 1 ))),
           scenario = paste0("dd", scenario_density,
                           "_disp", scenario_dispersal,
                           "_sr2_e0_m", scenario_fbmr,
@@ -74,26 +77,41 @@ for (density in density_options) {
 }
 ```
 
-# run parallel
 ```{r}
-# runs <- runSimulation(params1[[1]])
-runs1 <- runSimulationBatch(params1, parallel = 24, backup = TRUE)
-saveRDS(runs1, "~/cyber_synch/local/runs/fat/20250602_01")
-
-runs2 <- runSimulationBatch(params2, parallel = 24, backup = TRUE)
-saveRDS(runs2, "~/cyber_synch/local/runs/fat/20250602_02")
-
-runs3 <- runSimulationBatch(params3, parallel = 24, backup = TRUE)
-saveRDS(runs3, "~/cyber_synch/local/runs/fat/20250602_03")
-
-runs4 <- runSimulationBatch(params4, parallel = 24, backup = TRUE)
-saveRDS(runs4, "~/cyber_synch/local/runs/fat/20250602_04")
-
-runs5 <- runSimulationBatch(params5, parallel = 24, backup = TRUE)
-saveRDS(runs5, "~/cyber_synch/local/runs/fat/20250602_05")
+runs <- runSimulationBatch(params, parallel = 2)
 ```
 
+```{r}
+names(runs) <- run_name(runs = runs, batch = TRUE)
+# print(names(runs))
+```
 
+```{r}
+runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
 
+cl <- makeCluster(length(runz)) # make cluster with core nb
+clusterExport(cl, c("runz", "get_con_neigh", "get_circular_offsets"))
+parallel_function <- function(run){
+  result <- get_con_neigh(run = run, radius = run$Model$densityCut, undo_torus = TRUE)
+  return(result)
+}
+runz <- parLapply(cl, X = runz, fun = parallel_function)
+```
 
+```{r}
+cl <- makeCluster(length(runz))
+clusterExport(cl, c("mat_to_tab", "runz"))
+res <- parLapply(cl = cl, X = runz, fun = mat_to_tab)
+```
 
+```{r}
+tab_list <- lapply(res, function(x){
+  return(x %>% mutate(census = as.numeric(census)))
+})
+
+fm1 <- glm(formula = "mort ~ con", family = binomial(), data = tab_list[[1]])
+fm2 <- glm(formula = "mort ~ con", family = binomial(), data = tab_list[[2]])
+
+summary(fm1)
+summary(fm2)
+```

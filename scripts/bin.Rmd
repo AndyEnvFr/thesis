@@ -1,0 +1,162 @@
+---
+title: "bin"
+output: html_document
+---
+
+# for functions and code that is not used anymore
+```{r}
+# function to reduce size and keep only species matrix
+
+# this function was ment to get only a subset of result matrices,
+# but is not used, because storage is not limiting and the informations are important
+
+slim <- function(sim_out, batch){
+  if (batch == FALSE) {
+    for (i in 1:length(sim_out$Output)) {
+      sim_out$Output[[i]]$traitMat <- NULL
+      sim_out$Output[[i]]$envMat <- NULL
+      # sim_out$Output[[i]]$compMat <- NULL
+      sim_out$Output[[i]]$neutMat <- NULL
+      sim_out$Output[[i]]$phylogeny <- NULL
+      sim_out$Output[[i]]$phyloTXT <- NULL
+    }
+  } else {
+    for (j in 1:length(sim_out)) {
+      for (i in 1:length(sim_out[[j]]$Output)) {
+        sim_out[[j]]$Output[[i]]$traitMat <- NULL
+        sim_out[[j]]$Output[[i]]$envMat <- NULL
+        # sim_out[[j]]$Output[[i]]$compMat <- NULL
+        sim_out[[j]]$Output[[i]]$neutMat <- NULL
+        sim_out[[j]]$Output[[i]]$phylogeny <- NULL
+        sim_out[[j]]$Output[[i]]$phyloTXT <- NULL
+      }
+    }
+  }
+  return(sim_out)
+}
+
+```
+
+
+```{r}
+# function to save the output either batch or single. -------------------------- --------------------------
+
+# was usefull, because builded a wrapper around slim. Not used as explained in "slim"
+
+save_out <- function(sim_out, path, batch = FALSE, slim = TRUE) {
+  if (slim) {
+    sim_out <- slim(sim_out = sim_out, batch = batch)
+  }
+  
+  date_tag <- format(Sys.Date(), "%Y%m%d")
+  
+  get_unique_filename <- function(base) {
+    if (!file.exists(base)) return(base)
+    paste0(base, "_DOUBLENAME")
+  }
+  
+  if (batch) {
+    for (i in seq_along(sim_out)) {
+      file_base <- paste0(path, date_tag, "_", sim_out[[i]]$Model$scenario)
+      file_final <- get_unique_filename(file_base)
+      saveRDS(sim_out[[i]], file = file_final)
+    }
+  } else {
+    file_base <- paste0(path, date_tag, "_", sim_out$Model$scenario)
+    file_final <- get_unique_filename(file_base)
+    saveRDS(sim_out, file = file_final)
+  }
+}
+```
+
+
+```{r}
+# own version of runSImulationBatch. However, Parallelization is much slower here !
+# is actually redundant, as it does everything as the runSimulationBatch function
+# the advantage over runSimBatch is that even if a run fails, the others continue
+# other handy options include: choosing a path for direct saving and application of slim
+# also error messages return for all
+
+run_save_batch <- function(params,
+                                 save_path = "~/cyber_synch/local/runs/slim/",
+                                 cores = 1,
+                                 slim = TRUE) {
+  
+  # Create a log file instead of using message()
+  log_file <- paste0(save_path, "batch_log_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".txt")
+  
+  results <- parallel::mclapply(seq_along(params), function(param_index) {
+    # Write to a file instead of using message
+    cat(paste0("Processing parameter set ", param_index, "/", length(params), "\n"), 
+        file = log_file, append = TRUE)
+    
+    tryCatch({
+      current_params <- params[[param_index]]
+      result <- runSimulation(current_params)
+      result$param_index <- param_index
+      
+      save_out(sim_out = result,
+               path = save_path,
+               batch = FALSE,
+               slim = slim)
+      
+      return(result)
+    }, error = function(e) {
+      # Log error to file instead of creating separate files
+      cat(paste0("ERROR in param_index ", param_index, ": ", e$message, "\n"),
+          file = log_file, append = TRUE)
+      return(NULL)
+    })
+  }, mc.cores = cores)
+  
+  return(results)
+}
+
+```
+
+
+```{r}
+#### von Neumann nieghbor coord ####
+
+# model uses circular neighborhood, not von neumann !
+# therefore, this function is not used anymore
+
+vNeumann <- function(focal_coord_x, focal_coord_y, order){
+  
+  # ensure matrix includes all neighbors
+  if ((focal_coord_x - order) < 1 | (focal_coord_y - order) < 1){
+    stop("Error: neighbours out of boundary")
+  }
+  # ensure order is min 1
+  if (order < 1){
+    stop("Error: order must be minimum 1")
+  }
+  
+  # create xy matrix with coordinates of all neighbors
+  fx <- focal_coord_x
+  fy <- focal_coord_y
+
+  # get manhatten distances and all combinations
+  grid_coord <- expand.grid(dx = -order:order, dy = -order:order)
+  manhatten <- abs(grid_coord$dx) + abs(grid_coord$dy)
+  
+  # filter von Neumann nieghborhood
+  valid_coords <- grid_coord[manhatten <= order & manhatten > 0, ]
+  
+  # Calculate neighbor coordinates
+  x_coords <- fx + valid_coords$dx
+  y_coords <- fy + valid_coords$dy
+  
+  # Calculate Euclidean distances
+  euclidean_dist <- sqrt(valid_coords$dx^2 + valid_coords$dy^2)
+  
+  # Create result matrix
+  result <- matrix(c(x_coords, y_coords, euclidean_dist), 
+                   ncol = 3, byrow = FALSE)
+  colnames(result) <- c("x", "y", "euclidean_dist")
+  
+  return(result)
+}
+
+```
+

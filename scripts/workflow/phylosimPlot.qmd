@@ -1,0 +1,66 @@
+---
+title: "phylosimPlot"
+format: html
+---
+
+```{r}
+library(PhyloSim)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+```
+
+```{r}
+# read in data
+files <- list.files("~/cyber_synch/local/runs/fat/", full.names = TRUE)
+
+filelist <- grep(pattern = "conN", 
+                 x = files,
+                 value = TRUE)[-1]
+
+runs <- lapply(filelist, function(x) readRDS(x))
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr")
+
+names(runs) <- run_name(runs)
+```
+
+```{r}
+# plotSpatialPhylo
+
+plotSpatialPhylo(runs[[2]]$ddF1_disp1_sr2_eF_fbmr10_dc1 , plot = "both" , plotTraits = T)
+plotSpatialPhylo(runs[[3]]$ddF1_disp1_sr2_eF_fbmr10_dc1 , plot = "both" , plotTraits = T)
+plotSpatialPhylo(runs[[4]]$ddF1_disp1_sr2_eF_fbmr10_dc1 , plot = "both" , plotTraits = T)
+plotSpatialPhylo(runs[[5]]$ddF1_disp1_sr2_eF_fbmr10_dc1 , plot = "both" , plotTraits = T)
+plotSpatialPhylo(runs[[6]]$ddF1_disp1_sr2_eF_fbmr10_dc1 , plot = "both" , plotTraits = T)
+plotSpatialPhylo(runs[[7]]$ddF1_disp1_sr2_eF_fbmr10_dc1 , plot = "both" , plotTraits = T)
+```
+
+```{r}
+# positively bent curve (concave up) = clustering 
+# negatively bent curve (concave down) = more neutral distribution
+
+par(mfrow = c(2,3))
+
+sac(runs[[2]]$ddF1_disp1_sr2_eF_fbmr10_dc1, plot = TRUE, size = c(1,seq(0,50,5)[-1]), rep = 100)
+sac(runs[[3]]$ddF1_disp1_sr2_eF_fbmr10_dc1, plot = TRUE, size = c(1,seq(0,50,5)[-1]), rep = 100)
+sac(runs[[4]]$ddF1_disp1_sr2_eF_fbmr10_dc1, plot = TRUE, size = c(1,seq(0,50,5)[-1]), rep = 100)
+sac(runs[[5]]$ddF1_disp1_sr2_eF_fbmr10_dc1, plot = TRUE, size = c(1,seq(0,50,5)[-1]), rep = 100)
+sac(runs[[6]]$ddF1_disp1_sr2_eF_fbmr10_dc1, plot = TRUE, size = c(1,seq(0,50,5)[-1]), rep = 100)
+sac(runs[[7]]$ddF1_disp1_sr2_eF_fbmr10_dc1, plot = TRUE, size = c(1,seq(0,50,5)[-1]), rep = 100)
+```
+SAC tells us something about the cluster of the species. a concave up is clustered, while a convex up is neutral.
+I feel like 50x50 is rather small to get a good picture of spatial pattern. But the nested option is helpful, as it allows small regions to be within bigger regions. The which.results = "all" allows to get a mean of the generations / years, instead of focusing only on the last one. I think it is nice to have rep = 100, as plots appear more robust and calculations are quick. For size=... it is good to have many values, so the bend of the curve is more noticeable.
+
+
+
+```{r}
+rac(runs[[2]]$ddF1_disp1_sr2_eF_fbmr10_dc1, which.result = NULL, plot = "line")
+```
+rac: nice implementation. allows to track abundances and check for rarities
+
+```{r}
+plotTraitDistribution(runs$ddF1_disp1_sr2_eF_fbmr10_dc1, type = "all")
+plotTraitDistribution(runs$ddF1_disp1_sr2_eF_fbmr10_dc1, type = "hist")
+```
+
+
+
+

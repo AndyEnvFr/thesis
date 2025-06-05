@@ -1,6 +1,10 @@
 library(PhyloSim)
 
-#### extract name ####
+#### extract name #### ----------------------------------------------------------------------
+
+# this function can be applied on a batch or single run.
+# It extracts the name from the model parameter directly.
+# Not from Model$scenario. This way, it is more reliable.
 
 run_name <- function(runs, batch = TRUE){
   if (batch == TRUE) {
@@ -30,200 +34,108 @@ run_name <- function(runs, batch = TRUE){
 }
 
 
-# function to reduce size and keep only species matrix
-slim <- function(sim_out, batch){
-  if (batch == FALSE) {
-    for (i in 1:length(sim_out$Output)) {
-      sim_out$Output[[i]]$traitMat <- NULL
-      sim_out$Output[[i]]$envMat <- NULL
-      # sim_out$Output[[i]]$compMat <- NULL
-      sim_out$Output[[i]]$neutMat <- NULL
-      sim_out$Output[[i]]$phylogeny <- NULL
-      sim_out$Output[[i]]$phyloTXT <- NULL
-    }
-  } else {
-    for (j in 1:length(sim_out)) {
-      for (i in 1:length(sim_out[[j]]$Output)) {
-        sim_out[[j]]$Output[[i]]$traitMat <- NULL
-        sim_out[[j]]$Output[[i]]$envMat <- NULL
-        # sim_out[[j]]$Output[[i]]$compMat <- NULL
-        sim_out[[j]]$Output[[i]]$neutMat <- NULL
-        sim_out[[j]]$Output[[i]]$phylogeny <- NULL
-        sim_out[[j]]$Output[[i]]$phyloTXT <- NULL
-      }
-    }
-  }
-  return(sim_out)
-}
 
-# function to plot species richness over time
-spec_time <- function(sim_out, thinning_factor = NULL, ymax) {
+# function to plot species richness over time ----------------------------------------------------
+
+# Apllies the build in specRich function for every year / generation to track change
+# of the sr or div. Can be applied on batch or single run
+# options are
+# thinning_factor: for runs with many years / generations one might smooth out
+#   the line by thinning the data
+# ymax: gives all plots the same ylim. Usefull for batch plotting
+# plot = bool, controls if a plot should be plotted or only sr data returned
+# batch = bool, must be true, if applied on a batch
+
+# core function
+sr <- function(run){
   
-  sr_simu <- sapply(1:length(sim_out$Output),
-                    function(x) PhyloSim::specRich(simu = sim_out,
+  # get species richness for all results
+  sr <- sapply(1:length(run$Output),
+                    function(x) PhyloSim::specRich(simu = run,
                                                    which.result = x))
-  maintitle <- paste0("dd",ifelse(sim_out$Model$density == TRUE, "T", "F"),
-                      sim_out$Model$compStrength,
-                      "_disp", ifelse(sim_out$Model$dispersal == "global", "G",
-                                      sim_out$Model$dispersal),
-                      "_sr", sim_out$Model$specRate,
-                      "_e", ifelse(sim_out$Model$environment == TRUE, "T", "F"),
-                      "_fbmr", sim_out$Model$fitnessBaseMortalityRatio,
-                      "_dc", sim_out$Model$densityCut)
+  # get year of result
+  yr <- run$Model$runs
   
-  
-  if (!is.null(thinning_factor) &&
-      is.numeric(thinning_factor) &&
-      thinning_factor > 1) {
-    idx <- seq(1, length(sr_simu), thinning_factor)
-    sr_simu <- sr_simu[idx]
-  } else if (!is.null(thinning_factor) &&
-             is.numeric(thinning_factor)) {
-    warning("thinning factor must be > 1 for effective thinning")
-  }
-  
-  if (is.numeric(ymax)) {
-    plot(sr_simu, type = "l", ylim = c(0, ymax),
-         ylab = "richness", xlab = "start : end", main = maintitle)
-  } else {
-    plot(sr_simu, type = "l", ylim = c(0, max(sr_simu)),
-         ylab = "richness", xlab = "start : end", main = maintitle)
-  }
+  return(data.frame(year = yr, spec_rich = sr))
 }
 
+# wrapper
+spec_time <- function(runs, thinning_factor = NULL, ymax = NULL, plot = TRUE, batch = TRUE) {
 
-# function to save the output either batch or single. 
-save_out <- function(sim_out, path, batch = FALSE, slim = TRUE) {
-  if (slim) {
-    sim_out <- slim(sim_out = sim_out, batch = batch)
-  }
-  
-  date_tag <- format(Sys.Date(), "%Y%m%d")
-  
-  get_unique_filename <- function(base) {
-    if (!file.exists(base)) return(base)
-    paste0(base, "_DOUBLENAME")
-  }
-  
-  if (batch) {
-    for (i in seq_along(sim_out)) {
-      file_base <- paste0(path, date_tag, "_", sim_out[[i]]$Model$scenario)
-      file_final <- get_unique_filename(file_base)
-      saveRDS(sim_out[[i]], file = file_final)
-    }
-  } else {
-    file_base <- paste0(path, date_tag, "_", sim_out$Model$scenario)
-    file_final <- get_unique_filename(file_base)
-    saveRDS(sim_out, file = file_final)
-  }
-}
-
-# function for save batch runs saves interim results
-
-# outcommented version: the try catch error part seems to cause problems:
-# simulation batches never finish. Problem is not there, if try catch is exclud.
-
-        # run_save_batch__ <-       function(params,
-        #                                  save_path = "~/cyber_synch/local/runs/slim/",
-        #                                  cores = 1,
-        #                                  slim = TRUE) {
-        # 
-        #   # Load the parallel package if needed
-        #   if (!requireNamespace("parallel", quietly = TRUE)) {
-        #     stop("The 'parallel' package is required but not installed.")
-        #   }
-        # 
-        #   results <- parallel::mclapply(seq_along(params), function(param_index) {
-        #     tryCatch({
-        #       message("Processing parameter set ", param_index, "/", length(params))
-        #       current_params <- params[[param_index]]
-        # 
-        #       # Add param_index to results for traceability
-        #       result <- runSimulation(current_params)
-        #       result$param_index <- param_index
-        # 
-        #       save_out(sim_out = result,
-        #                path = save_path,
-        #                batch = FALSE,
-        #                slim = slim)
-        # 
-        #       return(result)
-        #     }, error = function(e) {
-        #       # Save which param_index failed
-        #       error_log <- data.frame(
-        #         param_indication = param_index,
-        #         error_msg = e$message,
-        #         timestamp = Sys.time()
-        #       )
-        #       saveRDS(error_log, paste0(save_path, "ERROR", param_index, ".rds"))
-        #       return(NULL)
-        #     })
-        #   }, mc.cores = cores)
-        # }
-        #   
-        # run_save_batch <-       function(params,
-        #                                  save_path = "~/cyber_synch/local/runs/slim/",
-        #                                  cores = 1,
-        #                                  slim = TRUE) {
-        # 
-        #   results <- parallel::mclapply(seq_along(params), function(param_index) {
-        #     
-        #       current_params <- params[[param_index]]
-        # 
-        #       # Add param_index to results for traceability
-        #       result <- runSimulation(current_params)
-        #     
-        #       save_out(sim_out = result,
-        #                path = save_path,
-        #                batch = FALSE,
-        #                slim = slim)
-        # 
-        #       return(result)},
-        #       mc.cores = cores)
-        # 
-        #   return(results)
-        # }
-
-
-
-run_save_batch <- function(params,
-                                 save_path = "~/cyber_synch/local/runs/slim/",
-                                 cores = 1,
-                                 slim = TRUE) {
-  
-  # Create a log file instead of using message()
-  log_file <- paste0(save_path, "batch_log_", format(Sys.time(), "%Y%m%d_%H%M%S"), ".txt")
-  
-  results <- parallel::mclapply(seq_along(params), function(param_index) {
-    # Write to a file instead of using message
-    cat(paste0("Processing parameter set ", param_index, "/", length(params), "\n"), 
-        file = log_file, append = TRUE)
+  if (!batch){ # single run
     
-    tryCatch({
-      current_params <- params[[param_index]]
-      result <- runSimulation(current_params)
-      result$param_index <- param_index
+      result <- sr(run = runs) # calculate sr for every year
       
-      save_out(sim_out = result,
-               path = save_path,
-               batch = FALSE,
-               slim = slim)
+      main <- run_name(runs = runs, batch = FALSE) # get plot titles
+      
+      if (!is.null(thinning_factor) && # thinning factor
+          is.numeric(thinning_factor) &&
+          thinning_factor > 1) {
+        idx <- seq(1, nrow(result), thinning_factor)
+        result <- result[idx,]
+      } else if (!is.null(thinning_factor) &&
+                 is.numeric(thinning_factor)) {
+        warning("thinning factor must be > 1 for effective thinning")
+      }
+      
+      # ymax i.e., ylim applies only for batch, to make runs comparable
+      
+      if (plot){
+        plot(result, type = "b", ylab = "richness", xlab = "start : end",
+             main = main)
+      }
       
       return(result)
-    }, error = function(e) {
-      # Log error to file instead of creating separate files
-      cat(paste0("ERROR in param_index ", param_index, ": ", e$message, "\n"),
-          file = log_file, append = TRUE)
-      return(NULL)
-    })
-  }, mc.cores = cores)
+  }
   
-  return(results)
+  if (batch){ # for batch
+    
+    results <- lapply(runs, sr) # for all runs in batch
+    
+    if (!is.null(thinning_factor) && # thinning factor
+        is.numeric(thinning_factor) &&
+        thinning_factor > 1) {
+      idx <- seq(1, nrow(results[[1]]), thinning_factor)
+      for (i in 1:length(results)) {
+        results[[i]] <- results[[i]][idx, ]
+      }
+    } else if (!is.null(thinning_factor) &&
+               is.numeric(thinning_factor)) {
+      warning("thinning factor must be > 1 for effective thinning")
+    }
+
+    for (run in names(results)) {
+      
+      if (is.numeric(ymax) & plot) {
+        plot(results[[run]]$spec_rich ~ results[[run]]$year,
+           type = "b",
+           cex = .4,
+           ylim = c(0, ymax),
+           ylab = "richness",
+           xlab = "start : end",
+           main = run)
+        } else if(plot) {
+          plot(results[[run]]$spec_rich ~ results[[run]]$year,
+               type = "b",
+               cex = .4,
+           ylim = c(0, max(results[[run]]$spec_rich)),
+           ylab = "richness",
+           xlab = "start : end",
+           main = run)
+        }
+    }
+  
+    return(results)
+  }
 }
 
 
-mortality <- function(out){ # computes mortality only if generations are consecutive
+# calculates mortality  -----------------------------------------------------------------------
+# based on the trait matrices, because traits are unique
+
+mortality <- function(out){ # core function
   
+  # computes mortality only if generations are consecutive
   if (!(1 %in% diff(out$Model$runs))) {
     stop("No consecutive generations. Can't calculate mortality")
   } 
@@ -233,6 +145,7 @@ mortality <- function(out){ # computes mortality only if generations are consecu
     out$Output[[i]]$mortMat <- matrix(data = NA, nrow = out$Model$x, ncol = out$Model$y)
   }
   
+  # calculates mortalities based on the unique traits per individuum
   for (i in 1:(length(out$Output) -1)) {
     out$Output[[i+1]]$mortMat <-
       ifelse((out$Output[[i]]$traitMat - out$Output[[i+1]]$traitMat) == 0, FALSE, TRUE)
@@ -241,7 +154,7 @@ mortality <- function(out){ # computes mortality only if generations are consecu
   return(out)
 }
 
-mortality_batch <- function(out_batch){
+mortality_batch <- function(out_batch){ # wrapper function for batch
   for (runs in seq_along(out_batch)) {
     out_batch[[runs]] <- mortality(out_batch[[runs]])
   }
@@ -250,9 +163,11 @@ mortality_batch <- function(out_batch){
 
 
 
-#### calculate id mat ####
-# each individuum gets its personal ID based on the trait values
-run_id_in <- function(runs){
+# calculate id mat   -----------------------------------------------------------------------
+# each individuum gets its personal ID based on the trait values.
+# An ID is never repeated in a run.
+
+run_id_in <- function(runs){ # core function
   rXc <- (runs$Model$x * runs$Model$y) # dimension
   id_list <- list() # stores unique id values. Will be used max once per individuum
   id_list <- lapply(1:length(runs$Output), function(x) as.integer(c(1:rXc) + x * rXc))
@@ -276,7 +191,7 @@ run_id_in <- function(runs){
   return(runs)
 }
 
-run_id <- function(runs, batch = TRUE){
+run_id <- function(runs, batch = TRUE){ # wrapper for batch
   if (batch){
     for (run in seq_along(runs)) {
       runs[[run]] <- run_id_in(runs = runs[[run]])
@@ -288,8 +203,21 @@ run_id <- function(runs, batch = TRUE){
 }
 
 
-# create function to enlargen matrix: torus
-# it is probably easier to intially enlargen the matrix, instead of jumping to the other side of the matrix each time the neighborhood radius transgresses the matrix edges.
+# create function to enlargen matrix: torus    -----------------------------------------------------------------------
+# The main reason for this function: clarification.
+# Using the torus function makes it easier to follow the code.
+# Also, development is easy, because the matrix is actually enlarged, can be plotted and sanity checked
+# less clearer version: each time boundaries are transpassed, nieghbors are searched at the other end of the matrix
+#   requireing more "jumping"
+
+# arguement max_n_radius defines the N radius
+# if nothign is give, the batch function will extract densityCut value
+
+# the torus batch function prepares the data for further analysis. Therefore, by
+# default it generates id and mortality matrix, if not already there.
+# it renames the generations / year: instead of 1:end, they are called as their
+# actual year e.g., "1000", "1001", "2000", ...
+
 torus_in <- function(matrix, max_neighborhood_radius) {
   r <- max_neighborhood_radius
   
@@ -382,6 +310,7 @@ torus <- function(run, overwrite = FALSE, max_neighborhood_radius = NULL) {
   return(run)
 }
 
+# wrapper function for batch
 torus_batch <- function(batch, overwrite = FALSE, max_neighborhood_radius){
   if (overwrite){
   warning("matrix was overwritten from bigger torus matrix; names of matrices remain the same\n")
@@ -397,43 +326,171 @@ torus_batch <- function(batch, overwrite = FALSE, max_neighborhood_radius){
   return(batch)
 }
 
-#### von Neumann nieghbor coord ####
+# circular neighborhood radius as in phylosim cpp ----------------------------------------------------- 
 
-vNeumann <- function(focal_coord_x, focal_coord_y, order){
-  
-  # ensure matrix includes all neighbors
-  if ((focal_coord_x - order) < 1 | (focal_coord_y - order) < 1){
-    stop("Error: neighbours out of boundary")
-  }
-  # ensure order is min 1
-  if (order < 1){
-    stop("Error: order must be minimum 1")
-  }
-  
-  # create xy matrix with coordinates of all neighbors
-  fx <- focal_coord_x
-  fy <- focal_coord_y
+# takes the neighborhood radius from the phylosim cpp code and applies
+# it to a given max-radius to get the shifts in coordinates of all neighbors
 
-  # get manhatten distances and all combinations
-  grid_coord <- expand.grid(dx = -order:order, dy = -order:order)
-  manhatten <- abs(grid_coord$dx) + abs(grid_coord$dy)
+# Function to get circular neighborhood offsets
+get_circular_offsets <- function(neigh_radius) {
+  offsets <- data.frame()
   
-  # filter von Neumann nieghborhood
-  valid_coords <- grid_coord[manhatten <= order & manhatten > 0, ]
+  for (dx in -neigh_radius:neigh_radius) {
+    y_lims <- floor(sqrt(neigh_radius^2 - dx^2))
+    for (dy in -y_lims:y_lims) {
+      # Skip the center cell (0, 0)
+      if (!(dx == 0 && dy == 0)) {
+        offsets <- rbind(offsets, data.frame(
+          dx = dx,
+          dy = dy
+        ))
+      }
+    }
+  }
+  return(offsets) # return a df with the moves needed for all matrix shifts to compare all neighbors
+}
+
+# conspecific neighbors ------------------------------------------------------------------------------ 
+# get the number of conspecific neighbors for each cell for a given max-neighborhood radius
+# computed my matrix shift and matric addition for every coordinate shift calculated in
+# "get_circular_offsets"
+# has no batch = TRUE option, because it is designed for parallel computation.
+# the torus is undone by default, as it's only purpose is to get con N
+
+# here a minimal example code for parallel computation
+# cl <- makeCluster(length(runz)) # make cluster with core nb
+# clusterExport(cl, c("runz", "get_con_neigh", "get_circular_offsets"))
+# parallel_function <- function(run){
+#   offset <- get_circular_offsets(neigh_radius = run$Model$densityCut)
+#   result <- get_con_neigh(run = run, radius = run$Model$densityCut)
+#   return(result)
+# }
+# runz <- parLapply(cl, X = runz, fun = parallel_function)
+# saveRDS(runz, "~/cyber_synch/local/runs/fat/20250602_05_conN")
+
+
+get_con_neigh <- function(run, radius = NULL, offsets = NULL, undo_torus = TRUE){
   
-  # Calculate neighbor coordinates
-  x_coords <- fx + valid_coords$dx
-  y_coords <- fy + valid_coords$dy
+  # if no radius is given take density_cut
+  if(is.null(radius)){radius <- run$Model$densityCut}
+  r <- radius
   
-  # Calculate Euclidean distances
-  euclidean_dist <- sqrt(valid_coords$dx^2 + valid_coords$dy^2)
+  # if no offets are given, calculate them with r
+  if(is.null(offsets)){offsets <- get_circular_offsets(r)}
   
-  # Create result matrix
-  result <- matrix(c(x_coords, y_coords, euclidean_dist), 
-                   ncol = 3, byrow = FALSE)
-  colnames(result) <- c("x", "y", "euclidean_dist")
+  # if no offsets are given, calculate them
+  if(is.null(offsets)){offsets <- get_circular_offsets(neigh_radius = r)}
   
-  return(result)
+  lx <- dim(run$Output[[1]]$specMat)[1]
+  ly <- dim(run$Output[[1]]$specMat)[2]
+  
+  # get every second generation
+  census <- names(run$Output)[seq(1, length(names(run$Output)), by = 2)]
+  for (cen in census) {
+    
+    # to the start add then the offsets
+    sx <- c( (1 + r) , (lx - r) ) # starting x-coord of original mat in bigmat
+    sy <- c( (1 + r) , (ly - r) ) # starting y-coord of original mat in bigmat
+    
+    # generate a matrix for summing up conspecific neighbors (by mat addition)
+    # convert back to original (i.e., small) size
+    con <- matrix(0, lx - r * 2, ly - r * 2)
+    
+    # get actual inner mat
+    inner <- run$Output[[cen]]$specMat[c(sx[1] : sx[2]), c(sy[1] : sy[2])]
+    
+    for (xy in 1:nrow(offsets)) {
+      # get offset coordinates
+      xshift <- offsets[xy,1]
+      yshift <- offsets[xy,2]
+      
+      # add offsets
+      X <- sx + xshift
+      Y <- sy + yshift
+      
+      # crucial part: compare shifted big- and original matrix
+      con <- con + ifelse(run$Output[[cen]]$specMat[c(X[1] : X[2]) ,
+                                                    c(Y[1] : Y[2])] == inner,
+                          1, 0)
+      
+    }
+    run$Output[[cen]]$conNeighMat <- con
+  }
+  
+  # after getting con undo the torus for all generations, therefore outside the cen loop
+  for (all in 1:length(run$Output)) {
+    
+    if (undo_torus){
+      run$Output[[all]]$specMat <- run$Output[[all]]$specMat[c(r+1 : (lx - r * 2)), c(r+1 : (ly - r * 2))]
+      run$Output[[all]]$traitMat <- run$Output[[all]]$traitMat[c(r+1 : (lx - r * 2)), c(r+1 : (ly - r * 2))]
+      run$Output[[all]]$envMat <- run$Output[[all]]$envMat[c(r+1 : (lx - r * 2)), c(r+1 : (ly - r * 2))]
+      run$Output[[all]]$compMat <- run$Output[[all]]$compMat[c(r+1 : (lx - r * 2)), c(r+1 : (ly - r * 2))]
+      run$Output[[all]]$neutMat <- run$Output[[all]]$neutMat[c(r+1 : (lx - r * 2)), c(r+1 : (ly - r * 2))]
+      run$Output[[all]]$mortMat <- run$Output[[all]]$mortMat[c(r+1 : (lx - r * 2)), c(r+1 : (ly - r * 2))]
+      run$Output[[all]]$idMat <- run$Output[[all]]$idMat[c(r+1 : (lx - r * 2)), c(r+1 : (ly - r * 2))]
+    }
+  }
+  
+  return(run)
 }
 
 
+
+# matrix to table ------------------------------------------------------
+
+# extracts census, id, mortality status, number of con neighbors
+
+mat_to_tab <- function(run){
+  
+  r <- run$Model$densityCut # neighb. radius
+  
+  # census start (where neighbour. denisty is measured)
+  census <- as.character(run$Model$runs)
+  cen_idx <- seq(1, length(names(run$Output)), by = 2)
+  
+  # get bigmat size
+  big <- dim(run$Output[[1]]$specMat)
+  
+  # get position of original(i.e., inner) matrix
+  in_x <- c(1 + r, (big[1] - r))
+  in_y <- c(1 + r, (big[2] - r))
+  in_dim <- big - r * 2
+  
+  # create empty df
+  res <- data.frame(
+    "census" = NA,
+    "ind_id" = NA,
+    "spec_id" = NA,
+    "mort" = NA,
+    "con" = NA)
+  
+  for (c in seq_along(cen_idx)) {
+    
+    # create interim result df. later cbind it to res
+    interim <- data.frame(
+      census = integer(in_dim[1] * in_dim[2]),
+      ind_id = integer(in_dim[1] * in_dim[2]),
+      spec_id = integer(in_dim[1] * in_dim[2]),
+      mort = numeric(in_dim[1] * in_dim[2]),
+      con = integer(in_dim[1] * in_dim[2])
+    )
+    
+    interim$census <- census[cen_idx[c]]
+    
+    sprint <- 1
+    
+    for (x in (in_x[1] : in_x[2])) {
+      for (y in (in_y[1] : in_y[2])) {
+        interim$ind_id[sprint] = run$Output[[cen_idx[c]]]$idMat[x,y]
+        interim$spec_id[sprint] = run$Output[[cen_idx[c]]]$specMat[x,y]
+        interim$con[sprint] = run$Output[[cen_idx[c]]]$conNeighMat[(x - r), (y - r)]
+        interim$mort[sprint] = run$Output[[cen_idx[c] + 1]]$mortMat[x,y]
+        
+        sprint <- sprint + 1
+      }
+    }
+    
+    res <- rbind(res,interim)
+  }
+  return(res[-1,]) # del initialzier NA in res df
+}
