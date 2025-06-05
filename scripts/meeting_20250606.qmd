@@ -8,16 +8,16 @@ editor: visual
 
 # OK to open issues for suggestions on docu and code ? Or does it feel like spam ?
 
-
 ```{r}
 #| warning: false
-source("~/cyber_synch/git_synch/scripts/functions.R")
 library(PhyloSim)
 library(parallel)
-# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+# source("~/cyber_synch/git_synch/scripts/functions.R")
+source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
 # dd issue in global and local
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -87,10 +87,12 @@ names(runs) <- run_name(runs = runs, batch = TRUE)
 print(names(runs))
 ```
 
-
 ## global and local models difference in dd = 1.2
+
 ### Looks OK for global but not for local
+
 ### see also: https://github.com/TheoreticalEcology/EcoPhyloSim/issues/96
+
 ```{r}
 #|fig-width: 5  
 #|fig-height: 15 
@@ -111,8 +113,8 @@ image(runs$ddT1.2_dispG_sr2_eF_fbmr10_dc1$Output[[1]]$specMat, main = names(runs
 
 ```
 
-
 # runs issue
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -178,66 +180,53 @@ runs <- runSimulationBatch(params, parallel = 8)
 run <- runSimulation(params[[1]])
 # Error in FUN(X[[i]], ...) : numbers of left and right parentheses in Newick string not equal
 ```
+
 # what I have done so far
 
 parameter settings
-xy = 50*50 [maybe too small]
-density = 0, .2, .4, ... 1
-dispersal = 1, "global"
-specRate = 2 [as in Bauche Thesis: tbl 2.1]
-fitnessBasedMortRat = 10, (20)
 
+-   xy = 50\*50 \[maybe too small\]
 
-```{r}
-# calculated mortalities based on traits
-```
+-   density = 0, .2, .4, ... 1
 
-```{r}
-# get the number of con N by using torus
-```
+-   dispersal = 1, "global"
 
-```{r}
-# statistical model (build a gam maybe)
-```
+-   specRate = 2 \[as in Bauche Thesis: tbl 2.1\]
+
+-   fitnessBasedMortRat = 10, (20)
+
+-   densityCut: 1,4 (DD effects seems to remain the same but diluted/spread across multiple neighbors)
+
+glm to show dd
+
+-   calculated mortalities based on traits
+
+-   get the number of con N by using torus
+
+-   transform results in tabular data
 
 # Open Questions
 
-Neutral trait?
-  is this the random trait in the trait evolution?
-  
-Mortality?
-  how do individuals die?
-  **In my simulation, each generation L2 cells are sequentially chosen at random. The individual within the chosen cell dies and is replaced by the offspring of another individual**
-  what is fitness based mortality ratio?
+Neutral trait? is this the random trait in the trait evolution?
+
+Mortality? how do individuals die? **In my simulation, each generation L2 cells are sequentially chosen at random. The individual within the chosen cell dies and is replaced by the offspring of another individual**
 
 What is compStrength ?
-  
-Effect of DD on ?
-  fitness -> colonization ?
+
+Effect of DD on ? fitness -\> colonization ? - fitness has two effetcs: escape death + increase clonization ?
+
+How do I know that the DD effect is strong enough / realistically strong?
+
+-   compare the change in mortality with empirical studies?
 
 # how to continue
 
-- impact of CDD on
-    - alpha diversity
-      - mean of last years (when equilibreium seems reached)
-    - beta diversity ?
-      - beta div VS SAC ?
-      - cut map into pieces and check alpha div in each piece
-      - 50x50 is rather small for spatial analysis ? what about 256x256 like Bauche et al ?
-    - abundance
-      - at final year ?
-      - mean of last years ?
-      - 
-      
-- implement destabilizing CDD
-  - how strong should it be ? as stabilizing CDD
-  - compare estimate: stab CDD VS stab + destab. CDD
-  
-  
-  
-  
-  
-  
-
-
-  
+-   implement destabilizing CDD
+    -   how strong should it be ? as stabilizing CDD
+    -   compare estimate: stab CDD VS stab + destab. CDD
+-   Evironment
+    -   beta diversity ?
+        -   50x50 too small?
+    -   abundance
+        -   DD \~ abundance
+-   Consideration of phylogeny?

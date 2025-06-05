@@ -10,17 +10,20 @@ Here, I want to calculate the change in mortality from 0 to 1 neighbor.
 ```{r}
 library(dplyr)
 library(lattice)
-source("~/cyber_synch/git_synch/scripts/functions.R")
+# source("~/cyber_synch/git_synch/scripts/functions.R")
+source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+root <- "~/Uni/Master/MA/"
+# root <- "~/cyber_synch"
 ```
 
 ```{r}
 # read in tabular data
-tab_list <- readRDS("~/cyber_synch/local/runs/tabular/20250528_fbmr")
-tab_list1 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_01")
-tab_list2 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_02")
-tab_list3 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_03")
-tab_list4 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_04")
-tab_list5 <- readRDS("~/cyber_synch/local/runs/tabular/20250602_05")
+tab_list <- readRDS(paste0(root, "local/runs/tabular/20250528_fbmr"))
+tab_list1 <- readRDS(paste0(root, "local/runs/tabular/20250602_01"))
+tab_list2 <- readRDS(paste0(root, "local/runs/tabular/20250602_02"))
+tab_list3 <- readRDS(paste0(root, "local/runs/tabular/20250602_03"))
+tab_list4 <- readRDS(paste0(root, "local/runs/tabular/20250602_04"))
+tab_list5 <- readRDS(paste0(root, "local/runs/tabular/20250602_05"))
 ```
 
 ```{r}
@@ -136,27 +139,27 @@ mort_change5 <- sapply(tab_list5, function(x){
 
 ```{r}
 # read in matrix data for sr calculation, then delete, because heavy
-run <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr")
+run <- readRDS(paste0(root, "local/runs/fat/20250528_fbmr"))
 sr <- spec_time(runs = run, plot = FALSE, batch = TRUE)
 rm(run)
 
-run1 <- readRDS("~/cyber_synch/local/runs/fat/20250602_01")
-sr1 <- spec_time(runs = run1, plot = FALSE, batch = TRUE)
+run1 <- readRDS(paste0(root, "local/runs/fat/20250602_01"))
+sr1 <- spec_time(runs = run1, plot = TRUE, batch = TRUE)
 rm(run1)
 
-run2 <- readRDS("~/cyber_synch/local/runs/fat/20250602_02")
+run2 <- readRDS(paste0(root, "local/runs/fat/20250602_02"))
 sr2 <- spec_time(runs = run2, plot = FALSE, batch = TRUE)
 rm(run2)
 
-run3 <- readRDS("~/cyber_synch/local/runs/fat/20250602_03")
+run3 <- readRDS(paste0(root, "local/runs/fat/20250602_03"))
 sr3 <- spec_time(runs = run3, plot = FALSE, batch = TRUE)
 rm(run3)
 
-run4 <- readRDS("~/cyber_synch/local/runs/fat/20250602_04")
+run4 <- readRDS(paste0(root, "local/runs/fat/20250602_04"))
 sr4 <- spec_time(runs = run4, plot = FALSE, batch = TRUE)
 rm(run4)
 
-run5 <- readRDS("~/cyber_synch/local/runs/fat/20250602_05")
+run5 <- readRDS(paste0(root, "local/runs/fat/20250602_05"))
 sr5 <- spec_time(runs = run5, plot = FALSE, batch = TRUE)
 rm(run5)
 ```
@@ -241,16 +244,15 @@ df4$seed <- 4
 df5$seed <- 5
 
 df_all <- rbind(df,df1,df2,df3,df3,df5)
-saveRDS(df_all, "~/cyber_synch/local/runs/tabular/20250602_all")
+# saveRDS(df_all, "~/cyber_synch/local/runs/tabular/20250602_all")
 ```
 
 
 ```{r}
 # read in data
 
-df_all <- readRDS("~/cyber_synch/local/runs/tabular/20250602_all")
+df_all <- readRDS(paste0(root, "local/runs/tabular/20250602_all"))
 ```
-
 
 ```{r}
 df_dc1 <- df_all %>%  filter(dc == 1)

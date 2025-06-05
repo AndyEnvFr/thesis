@@ -62,6 +62,8 @@ sr <- function(run){
 # wrapper
 spec_time <- function(runs, thinning_factor = NULL, ymax = NULL, plot = TRUE, batch = TRUE) {
 
+  names(runs) <- run_name(runs, batch = batch)
+  
   if (!batch){ # single run
     
       result <- sr(run = runs) # calculate sr for every year
