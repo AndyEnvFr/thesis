@@ -1,42 +1,51 @@
 11:28 12/06/2025
 
-questions
 
-(why) is m_nicheWidth as a constant ?
+Github Desktop (=GD)
+	Workflow: Forking -> Branching -> Pull request
+	https://github.com/TheoreticalEcology/EcoPhyloSim -> Code -> Open with Github Desktop
+		Forking
+			https://github.com/AndyEnvFr/EcoPhyloSim
+				synch fork: changes will be updated from Florian to Andy
+			forked under C:\Users\andre\Documents\Uni\Master\MA\EcoPhyloSim\
+		branching
+			create a branch for each new major change: e.g., mortality function
+			GD: Current Branch -> new branch
+			open "C:\Users\andre\Documents\Uni\Master\MA\EcoPhyloSim\phylosim.Rproj"
+			make changes and save
+			commit to master
+			Branch -> Create Pull request -> … 
+
+getMortality, function docu, roxy etc.
+	use new roxy conventions and not the depreciated html style used in PhyloSim
+	S3 class function: getMortality.Phylosim
+		"C:\Users\andre\Documents\Uni\Master\MA\git_synch\example_s3_function.txt"
 
 
 
-constants
-	weightSpecies
-	m_nicheWidth
+TODO:
+
+remake the script, where I check the dd species wise: why isn't the results like for all species ? Use exactly same runs !
 	
-rename
-	m_Variance --> m_nicheWidth
-
-changes
-
-
-
-
-0) branch mit mortality fertigstellen + pull request
-
-branch erstellen dd und env effekt
-1) gauss kernel so implemntieren
-2) nischen weiten user defined machen für env und dd
-3) ist fitness defintion sinvoll ? additiv … so wie mortality passiert . Oder lieber mulitplikativ, weil wenn eine niche nicht erfüllt wird, es schon vorbei ist
-	4) mitdenken: Mutualismus muss zur fitness defintion passen
-	Vielleicht: alles weiterhin additiv mit logit function: wie bei glm logit link. Anfangswert = base fitness, dann + oder - je nach Effekt. Am ende logit -> [0,1]
-4) wenn 3 gelöst, competition Mechanismus kopieren für mutualistische cDD
-5) pull request
-
-überlegen
-getFitness zwischen null und eins
-	
-
-R debuger ausprobieren
-C debuger ausprobieren
-RCPP nativ debuggen
-
-C debugger zum laufen bekommen: R und cpp code gemischt. C code anhalten und wert für c variablen checken
-	wenn ich reines c Modell hab kann ich breakpoints setzen und debugen
-	debuger ausprobieren
+change gauss kernel in density dependence & other changes also in environmental effect
+	1) stay in line with the current phylosim logic
+		//  if(dd){
+		// 	double competitionEffect = exp(-0.5 * pow(m_LocalDensity / m_compNicheWidth, 2.0)); // 
+		// 	out += (1.0 - competitionEffect) * m_compStrength + (1.0 - m_compStrength);
+		// 	out += (DBL_MIN * 100.0);
+		// }
+	2) make the m_nicheWidth in "if (env) out += ... " & m_compNicheWidth in "if (dd) our += ... " user exposed, so that the kernel can be user defined. This is important for setting the options in the mutualistic process
+	3) Think about: is the definition and calculation of fitness correct?
+		before making any changes, add a debugger for R and C. Maybe there is something nice for Rcpp ?
+			it is helpful, because it allows to add breakpoints, before which one can check the values of all variables. This is extremely helpful for debugging
+		keep in mind that the getFitness function should return a value from 0 to 1, otherwise, individuals can completely escape death
+		now it is additive if dd and env are on. However, is there a risk, that the value could become > 1 ? in this way, such individuals would escape mortality, based on https://github.com/TheoreticalEcology/EcoPhyloSim/blob/da4b03c267f9ddc94397f4c9d44d72500263a119/PhyloSim/src/Grid.cpp#L358
+		an option: make multiplicative. start at 1 and by multiplication with dd and env < 1 reduce fitness
+			problem: how to implement mutualism ?
+		maybe better: logit link function. Like in GLM have any value which can be converted back to a range [0,1]
+		Keep in mind: liebigs law of minimum. If a niche is not met, the individual dies notwithstanding if the other niche is met
+		check DBL.MIN * 100
+			why is it used? is it needed? why not double out = 0.0 ? maybe because latter could be positive and negative?
+		care for a nice docu, also in cpp code: e.g., @return Fitness is not enough. Better: return a double value bounded from ... to ... that is interpreted as fitness
+	4) when 3 is solved, copy the dd mechanism for the mutualistic density dependent process
+	5) finally, pull request
