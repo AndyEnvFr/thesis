@@ -1,0 +1,186 @@
+---
+title: "runs to tbl"
+author: "ai"
+format: html
+editor: visual
+---
+
+# load
+
+```{r}
+#| warning: false
+library(PhyloSim)
+source("~/cyber_synch/git_synch/scripts/functions.R")
+# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+```{r}
+runs <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
+```
+
+# get names
+```{r}
+nm <- run_name(runs = runs, batch = TRUE)
+names(runs) <- nm
+```
+
+# get mortMat, idMat and torus
+```{r}
+# by default when computing the torus mort and id mat will be calculated
+# keep in mind that from now on, the matrices are not of original size any longer
+runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
+```
+# transform matrix in df
+
+## define which generations are a census
+```{r}
+# check the structure of the census
+# I define: if > 1% of individuals are alive in the next generation,
+# this will be included in the census
+
+# if run a batch, the first param set is representative for all other
+# generations <- runz[[1]]$Model$runs 
+# diff(generations) # get an idea of the temporal dimensions in generations
+
+# check survival rates between generations
+# if no survivor in the current generation, this will be the start of a new
+surv_rates <- as.data.frame(matrix(data = NA,
+                                   nrow = length(runz),
+                                   ncol = length(runz[[1]]$Output)),
+                            row.names = names(runz))
+colnames(surv_rates) <- paste0("surv_",
+                               (0:(length(runz[[1]]$Output)-1)),
+                               ":",
+                               (1:(length(runz[[1]]$Output))))
+
+for (par in names(runz)) {
+for (i in 1:(length(runz[[par]]$Output)-1)) {
+  surv_rates[par, i + 1] <- sum(runz[[par]]$Output[[i]]$idMat == runz[[par]]$Output[[i + 1]]$idMat) /
+          length(runz[[par]]$Output[[i]]$idMat)
+}
+}
+# no survivor between every second generation,
+# hence this will be the start of the second generation
+
+# visualize surv rates to see if they are homogenuous across the batch
+# image(t(as.matrix(surv_rates)))
+
+# transform in vector for indexing census
+# define survival treshold for census definition
+min_surv <- 0.2
+# define list with census index for each parameter combination
+census_idx <- list()
+
+# get the census idx based on min. survival rate
+for (par in names(runz)) {
+  census_idx[[par]] <- which(surv_rates[par,] >= min_surv)
+}
+
+```
+
+## tabularize census data
+Informations from matrices are stored in df
+Neighbor-distance are euclidian (sqrt((x2-x1)^2 + (y2-y1)^2))
+and apply on Von Neumann neighborhoods of order = densityCut
+```{r}
+
+# create list[[par]] and fill in df with focal and neighbor id and traits for every census
+tab_list <- list()
+
+# !!! ASSUMPTION: NEIGHBORHOOD RADIUS = DENSITYCUT !!!
+for (par in names(runz)) {
+  
+  # which generation to look at. census interval = i-1 : i
+  census_idx_loop <- census_idx[[par]]
+  
+  edge <- runz[[par]]$Model$densityCut # get torus edge size
+  
+  # get position of inner matrix in bigger matrix
+  x_coord <- (1 : (dim(runz[[par]]$Output[[1]]$idMat)[1] - edge * 2)) + edge
+  y_coord <- (1 : (dim(runz[[par]]$Output[[1]]$idMat)[2] - edge * 2)) + edge
+  
+# (re)create running index for each param set
+run <- 1
+  
+# create empty df with focal and neighbor id and traits for every census
+tab_join <- data.frame(focal_id = NA,
+                       census = NA,
+                       mort_census_start = NA,
+                       mort_census_end = NA,
+                       neighbor_id = NA,
+                       distance = NA,
+                       het_con = NA)
+
+  for (cil in census_idx_loop) {
+  for (x in x_coord) {
+    for (y in y_coord) {
+
+      # get focal information
+      # empty vector stores focal info. Vector is faster then df
+      # here order is crucial:
+      # [1] = census, [2] = focal_id, [3] = mort_start, [4] = mort_end
+      vec_focal <- rep(NA, 4)
+      vec_focal[1] <- cil
+      vec_focal[2] <- runz[[par]]$Output[[cil]]$idMat[x,y]
+      vec_focal[3] <- runz[[par]]$Output[[cil - 1]]$mortMat[x,y]
+      vec_focal[4] <- runz[[par]]$Output[[cil]]$mortMat[x,y]
+      
+      # get neighbor information
+      # apply vNeuman to get the neighbor coord and distances from focal cell
+      neighbors <- vNeumann(focal_coord_x = x, focal_coord_y = y, order = edge)
+      for (n in 1:nrow(neighbors)) {
+        nx <- neighbors[n,1]
+        ny <- neighbors[n,2]
+        nd <- neighbors[n,3]
+        vec_joint <- vec_focal # [5] = id, [6] = distance, [7] = het_con
+        vec_joint[5] <- runz[[par]]$Output[[cil]]$idMat[nx,ny]
+        vec_joint[6] <- nd
+        # focal species == neighbor species ?
+        vec_joint[7] <-
+          ifelse((runz[[par]]$Output[[cil]]$specMat[x,y] ==
+                    runz[[par]]$Output[[cil]]$specMat[nx,ny]),
+                 "con", "het")
+        
+        # combine focal and nieghbor information
+        tab_join[run,] <- vec_joint
+        run <- run + 1
+      }
+      }
+    }
+  }
+  tab_list[[pat]] <- tab_join
+}
+```
+
+```{r}
+testdf <- data.frame(test = NA)
+testdff <- data.frame(test = c(NA,NA))
+length(testdff$test)
+for (i in 1:10) {
+  testdf$test[length(testdf$test)] <- i
+}
+```
+
+
+
+# calculate cdd
+this should be a function that return for every cell the identity of neighbours. \\
+The simpler method probably results in following cols: \\
+focal_ID, focal_status(alive/dead), neighbor_ID, neighbor_identity(con/het) \\
+and also should include the exponential decay function:
+exp01_N, exp02_N, ... \\
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
