@@ -243,38 +243,38 @@ df3$seed <- 3
 df4$seed <- 4
 df5$seed <- 5
 
-df_all <- rbind(df,df1,df2,df3,df3,df5)
-# saveRDS(df_all, "~/cyber_synch/local/runs/tabular/20250602_all")
+df_all <- rbind(df,df1,df2,df3,df4,df5)
+# saveRDS(df_all, paste0(root, "local/runs/tabular/20250602_all"))
 ```
-
 
 ```{r}
 # read in data
 
 df_all <- readRDS(paste0(root, "local/runs/tabular/20250602_all"))
+df_all <- df_all %>% filter(seed != 0)
 ```
 
 ```{r}
-df_dc1 <- df_all %>%  filter(dc == 1)
+df_dc1 <- df_all %>%  filter(dc == 1) %>% arrange(., dd)
 
-xyplot(sr ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc1, type = "p", auto.key = TRUE)
+xyplot(sr ~ dd | fbmr, groups = seed, lwd = 2, cex = 1, df_dc1, type = "l", auto.key = TRUE)
        # key = list(text = list(c("1","4")),
        #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
        #            title = "seeds", cex.title = 1))
-xyplot(mc ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc1, type = "p",  auto.key = TRUE)
+xyplot(mc ~ dd | fbmr, groups = seed, lwd = 2, df_dc1, type = "l",  auto.key = TRUE)
        # key = list(text = list(c("1","4")),
        #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
        #            title = "seeds", cex.title = 1))
 ```
 
 ```{r}
-df_dc4 <- df_all %>%  filter(dc == 4)
+df_dc4 <- df_all %>%  filter(dc == 4) %>% arrange(., dd)
 
-xyplot(sr ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc4, type = "p", auto.key = TRUE)
+xyplot(sr ~ dd | fbmr, groups = seed, lwd = 2, df_dc4, type = "l", auto.key = TRUE)
        # key = list(text = list(c("1","4")),
        #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
        #            title = "seeds", cex.title = 1))
-xyplot(mc ~ dd | fbmr, groups = seed, pch = 1, cex = 1, df_dc4, type = "p",  auto.key = TRUE)
+xyplot(mc ~ dd | fbmr, groups = seed, lwd = 2, df_dc4, type = "l",  auto.key = TRUE)
        # key = list(text = list(c("1","4")),
        #            points = list(pch = 16, lty = 1, col = c(1:5), cex = 1.5),
        #            title = "seeds", cex.title = 1))

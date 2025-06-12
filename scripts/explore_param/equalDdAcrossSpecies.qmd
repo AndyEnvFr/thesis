@@ -84,13 +84,14 @@ names(runs) <- run_name(runs = runs, batch = TRUE)
 # print(names(runs))
 ```
 
-
 ## --------------------------------------------- load results
+
 ```{r}
 runs <- readRDS("~/cyber_synch/local/runs/test/equalDdAcrossSpecies")
 ```
 
 # convert into tabular
+
 ```{r}
 runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
 
@@ -109,15 +110,18 @@ clusterExport(cl, c("mat_to_tab", "runz"))
 res <- parLapply(cl = cl, X = runz, fun = mat_to_tab)
 ```
 
-
 # statistical analysis
+
 ```{r}
 tab_list <- lapply(res, function(x){
   return(x %>% mutate(census = as.numeric(census)))
 })
 ```
+
 ## for all species aggregated
-### con N 
+
+### con N
+
 ```{r}
 # glm for all species aggregated
 
@@ -130,6 +134,7 @@ summary(fm2)
 ```
 
 ### mort change
+
 ```{r}
 # glm for all species aggregated
 
@@ -150,16 +155,10 @@ change_mort_dd <- (mort1_dd - mort0_dd)
 cat("\n\nchange_mort for run with DD: ", change_mort_dd)
 ```
 
+## species wise model, if spec has \>= 10 individuals
 
-
-
-
-
-
-
-
-## species wise model, if spec has >= 10 individuals
 ### without DD
+
 ```{r}
 # for every species do a run
 fbmr1 <- tab_list$ddT1_disp1_sr2_eF_fbmr1_dc1
@@ -224,10 +223,8 @@ cat(paste0("\n\ncon_coef mean ",mean(glm_result$con_coef)))
 cat(paste0("\n\nchange_mort median ",median(glm_result$change_mort)))
 ```
 
-
-
-
 ### with DD
+
 ```{r}
 # for every species do a run
 fbmr50 <- tab_list$ddT1_disp1_sr2_eF_fbmr50_dc1 # with DD
@@ -291,15 +288,6 @@ cat(paste0("\n\ncon_coef mean ",mean(glm_result$con_coef)))
 cat(paste0("\n\nchange_mort median ",median(glm_result$change_mort)))
 ```
 
+If we change the filter conditions from \>=10 \>=50 we get a different trend: for \>=10 the median con_estimates for species wise models is higher without DD for \>=50 the median con_estimates for species wise models is higher with DD (as I would expect)
 
-
-If we change the filter conditions from >=10 >=50 we get a different trend:
-for >=10 the median con_estimates for species wise models is higher without DD
-for >=50 the median con_estimates for species wise models is higher with DD (as I would expect)
-
-Because the results seem unstable, Lisa suggested to:
-Ich fürchte du solltest doch eine meta-analyse regression machen. das ist so auch in dem Tutorial erklärt. Dann wird die Unsicherheit der estimates mit berücksichtigt
-
-
-
-
+Because the results seem unstable, Lisa suggested to: Ich fürchte du solltest doch eine meta-analyse regression machen. das ist so auch in dem Tutorial erklärt. Dann wird die Unsicherheit der estimates mit berücksichtigt

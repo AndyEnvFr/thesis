@@ -124,10 +124,28 @@ ________________________________________________________________________________
 
 16:33 04/06/2025
 
-neutral trait ?
+Traits
+  each *individual* has two active traits: 
+    env trait: an individuals niche is described by a gaussian distribution with µ = optimum use and sigma = generalization. The trait is sigma. 
+      during speciation and dispersal the trait is subject to evolution (genetic recombination)
+      
+    comp trait: describes individual niche/ preference apart from environment. The more similar the trait between 2 ind. the stronger the comp. 
+    both traits influence the colonization
+    
+  each *species* has traits too:
+  these traits dont evolve on their own but are the mean of all species individuals and are an attractor during the development of individual traits. Each species contains also parental trait information.
+  
+  
+???  neutral trait
 
-mortality ?
-
+Fitness is based on
+  Density
+    based on Competition trait and relatedness [Thesis fig 2.2]
+  
+Mortality: fitnessActsOn = "mortality" / Colonization
+  what drives mortality ?
+  colonization: controlled by dispersal and individual fitness, which in turn depends on density and environment
+  
 
 
 

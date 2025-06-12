@@ -1,0 +1,42 @@
+11:28 12/06/2025
+
+questions
+
+(why) is m_nicheWidth as a constant ?
+
+
+
+constants
+	weightSpecies
+	m_nicheWidth
+	
+rename
+	m_Variance --> m_nicheWidth
+
+changes
+
+
+
+
+0) branch mit mortality fertigstellen + pull request
+
+branch erstellen dd und env effekt
+1) gauss kernel so implemntieren
+2) nischen weiten user defined machen für env und dd
+3) ist fitness defintion sinvoll ? additiv … so wie mortality passiert . Oder lieber mulitplikativ, weil wenn eine niche nicht erfüllt wird, es schon vorbei ist
+	4) mitdenken: Mutualismus muss zur fitness defintion passen
+	Vielleicht: alles weiterhin additiv mit logit function: wie bei glm logit link. Anfangswert = base fitness, dann + oder - je nach Effekt. Am ende logit -> [0,1]
+4) wenn 3 gelöst, competition Mechanismus kopieren für mutualistische cDD
+5) pull request
+
+überlegen
+getFitness zwischen null und eins
+	
+
+R debuger ausprobieren
+C debuger ausprobieren
+RCPP nativ debuggen
+
+C debugger zum laufen bekommen: R und cpp code gemischt. C code anhalten und wert für c variablen checken
+	wenn ich reines c Modell hab kann ich breakpoints setzen und debugen
+	debuger ausprobieren
