@@ -10,10 +10,9 @@ Here, I want to calculate the change in mortality from 0 to 1 neighbor.
 ```{r}
 library(dplyr)
 library(lattice)
-# source("~/cyber_synch/git_synch/scripts/functions.R")
-source("~/Uni/Master/MA/git_synch/scripts/functions.R")
-root <- "~/Uni/Master/MA/"
-# root <- "~/cyber_synch"
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+source(paste0(root, "/git_synch/scripts/functions.R"))
 ```
 
 ```{r}

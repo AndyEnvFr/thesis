@@ -1,0 +1,143 @@
+---
+title: "diversity"
+format: html
+editor: visual
+---
+
+```{r}
+library(dplyr)
+library(purrr)
+library(stringr)
+```
+
+
+```{r}
+# Define the base path to your runs
+root <- "~/cyber_synch"
+# Define the run suffixes you want to process
+run_suffixes <- sprintf("20250602_%02d_conN", 1:5)
+```
+
+```{r}
+# first eyeball the getSpecTime plot to see where eq is reached
+# readRDS( here you should check the files)
+equilibrium <- 20000 
+```
+
+```{r}
+# Loop through each run suffix
+for (suffix in run_suffixes) {
+  file_path <- file.path(root,"local/runs/fat", suffix)
+  
+  # Check if the file exists before attempting to read
+  if (!file.exists(file_path)) {
+    message(paste("Warning: File not found -", file_path, ". Skipping this run."))
+    next # Skip to the next iteration if file doesn't exist
+  }
+  
+  message(paste("Processing run:", suffix))
+  
+  # Read the RDS file for the current run
+  run <- readRDS(file_path)
+  
+  # --- Process dc1 scenarios ---
+  # Set up plotting parameters for dc1 plots
+  par(mfrow = c(2,3)) # This will create a 2x3 grid of plots for each run
+  
+  # Get species time series data and plot for dc1 scenarios
+  dd0dc1 <- getSpecTime(runs = run$disp1_sr2_fbmr10_dc1_faoM, plot = F)
+  dd02dc1 <- getSpecTime(runs = run$dd0.2_disp1_sr2_fbmr10_dc1_faoM, plot = F)
+  dd04dc1 <- getSpecTime(runs = run$dd0.4_disp1_sr2_fbmr10_dc1_faoM, plot = F)
+  dd06dc1 <- getSpecTime(runs = run$dd0.6_disp1_sr2_fbmr10_dc1_faoM, plot = F)
+  dd08dc1 <- getSpecTime(runs = run$dd0.8_disp1_sr2_fbmr10_dc1_faoM, plot = F)
+  dd1dc1 <- getSpecTime(runs = run$dd1_disp1_sr2_fbmr10_dc1_faoM, plot = F)
+  
+  mean_dd0dc1 <- mean(dd0dc1$spec_rich[which(dd0dc1$year > equilibrium)])
+  mean_dd02dc1 <- mean(dd02dc1$spec_rich[which(dd02dc1$year > equilibrium)])
+  mean_dd04dc1 <- mean(dd04dc1$spec_rich[which(dd04dc1$year > equilibrium)])
+  mean_dd06dc1 <- mean(dd06dc1$spec_rich[which(dd06dc1$year > equilibrium)])
+  mean_dd08dc1 <- mean(dd08dc1$spec_rich[which(dd08dc1$year > equilibrium)])
+  mean_dd1dc1 <- mean(dd1dc1$spec_rich[which(dd1dc1$year > equilibrium)])
+  
+  sd_dd0dc1 <- sd(dd0dc1$spec_rich[which(dd0dc1$year > equilibrium)])
+  sd_dd02dc1 <- sd(dd02dc1$spec_rich[which(dd02dc1$year > equilibrium)])
+  sd_dd04dc1 <- sd(dd04dc1$spec_rich[which(dd04dc1$year > equilibrium)])
+  sd_dd06dc1 <- sd(dd06dc1$spec_rich[which(dd06dc1$year > equilibrium)])
+  sd_dd08dc1 <- sd(dd08dc1$spec_rich[which(dd08dc1$year > equilibrium)])
+  sd_dd1dc1 <- sd(dd1dc1$spec_rich[which(dd1dc1$year > equilibrium)])
+  
+  # --- Process dc4 scenarios ---
+  # Set up plotting parameters for dc4 plots (resets plot layout)
+  par(mfrow = c(2,3))
+  
+  # Get species time series data and plot for dc4 scenarios
+  # Note: The first line below uses run$disp1_sr2_fbmr10_dc1_faoM, which might be a typo
+  # if you intended it to be dc4. I'm keeping it as in your original script.
+  # If it should be dc4, change 'dc1_faoM' to 'dc4_faoM' for dd0dc4.
+  dd0dc4 <- getSpecTime(runs = run$disp1_sr2_fbmr10_dc1_faoM)
+  dd02dc4 <- getSpecTime(runs = run$dd0.2_disp1_sr2_fbmr10_dc4_faoM)
+  dd04dc4 <- getSpecTime(runs = run$dd0.4_disp1_sr2_fbmr10_dc4_faoM)
+  dd06dc4 <- getSpecTime(runs = run$dd0.6_disp1_sr2_fbmr10_dc4_faoM)
+  dd08dc4 <- getSpecTime(runs = run$dd0.8_disp1_sr2_fbmr10_dc4_faoM)
+  dd1dc4 <- getSpecTime(runs = run$dd1_disp1_sr2_fbmr10_dc4_faoM)
+  
+  # Calculate mean species richness after 20k generations for dc4
+  mean_dd0dc4 <- mean(dd0dc4$spec_rich[which(dd0dc4$year > equilibrium)])
+  mean_dd02dc4 <- mean(dd02dc4$spec_rich[which(dd02dc4$year > equilibrium)])
+  mean_dd04dc4 <- mean(dd04dc4$spec_rich[which(dd04dc4$year > equilibrium)])
+  mean_dd06dc4 <- mean(dd06dc4$spec_rich[which(dd06dc4$year > equilibrium)])
+  mean_dd08dc4 <- mean(dd08dc4$spec_rich[which(dd08dc4$year > equilibrium)])
+  mean_dd1dc4 <- mean(dd1dc4$spec_rich[which(dd1dc4$year > equilibrium)])
+
+  sd_dd0dc4 <- sd(dd0dc4$spec_rich[which(dd0dc4$year > equilibrium)])
+  sd_dd02dc4 <- sd(dd02dc4$spec_rich[which(dd02dc4$year > equilibrium)])
+  sd_dd04dc4 <- sd(dd04dc4$spec_rich[which(dd04dc4$year > equilibrium)])
+  sd_dd06dc4 <- sd(dd06dc4$spec_rich[which(dd06dc4$year > equilibrium)])
+  sd_dd08dc4 <- sd(dd08dc4$spec_rich[which(dd08dc4$year > equilibrium)])
+  sd_dd1dc4 <- sd(dd1dc4$spec_rich[which(dd1dc4$year > equilibrium)])
+  
+  # Create a data frame for the current run's results
+  current_run_results <- data.frame(
+    run_id = suffix,
+    scenario = c(
+      "dd0dc1", "dd0.2dc1", "dd0.4dc1", "dd0.6dc1", "dd0.8dc1", "dd1dc1",
+      "dd0dc4", "dd0.2dc4", "dd0.4dc4", "dd0.6dc4", "dd0.8dc4", "dd1dc4"
+    ),
+    mean_spec_rich_20k = c(
+      mean_dd0dc1, mean_dd02dc1, mean_dd04dc1, mean_dd06dc1, mean_dd08dc1, mean_dd1dc1,
+      mean_dd0dc4, mean_dd02dc4, mean_dd04dc4, mean_dd06dc4, mean_dd08dc4, mean_dd1dc4
+    ),
+    sd_spec_rich_20k = c(
+      sd_dd0dc1, sd_dd02dc1, sd_dd04dc1, sd_dd06dc1, sd_dd08dc1, sd_dd1dc1,
+      sd_dd0dc4, sd_dd02dc4, sd_dd04dc4, sd_dd06dc4, sd_dd08dc4, sd_dd1dc4
+    )
+  )
+  
+  # Add the current run's results to the master list
+  all_results_list[[suffix]] <- current_run_results
+}
+```
+
+
+```{r}
+# Combine all results into a single data frame
+final_results_df <- bind_rows(all_results_list)
+
+final_results_df_ <- final_results_df %>% 
+  mutate(dd = str_extract(string = scenario, pattern = "(?<=^dd).*?(?=dc)"),
+         dc = str_extract(string = scenario, pattern = "(?<=dc).*")) %>% 
+  select(-scenario) %>% 
+  group_by(dd,dc) %>% 
+  summarise(
+    mean_div_aggregated = mean(mean_spec_rich_20k, na.rm = TRUE), # Calculate the mean of means
+    sd_div_aggregated = mean(sd_spec_rich_20k, na.rm = TRUE), # Calculate the mean of means
+    .groups = 'drop' # Ungroup the data frame after summarising
+  )
+```
+
+```{r}
+saveRDS(object = final_results_df_, file = file.path(root, "git_synch/scripts/validation/div_20250602"))
+saveRDS(object = final_results_df, file = file.path(root, "git_synch/scripts/validation/divExtended_20250602"))
+```
+
+

@@ -1,0 +1,497 @@
+---
+title: "species wise density dependence"
+format: html
+editor: visual
+---
+
+This script first checks the change in mortality for the runs "\~/cyber_synch/local/runs/fat/20250602\_\[01,02,03,04,05\]". The change in mortality is defined as \[p(mort) with 1 neig.\] - \[p(mort) with 1 neig.\]. For runs with dc = 4, the estimate of the con parametr (effect of a neighbor) is multiplied by 12, because there are now 48 neighbors (?getCircularOffsets) instead of 4 with dc = 1. This dilutes the density effect. Multiplying by 12 compensates therefore.
+
+```{r}
+#| warning: false
+
+library(PhyloSim)
+library(parallel)
+library(lattice)
+library(dplyr)
+library(stringr)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+source(paste0(root, "/git_synch/scripts/functions.R"))
+```
+
+## --------------------------------------------- load results
+
+Skip this part
+
+```{r}
+# l <- list.files(paste0(root, "local/runs/tabular/"), full.names = TRUE)
+# g <- grep(pattern = ".*_[0:9].*", x = l, value = TRUE)
+# runs <- lapply(g, function(x) readRDS(x))
+# names(runs) <- 1:5
+```
+
+```{r}
+# runz <- runs %>% bind_rows(., .id = "seed") %>% # re-arrange
+#   mutate(
+#     dd = str_extract(params, "(?<=dd)[0-9.]+"),
+#     fbmr = as.numeric(str_extract(params, "(?<=fbmr)[0-9]+")),
+#     dc = as.numeric(str_extract(params, "(?<=dc)[0-9]+")),
+#     dd = case_when(is.na(dd) ~ 0, TRUE ~ as.numeric(dd))
+#   )
+# saveRDS(runz, paste0(root, "local/runs/tabular/20250602_all"))
+# runz <- readRDS(paste0(root, "local/runs/tabular/20250602_all")) # OR LOAD DIRECTLY
+```
+
+# statistical analysis
+
+## for all species aggregated
+
+### for no density dependece
+
+```{r}
+# # the file is too heavy (59 mio rows), therefore, create subsets
+# 
+# # Get unique values and create all combinations
+# dd_values <- unique(runz$dd)
+# dc_values <- unique(runz$dc)
+# fbmr_values <- unique(runz$fbmr)
+# 
+# # Create all combinations of the three variables
+# filter_combinations <- expand.grid(
+#   dd = dd_values,
+#   dc = dc_values,
+#   fbmr = fbmr_values
+# )
+# 
+# # Loop through each row (combination) in filter_combinations
+# for (i in 1:nrow(filter_combinations)) {
+#   current_dd <- filter_combinations$dd[i]
+#   current_dc <- filter_combinations$dc[i]
+#   current_fbmr <- filter_combinations$fbmr[i]
+# 
+#   # Filter 'runz' for the current combination
+#   subset_data <- runz %>%
+#     filter(
+#       dd == current_dd,
+#       dc == current_dc,
+#       fbmr == current_fbmr
+#     )
+# 
+#   # Create a unique filename for the subset
+#   # Replace periods in numbers with hyphens for cleaner filenames
+#   filename_dd <- str_replace_all(as.character(current_dd), "\\.", "-")
+#   filename_dc <- as.character(current_dc)
+#   filename_fbmr <- as.character(current_fbmr)
+# 
+#   file_name <- paste0(
+#     "dd_", filename_dd,
+#     "_dc_", filename_dc,
+#     "_fbmr_", filename_fbmr,
+#     ".Rds"
+#   )
+# 
+#   # Construct the full file path
+#   file_path <- file.path(root, "local/runs/tabular/20250602_dd_across_spec", file_name)
+# 
+#   # Save the subsetted data
+#   saveRDS(subset_data, file = file_path)
+# }
+```
+
+```{r}
+# these tabular data contains the results from "~/cyber_synch/local/runs/fat/20250602_[01,02,03,04,05]", i.e., the same run in 5 seeds
+# the data is already ordered by parameters (i.e., dd, fbmr, dc)
+
+# l <- list.files(file.path(root, "local/runs/tabular/20250602_dd_across_spec"),
+#                 full.names = TRUE)
+# l <- str_subset(string = l, pattern = "dd.*")
+
+# res_20250602 <- as.data.frame(
+#   matrix(NA, nrow = length(l), ncol = 10,
+#          dimnames = list(NULL, c("dd", "fbmr", "dc", "int",
+#                                  "con_coef", "con_se", "con_p",
+#                                  "mort0", "mort1", "mort_change"))))
+# run <- 1 # index for res df
+# 
+# for (file in l) {
+#   # get the params
+#   dd <- str_extract(string = file, pattern = "(?<=dd_)[0-9-]+")
+#   fbmr <- str_extract(string = file, pattern = "(?<=fbmr_)[0-9]+")
+#   dc <- str_extract(string = file, pattern = "(?<=dc_)[0-9]+")
+#   
+#   df <- readRDS(file)
+#   fm <- glm("mortNextGen ~ con", family = binomial(), data = df)
+#   sfm <- summary(fm)
+#   intercept <- sfm$coefficients["(Intercept)","Estimate"]
+#   con_coef <- sfm$coefficients["con","Estimate"]
+#   con_se <- sfm$coefficients["con","Std. Error"]
+#   con_p <- sfm$coefficients["con","Pr(>|z|)"]
+#   # calculate change in mortality from 1 to 0 nieghbors
+#   mort0 <- plogis(con_coef * 0 + intercept) # null model, without neighbors
+#   multiplicator <- ifelse(grepl("dc_1", file), 1, 12) # if the densityCut is on, dd effect is diluted because density effect is spread across more neighbors. This is compensated by the multiplicator. 12, because dc4 = 48 neighbors and 1/4(dc1) == 12/48(dc4)
+#   mort1 <- plogis(con_coef * 1 * multiplicator + intercept)
+#   mort_change <- (mort1 - mort0)
+#   
+#   res_20250602[run,] <- c(dd, fbmr, dc, intercept, con_coef, con_se, con_p,
+#                           mort0, mort1, mort_change)
+#   run <- run + 1
+# }
+```
+
+```{r}
+# as numeric
+
+res_20250602 <- res_20250602 %>%  mutate(
+  dd = as.numeric(str_replace(string = dd, pattern = "-", replacement = ".")),
+  fbmr = as.numeric(fbmr),
+  dc = as.numeric(dc),
+  int = as.numeric(int),
+  con_coef = as.numeric(con_coef),
+  con_se = as.numeric(con_se),
+  con_p = as.numeric(con_p),
+  mort0 = as.numeric(mort0),
+  mort1 = as.numeric(mort1),
+  mort_change = as.numeric(mort_change)
+)
+```
+
+#### store & load results
+
+```{r}
+# saveRDS(res_20250602, file.path(root,"local/runs/tabular/20250602_dd_across_spec/all_spec")) 
+res_20250602 <- readRDS(file.path(root,"local/runs/tabular/20250602_dd_across_spec/all_spec"))
+```
+
+#### plot results
+
+```{r}
+xyplot(data = res_20250602, mort_change~dd | fbmr, groups = dc, type = "l", auto.key = TRUE)
+```
+
+### now the same, but with abundance in the model
+
+!!! was calculated without log(abundance). Maybe better with log() !!!
+
+Here i run an alternative glm: mortNextGen \~ con + abundance. for mort_change abundance is set to its mean
+
+```{r}
+# l <- list.files(file.path(root, "local/runs/tabular/20250602_dd_across_spec"),
+#                 full.names = TRUE)
+# l <- str_subset(string = l, pattern = "dd.*")
+# 
+# # Updated column names to include abundance-related coefficients
+# res_20250602_abund <- as.data.frame(
+#   matrix(NA, nrow = length(l), ncol = 13,
+#          dimnames = list(NULL, c("dd", "fbmr", "dc", "int",
+#                                 "con_coef", "con_se", "con_p",
+#                                 "abund_coef", "abund_se", "abund_p",
+#                                 "mort0", "mort1", "mort_change"))))
+# run <- 1 # index for res df
+# 
+# for (file in l) {
+#   # get the params
+#   dd <- str_extract(string = file, pattern = "(?<=dd_)[0-9.-]+")
+#   fbmr <- str_extract(string = file, pattern = "(?<=fbmr_)[0-9]+")
+#   dc <- str_extract(string = file, pattern = "(?<=dc_)[0-9]+")
+#   
+#   df <- readRDS(file)
+#   
+#   # Add abundance column (number of individuals per species)
+#   df <- df %>%
+#     group_by(specId) %>%
+#     mutate(abundance = n()) %>%
+#     ungroup()
+#   
+#   # Single aggregated model with abundance term
+#   fm <- glm(mortNextGen ~ con + abundance, family = binomial(), data = df)
+#   sfm <- summary(fm)
+#   
+#   # Extract coefficients
+#   intercept <- sfm$coefficients["(Intercept)", "Estimate"]
+#   con_coef <- sfm$coefficients["con", "Estimate"]
+#   con_se <- sfm$coefficients["con", "Std. Error"]
+#   con_p <- sfm$coefficients["con", "Pr(>|z|)"]
+#   abund_coef <- sfm$coefficients["abundance", "Estimate"]
+#   abund_se <- sfm$coefficients["abundance", "Std. Error"]
+#   abund_p <- sfm$coefficients["abundance", "Pr(>|z|)"]
+#   
+#   # Calculate change in mortality from 1 to 0 neighbors (holding abundance at mean)
+#   mean_abundance <- mean(df$abundance)
+#   mort0 <- plogis(con_coef * 0 + abund_coef * mean_abundance + intercept)
+#   multiplicator <- ifelse(grepl("dc_1", file), 1, 12)
+#   mort1 <- plogis(con_coef * 1 * multiplicator + abund_coef * mean_abundance + intercept)
+#   mort_change <- (mort1 - mort0)
+#   
+#   res_20250602_abund[run,] <- c(dd, fbmr, dc, intercept, con_coef, con_se, con_p,
+#                           abund_coef, abund_se, abund_p,
+#                           mort0, mort1, mort_change)
+#   run <- run + 1
+# }
+```
+
+```{r}
+# as numeric
+
+res_20250602_abund <- res_20250602_abund %>%  mutate(
+  dd = as.numeric(str_replace(string = dd, pattern = "-", replacement = ".")),
+  fbmr = as.numeric(fbmr),
+  dc = as.numeric(dc),
+  int = as.numeric(int),
+  con_coef = as.numeric(con_coef),
+  con_se = as.numeric(con_se),
+  con_p = as.numeric(con_p),
+  mort0 = as.numeric(mort0),
+  mort1 = as.numeric(mort1),
+  abund_coef = as.numeric(abund_coef),
+  abund_se = as.numeric(abund_se),
+  abund_p = as.numeric(abund_p),
+  mort_change = as.numeric(mort_change)
+)
+```
+
+#### store results
+
+```{r}
+# saveRDS(res_20250602_abund, file.path(root,"local/runs/tabular/20250602_dd_across_spec/all_spec_abund"))
+```
+
+## species wise
+
+```{r}
+# Get file list
+l <- list.files(file.path(root, "local/runs/tabular/20250602_dd_across_spec"), 
+                full.names = TRUE)
+l <- str_subset(string = l, pattern = "dd_\\d.*")
+
+# Function to process a single file
+process_file <- function(file) {
+  # Load data
+  df <- readRDS(file)
+  
+  # Filter common species
+  df_common <- df %>%
+    group_by(specId) %>%
+    mutate(abundance = n()) %>%
+    filter(abundance > 20) %>%
+    ungroup() 
+  
+  all_spec <- unique(df_common$specId)
+  
+  # Process species with error handling
+  file_results <- lapply(all_spec, function(spec) {
+    tryCatch({
+      df_spec <- df_common %>% filter(specId == spec)
+      
+      # Check if we have data
+      if(nrow(df_spec) == 0) {
+        return(NULL)
+      }
+      
+      # Fit model
+      fm <- glm("mortNextGen ~ con", family = binomial(), data = df_spec)
+      sfm <- summary(fm)
+      
+      # Check if coefficients exist
+      if(!"con" %in% rownames(sfm$coefficients)) {
+        return(NULL)
+      }
+      
+      # Extract coefficients safely
+      intercept <- sfm$coefficients["(Intercept)", "Estimate"]
+      con_coef <- sfm$coefficients["con", "Estimate"]
+      con_se <- sfm$coefficients["con", "Std. Error"]
+      con_p <- sfm$coefficients["con", "Pr(>|z|)"]
+      
+      # Calculate mortality rates
+      mort0 <- plogis(con_coef * 0 + intercept)
+      multiplicator <- ifelse(grepl("dc_1", file), 1, 12)
+      mort1 <- plogis(con_coef * 1 * multiplicator + intercept)
+      mort_change <- (mort1 - mort0)
+      
+      # Return results
+      data.frame(
+        spec = spec,
+        abundance = nrow(df_spec), # More reliable than unique()[1]
+        dd = df_spec$dd[1],
+        fbmr = df_spec$fbmr[1],
+        dc = df_spec$dc[1],
+        int = intercept,
+        con_coef = con_coef,
+        con_se = con_se,
+        con_p = con_p,
+        mort0 = mort0,
+        mort1 = mort1,
+        mort_change = mort_change,
+        stringsAsFactors = FALSE
+      )
+    }, error = function(e) {
+      # Return NULL for failed species
+      return(NULL)
+    })
+  })
+  
+  # Remove NULL results and combine
+  file_results <- file_results[!sapply(file_results, is.null)]
+  if(length(file_results) > 0) {
+    do.call(rbind, file_results)
+  } else {
+    cat("Error with species", spec, ":", e$message, "\n")
+    return(NULL)
+  }
+}
+
+# Set up parallel processing
+num_cores <- 24
+cl <- makeCluster(num_cores)
+
+# Export necessary objects and libraries to cluster
+clusterEvalQ(cl, {
+  library(stringr)
+  library(dplyr)
+})
+
+# Run parallel processing
+results_list <- parLapply(cl, l, process_file)
+
+# Stop cluster
+stopCluster(cl)
+
+# Combine all results
+res_20250602_spec <- do.call(rbind, results_list)
+
+# Reset row names
+rownames(res_20250602_spec) <- NULL
+```
+
+#### store & load results
+
+```{r}
+# save results: data frame with coefficients for each species for each par setting
+# saveRDS(res_20250602_spec, file.path(root, "local/runs/tabular/20250602_dd_across_spec/spec_wise"))
+```
+
+```{r}
+# read in results
+df <- readRDS(file.path(root, "local/runs/tabular/20250602_dd_across_spec/spec_wise"))
+```
+
+### plot the results
+
+```{r}
+# fbmr
+df <- df %>%
+  group_by(dd, dc, fbmr) %>%
+  mutate(mean_mc = mean(mort_change),
+         mean_con_coef = mean(con_coef)) %>%
+  ungroup()
+```
+
+Outcommented is the lm. Here I analyze the relationship between abundance (=N) and density dependence indirectly via the mort_change.
+
+In all cases, even without dd, abundant species have lower mortality change then rare species.
+
+```{r}
+
+par(mfrow = c(4, 6), pty = "s",  mar = c(2, 4, 1, 1))  # pty = "s" makes plots square
+
+dd_values <- c(0, 0.2, 0.4, 0.6, 0.8, 1)
+dc_values <- c(1, 4)
+fbmr_values <- c(10, 20)
+
+for(dd_val in dd_values) {
+  for(dc_val in dc_values) {
+    for(fbmr_val in fbmr_values){
+    # Subset data for BOTH dd and dc values
+    subset_data <- df %>% filter(dd == dd_val,
+                                 dc == dc_val,
+                                 fbmr == fbmr_val)
+    
+    # with lm to check relation between N and mort change
+    sfm <- lm(mort_change ~ log(abundance),data = subset_data) %>%
+      summary()
+
+    logN_coef <- sfm$coefficients[2,1]
+    int_coef <- sfm$coefficients[1,1]
+    
+    
+    
+    # Create plot
+    plot(mort_change ~ log(abundance), 
+         data = subset_data, 
+         cex = 0.1, 
+         col = rgb(0, 0, 0, 0.1))
+    
+    # add lm
+    abline(int_coef, logN_coef, lty = 2, col = "aquamarine")
+    
+    # Add horizontal line for mean
+    mean_mc <- subset_data$mean_mc[1]
+    abline(h = mean_mc, lty = 2, col = "green", lwd = 1)
+    
+    # Add text labels
+    
+    legend("topright",
+           legend = paste0("dd = ", dd_val,
+                           "\ndc = ", dc_val,
+                           "\nfbmr = ", fbmr_val,
+                           "\nmean mc = ", round(mean_mc,4),
+                           "\nlm:log(N) = ", round(logN_coef,4)),
+           col = NA, bty = "n")
+    }
+    }
+}
+```
+
+Plot the con coefficient instead of mc
+
+```{r}
+
+  par(mfrow = c(4, 6), pty = "s",  mar = c(2, 4, 1, 1)) 
+  
+  dd_values <- c(0, 0.2, 0.4, 0.6, 0.8, 1)
+  dc_values <- c(1, 4)
+  fbmr_values <- c(10, 20)
+  
+  for(dd_val in dd_values) {
+    for(dc_val in dc_values) {
+      for(fbmr_val in fbmr_values){
+        # Subset data for BOTH dd and dc values
+        subset_data <- df %>% filter(dd == dd_val,
+                                     dc == dc_val,
+                                     fbmr == fbmr_val)
+        
+        # with lm to check relation between N and mort change
+        sfm <- lm(con_coef ~ log(abundance),data = subset_data) %>%
+          summary()
+
+        c_coef <- sfm$coefficients[2,1]
+        int_coef <- sfm$coefficients[1,1]
+        
+        
+        
+        # Create plot
+        plot(con_coef ~ log(abundance), 
+             data = subset_data, 
+             cex = 0.1, 
+             col = rgb(0, 0, 0, 0.1))
+        
+        # add lm
+        abline(int_coef, c_coef, lty = 1, col = "red", lwd = 1.5)
+        
+        # Add horizontal line for mean
+        con_coef <- subset_data$mean_con_coef[1]
+        abline(h = con_coef, lty = 2, col = "green", lwd = 1)
+        
+        # Add text labels
+        
+        legend("topright",
+               legend = paste0("dd = ", dd_val,
+                               "\ndc = ", dc_val,
+                               "\nfbmr = ", fbmr_val,
+                               "\nmean\ncon_cf = ", round(con_coef,4)),
+               # "\nlm:log(N) = ", round(logN_coef,4)),
+               col = NA, bty = "n")
+      }
+    }
+  }
+```

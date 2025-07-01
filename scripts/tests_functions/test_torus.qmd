@@ -14,6 +14,7 @@ source("~/cyber_synch/git_synch/scripts/functions.R")
 ```
 
 #load data
+
 ```{r}
 mort <- readRDS("~/cyber_synch/local/runs/fat/20250520_mortality")
 
@@ -23,6 +24,7 @@ nameshort <- paste0("mort = ", sub(".*m([0-9]+).*", replacement = "\\1", x = nam
 ```
 
 #test the inner torus function
+
 ```{r}
 test <- matrix(1, 5, 10)
 test[c(2:(dim(test)[1] - 1)), c(2:(dim(test)[2] - 1))] <- 2

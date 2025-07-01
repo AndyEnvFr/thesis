@@ -25,8 +25,6 @@ getMortality, function docu, roxy etc.
 
 TODO:
 
-remake the script, where I check the dd species wise: why isn't the results like for all species ? Use exactly same runs !
-	
 change gauss kernel in density dependence & other changes also in environmental effect
 	1) stay in line with the current phylosim logic
 		//  if(dd){
@@ -49,3 +47,14 @@ change gauss kernel in density dependence & other changes also in environmental 
 		care for a nice docu, also in cpp code: e.g., @return Fitness is not enough. Better: return a double value bounded from ... to ... that is interpreted as fitness
 	4) when 3 is solved, copy the dd mechanism for the mutualistic density dependent process
 	5) finally, pull request
+	
+	
+	
+	
+	
+	PROBLEM:
+	the master does not compile and install on my pc (also not on the uni bt server) "undefined symbol: _PhyloSim_callModel
+   Error: loading failed". I currently work with https://dl.dropboxusercontent.com/s/zkdof0b5b523qxt/PhyloSim_0.3.tar.gz.
+   I can continue to work there.
+   
+   lets see what florian replies.
