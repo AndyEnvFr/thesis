@@ -24,8 +24,8 @@ source(paste0(root, "/git_synch/scripts/functions.R"))
 # Define parameter values
 ndd_options <- c(0, 0.5, 1)
 pdd_options <- c(0, 0.5, 1)
-nddVar_options <- c(0.01, 0.1)
-pddVar_options <- c(0.01, 0.1)
+nddVar_options <- c(0.1)
+pddVar_options <- c(0.1)
 
 environment_options <- c(0)
 seed_options <- c(2025070101)
@@ -59,7 +59,8 @@ for (ndd in ndd_options) {
               redQueenStrength = 0,
               airmat = 0,
               fitnessActsOn = "mortality",
-              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+              scenario = paste0("1_",param_index),
+              runs = c(100,101)#c(sort( c((1:50 * 800) ,(1:150 * 20000), (1:150 * 20000) + 1 )))
             )
             
             param_index <- param_index + 1
@@ -72,6 +73,7 @@ for (ndd in ndd_options) {
 
 # run parallel
 ```
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -79,8 +81,8 @@ for (ndd in ndd_options) {
 # Define parameter values
 ndd_options <- c(0, 0.5, 1)
 pdd_options <- c(0, 0.5, 1)
-nddVar_options <- c(0.01, 0.1)
-pddVar_options <- c(0.01, 0.1)
+nddVar_options <- c(0.1)
+pddVar_options <- c(0.1)
 
 environment_options <- c(0)
 seed_options <- c(2025070102)
@@ -114,7 +116,8 @@ for (ndd in ndd_options) {
               redQueenStrength = 0,
               airmat = 0,
               fitnessActsOn = "mortality",
-              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+              scenario = paste0("2_",param_index),
+              runs = c(sort( c((1:50 * 800) ,(1:150 * 20000), (1:150 * 20000) + 1 )))
             )
             
             param_index <- param_index + 1
@@ -127,6 +130,7 @@ for (ndd in ndd_options) {
 
 # run parallel
 ```
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -134,8 +138,8 @@ for (ndd in ndd_options) {
 # Define parameter values
 ndd_options <- c(0, 0.5, 1)
 pdd_options <- c(0, 0.5, 1)
-nddVar_options <- c(0.01, 0.1)
-pddVar_options <- c(0.01, 0.1)
+nddVar_options <- c(0.1)
+pddVar_options <- c(0.1)
 
 environment_options <- c(0)
 seed_options <- c(2025070103)
@@ -169,7 +173,8 @@ for (ndd in ndd_options) {
               redQueenStrength = 0,
               airmat = 0,
               fitnessActsOn = "mortality",
-              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+              scenario = paste0("3_",param_index),
+              runs = c(sort( c((1:50 * 800) ,(1:150 * 20000), (1:150 * 20000) + 1 )))
             )
             
             param_index <- param_index + 1
@@ -182,6 +187,7 @@ for (ndd in ndd_options) {
 
 # run parallel
 ```
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -189,8 +195,8 @@ for (ndd in ndd_options) {
 # Define parameter values
 ndd_options <- c(0, 0.5, 1)
 pdd_options <- c(0, 0.5, 1)
-nddVar_options <- c(0.01, 0.1)
-pddVar_options <- c(0.01, 0.1)
+nddVar_options <- c(0.1)
+pddVar_options <- c(0.1)
 
 environment_options <- c(0)
 seed_options <- c(2025070104)
@@ -224,7 +230,8 @@ for (ndd in ndd_options) {
               redQueenStrength = 0,
               airmat = 0,
               fitnessActsOn = "mortality",
-              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+              scenario = paste0("4_",param_index),
+              runs = c(sort( c((1:50 * 800) ,(1:150 * 20000), (1:150 * 20000) + 1 )))
             )
             
             param_index <- param_index + 1
@@ -237,6 +244,7 @@ for (ndd in ndd_options) {
 
 # run parallel
 ```
+
 ```{r}
 #| eval: true
 #| echo: false
@@ -244,8 +252,8 @@ for (ndd in ndd_options) {
 # Define parameter values
 ndd_options <- c(0, 0.5, 1)
 pdd_options <- c(0, 0.5, 1)
-nddVar_options <- c(0.01, 0.1)
-pddVar_options <- c(0.01, 0.1)
+nddVar_options <- c(0.1)
+pddVar_options <- c(0.1)
 
 environment_options <- c(0)
 seed_options <- c(2025070105)
@@ -279,7 +287,8 @@ for (ndd in ndd_options) {
               redQueenStrength = 0,
               airmat = 0,
               fitnessActsOn = "mortality",
-              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+              scenario = paste0("5_",param_index),
+              runs = c(sort( c((1:50 * 800) ,(1:150 * 20000), (1:150 * 20000) + 1 )))
             )
             
             param_index <- param_index + 1
@@ -294,35 +303,44 @@ for (ndd in ndd_options) {
 ```
 
 ```{r}
-for (i in 1:36) {
-  run <- runSimulation(par = params1[[i]])
-}
-
-runz1 <- runSimulationBatch(params1, parallel = 36, backup = TRUE)
-saveRDS(runz1, "~/cyber_synch/local/runs/fat/new/20250701_01")
+runz1 <- runSimulationBatch(params1[1:3], parallel = 3, backup = TRUE)
+saveRDS(runz1, file.path(root,"local/runs/fat/new/20250701_01"))
 rm(runz1)
+```
 
+
+```{r}
 runz2 <- runSimulationBatch(params2, parallel = 36, backup = TRUE)
-saveRDS(runz2, "~/cyber_synch/local/runs/fat/new/20250701_02")
+saveRDS(runz2, file.path(root, "local/runs/fat/new/20250701_02"))
 rm(runz2)
+```
 
+
+```{r}
 runz3 <- runSimulationBatch(params3, parallel = 36, backup = TRUE)
-saveRDS(runz3, "~/cyber_synch/local/runs/fat/new/20250701_03")
+saveRDS(runz3, file.path(root,"local/runs/fat/new/20250701_03"))
 rm(runz3)
+```
 
+
+```{r}
 runz4 <- runSimulationBatch(params4, parallel = 36, backup = TRUE)
-saveRDS(runz4, "~/cyber_synch/local/runs/fat/new/20250701_04")
+saveRDS(runz4, file.path(root,"local/runs/fat/new/20250701_04"))
 rm(runz4)
+```
 
-runz5 <- runSimulationBatch(params5, parallel = 36, backup = TRUE)
-saveRDS(runz5, "~/cyber_synch/local/runs/fat/new/20250701_05")
+
+```{r}
+runz5 <- runSimulationBatch(params5, parallel = 36, backup = FALSE)
+saveRDS(runz5, file.path(root,"local/runs/fat/new/20250701_05"))
 rm(runz5)
 
 ```
 
 
+```{r}
 
-
+```
 
 
 ```{r}
