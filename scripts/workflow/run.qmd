@@ -23,13 +23,11 @@ source(paste0(root, "/git_synch/scripts/functions.R"))
 
 # Define parameter values
 density_options <- c(0, 1)
-dispersal_options <- list(1)  # Using a list to preserve types
+dispersal_options <- list(1)
 densityCut_options <- c(1)
 fitnessBaseMortalityRatio_options <- c(10)
-
-# Define seed options - 5 different seeds by changing only the last digit
-# The base part (20250602) remains consistent, and the distinguishing part is appended.
-seed_options <- c(2025060201)
+environment_options <- c(0, 1)
+seed_options <- c(20250701)
 
 # Initialize empty list for parameters
 params <- list()
@@ -40,46 +38,45 @@ for (density in density_options) {
   for (dispersal_type in dispersal_options) {
     for (cut in densityCut_options) {
       for (fbmr in fitnessBaseMortalityRatio_options) {
-        for (current_seed in seed_options) { # New loop for seeds
-          # Format scenario components
-          scenario_density <- gsub("\\.", "-", as.character(density))
-          scenario_dispersal <- ifelse(identical(dispersal_type, "global"), "G", dispersal_type)
-          scenario_cut <- gsub("\\.", "-", as.character(cut))
-          scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
-          
-          # Extract the changing part of the seed for the scenario name
-          # This assumes the last two digits are the 'changed number' as per request.
-          scenario_seed_suffix <- substr(as.character(current_seed), nchar(as.character(current_seed)) - 1, nchar(as.character(current_seed)))
-          
-          # Create parameter set
-          params[[param_index]] <- createCompletePar(
-            x = 50,
-            y = 50,
-            density = density,
-            dispersal = dispersal_type,
-            specRate = 2,
-            environment = 0,
-            fitnessBaseMortalityRatio = fbmr,
-            densityCut = cut,
-            seed = current_seed, # Use the current seed from the loop
-            type = "base",
-            protracted = 0,
-            fission = 0,
-            redQueen = 0,
-            redQueenStrength = 0,
-            airmat = 0,
-            fitnessActsOn = "mortality",
-            runs = c(100,102,103),# c(sort( c( ((1:10 * 50)^2), ((1:10 * 50)^2) + 1 ))),
-            scenario = paste0("dd", scenario_density,
-                              "_disp", scenario_dispersal,
-                              "_sr2_e0_m", scenario_fbmr,
-                              "_cut", scenario_cut,
-                              "_seed", scenario_seed_suffix) # Add the seed suffix to the scenario name
-          )
-          
-          # Increment parameter index
-          param_index <- param_index + 1
-        } # End seed loop
+        for (env in environment_options) {  # << neue Schleife
+          for (current_seed in seed_options) {
+            
+            scenario_density <- gsub("\\.", "-", as.character(density))
+            scenario_dispersal <- ifelse(identical(dispersal_type, "global"), "G", dispersal_type)
+            scenario_cut <- gsub("\\.", "-", as.character(cut))
+            scenario_fbmr <- gsub("\\.", "-", as.character(fbmr))
+            scenario_env <- gsub("\\.", "-", as.character(env))
+            scenario_seed_suffix <- substr(as.character(current_seed), nchar(as.character(current_seed)) - 1, nchar(as.character(current_seed)))
+            
+            params[[param_index]] <- createCompletePar(
+              x = 50,
+              y = 50,
+              density = density,
+              dispersal = dispersal_type,
+              specRate = 2,
+              environment = env,
+              fitnessBaseMortalityRatio = fbmr,
+              densityCut = cut,
+              seed = current_seed,
+              type = "base",
+              protracted = 0,
+              fission = 0,
+              redQueen = 0,
+              redQueenStrength = 0,
+              airmat = 0,
+              fitnessActsOn = "mortality",
+              runs = c(100, 102, 103),
+              scenario = paste0("dd", scenario_density,
+                                "_disp", scenario_dispersal,
+                                "_sr2_e", scenario_env,
+                                "_m", scenario_fbmr,
+                                "_cut", scenario_cut,
+                                "_seed", scenario_seed_suffix)
+            )
+            
+            param_index <- param_index + 1
+          }
+        }
       }
     }
   }
@@ -101,7 +98,6 @@ try <- getConNeigh(simu = runz)
 tryy <- getMatToTab(simu = tryy)
 try <- getMatToTab(simu = try)
 ```
-
 
 ```{r}
 names(runz) <- getNames(runs = runz)

@@ -1,0 +1,339 @@
+---
+title: "run file"
+format: html
+editor: visual
+---
+
+Here, I check the relationship between the *density* param and the species richness. Also, seed dispersal = (1, global). For this purpose the frequency of the output must not be every 50 generations for 100k generations.
+
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+source(paste0(root, "/git_synch/scripts/functions.R"))
+```
+
+### define params and run model
+
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+ndd_options <- c(0, 0.5, 1)
+pdd_options <- c(0, 0.5, 1)
+nddVar_options <- c(0.01, 0.1)
+pddVar_options <- c(0.01, 0.1)
+
+environment_options <- c(0)
+seed_options <- c(2025070101)
+
+# Initialize empty list for parameters
+params1 <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (ndd in ndd_options) {
+  for (pdd in pdd_options) {
+    for (nddVar in nddVar_options) {
+      for (pddVar in pddVar_options) {
+        for (env in environment_options) {  # << neue Schleife
+          for (current_seed in seed_options) {
+            
+            params1[[param_index]] <- createCompletePar(
+              x = 50,
+              y = 50,
+              negativeDensity = ndd, nDensityCut = 1, nDDNicheWidth = nddVar,
+              positiveDensity = pdd, pDensityCut = 1, pDDNicheWidth = pddVar,
+              dispersal = 1,
+              specRate = 2,
+              environment = 0,
+              fitnessBaseMortalityRatio = 10,
+              seed = current_seed,
+              type = "base",
+              protracted = 0,
+              fission = 0,
+              redQueen = 0,
+              redQueenStrength = 0,
+              airmat = 0,
+              fitnessActsOn = "mortality",
+              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+            )
+            
+            param_index <- param_index + 1
+          }
+        }
+      }
+    }
+  }
+}
+
+# run parallel
+```
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+ndd_options <- c(0, 0.5, 1)
+pdd_options <- c(0, 0.5, 1)
+nddVar_options <- c(0.01, 0.1)
+pddVar_options <- c(0.01, 0.1)
+
+environment_options <- c(0)
+seed_options <- c(2025070102)
+
+# Initialize empty list for parameters
+params2 <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (ndd in ndd_options) {
+  for (pdd in pdd_options) {
+    for (nddVar in nddVar_options) {
+      for (pddVar in pddVar_options) {
+        for (env in environment_options) {  # << neue Schleife
+          for (current_seed in seed_options) {
+            
+            params2[[param_index]] <- createCompletePar(
+              x = 50,
+              y = 50,
+              negativeDensity = ndd, nDensityCut = 1, nDDNicheWidth = nddVar,
+              positiveDensity = pdd, pDensityCut = 1, pDDNicheWidth = pddVar,
+              dispersal = 1,
+              specRate = 2,
+              environment = 0,
+              fitnessBaseMortalityRatio = 10,
+              seed = current_seed,
+              type = "base",
+              protracted = 0,
+              fission = 0,
+              redQueen = 0,
+              redQueenStrength = 0,
+              airmat = 0,
+              fitnessActsOn = "mortality",
+              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+            )
+            
+            param_index <- param_index + 1
+          }
+        }
+      }
+    }
+  }
+}
+
+# run parallel
+```
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+ndd_options <- c(0, 0.5, 1)
+pdd_options <- c(0, 0.5, 1)
+nddVar_options <- c(0.01, 0.1)
+pddVar_options <- c(0.01, 0.1)
+
+environment_options <- c(0)
+seed_options <- c(2025070103)
+
+# Initialize empty list for parameters
+params3 <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (ndd in ndd_options) {
+  for (pdd in pdd_options) {
+    for (nddVar in nddVar_options) {
+      for (pddVar in pddVar_options) {
+        for (env in environment_options) {  # << neue Schleife
+          for (current_seed in seed_options) {
+            
+            params3[[param_index]] <- createCompletePar(
+              x = 50,
+              y = 50,
+              negativeDensity = ndd, nDensityCut = 1, nDDNicheWidth = nddVar,
+              positiveDensity = pdd, pDensityCut = 1, pDDNicheWidth = pddVar,
+              dispersal = 1,
+              specRate = 2,
+              environment = 0,
+              fitnessBaseMortalityRatio = 10,
+              seed = current_seed,
+              type = "base",
+              protracted = 0,
+              fission = 0,
+              redQueen = 0,
+              redQueenStrength = 0,
+              airmat = 0,
+              fitnessActsOn = "mortality",
+              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+            )
+            
+            param_index <- param_index + 1
+          }
+        }
+      }
+    }
+  }
+}
+
+# run parallel
+```
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+ndd_options <- c(0, 0.5, 1)
+pdd_options <- c(0, 0.5, 1)
+nddVar_options <- c(0.01, 0.1)
+pddVar_options <- c(0.01, 0.1)
+
+environment_options <- c(0)
+seed_options <- c(2025070104)
+
+# Initialize empty list for parameters
+params4 <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (ndd in ndd_options) {
+  for (pdd in pdd_options) {
+    for (nddVar in nddVar_options) {
+      for (pddVar in pddVar_options) {
+        for (env in environment_options) {  # << neue Schleife
+          for (current_seed in seed_options) {
+            
+            params4[[param_index]] <- createCompletePar(
+              x = 50,
+              y = 50,
+              negativeDensity = ndd, nDensityCut = 1, nDDNicheWidth = nddVar,
+              positiveDensity = pdd, pDensityCut = 1, pDDNicheWidth = pddVar,
+              dispersal = 1,
+              specRate = 2,
+              environment = 0,
+              fitnessBaseMortalityRatio = 10,
+              seed = current_seed,
+              type = "base",
+              protracted = 0,
+              fission = 0,
+              redQueen = 0,
+              redQueenStrength = 0,
+              airmat = 0,
+              fitnessActsOn = "mortality",
+              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+            )
+            
+            param_index <- param_index + 1
+          }
+        }
+      }
+    }
+  }
+}
+
+# run parallel
+```
+```{r}
+#| eval: true
+#| echo: false
+
+# Define parameter values
+ndd_options <- c(0, 0.5, 1)
+pdd_options <- c(0, 0.5, 1)
+nddVar_options <- c(0.01, 0.1)
+pddVar_options <- c(0.01, 0.1)
+
+environment_options <- c(0)
+seed_options <- c(2025070105)
+
+# Initialize empty list for parameters
+params5 <- list()
+param_index <- 1
+
+# Generate all parameter combinations
+for (ndd in ndd_options) {
+  for (pdd in pdd_options) {
+    for (nddVar in nddVar_options) {
+      for (pddVar in pddVar_options) {
+        for (env in environment_options) {  # << neue Schleife
+          for (current_seed in seed_options) {
+            
+            params5[[param_index]] <- createCompletePar(
+              x = 50,
+              y = 50,
+              negativeDensity = ndd, nDensityCut = 1, nDDNicheWidth = nddVar,
+              positiveDensity = pdd, pDensityCut = 1, pDDNicheWidth = pddVar,
+              dispersal = 1,
+              specRate = 2,
+              environment = 0,
+              fitnessBaseMortalityRatio = 10,
+              seed = current_seed,
+              type = "base",
+              protracted = 0,
+              fission = 0,
+              redQueen = 0,
+              redQueenStrength = 0,
+              airmat = 0,
+              fitnessActsOn = "mortality",
+              runs = c(50,51,52)#c(sort( c( ((1:100 * 5)^2), ((1:100 * 5)^2) + 1 )))
+            )
+            
+            param_index <- param_index + 1
+          }
+        }
+      }
+    }
+  }
+}
+
+# run parallel
+```
+
+```{r}
+for (i in 1:36) {
+  run <- runSimulation(par = params1[[i]])
+}
+
+runz1 <- runSimulationBatch(params1, parallel = 36, backup = TRUE)
+saveRDS(runz1, "~/cyber_synch/local/runs/fat/new/20250701_01")
+rm(runz1)
+
+runz2 <- runSimulationBatch(params2, parallel = 36, backup = TRUE)
+saveRDS(runz2, "~/cyber_synch/local/runs/fat/new/20250701_02")
+rm(runz2)
+
+runz3 <- runSimulationBatch(params3, parallel = 36, backup = TRUE)
+saveRDS(runz3, "~/cyber_synch/local/runs/fat/new/20250701_03")
+rm(runz3)
+
+runz4 <- runSimulationBatch(params4, parallel = 36, backup = TRUE)
+saveRDS(runz4, "~/cyber_synch/local/runs/fat/new/20250701_04")
+rm(runz4)
+
+runz5 <- runSimulationBatch(params5, parallel = 36, backup = TRUE)
+saveRDS(runz5, "~/cyber_synch/local/runs/fat/new/20250701_05")
+rm(runz5)
+
+```
+
+
+
+
+
+
+```{r}
+tryy <- getConNeigh(simu = runzz)
+try <- getConNeigh(simu = runz)
+
+tryy <- getMatToTab(simu = tryy)
+try <- getMatToTab(simu = try)
+```
+
+```{r}
+names(runz) <- getNames(runs = runz)
+tryy <- getMatToTab(simu = try)
+```

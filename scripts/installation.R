@@ -7,7 +7,7 @@ remove.packages("PhyloSim")
 
 # change directory to the package &
 # build the 
-Rcpp::compileAttributes('Uni/Master/MA/local/phylosim_packages/Eco_phyloSim-master_Anika/PhyloSim/')
+Rcpp::compileAttributes('~/cyber_synch/EcoPhyloSim/PhyloSim/')
 
 # do this in the terminal
 # cd navigate to one folder above Phylosim (e.g., Eco_phyloSim-master_Anika)
