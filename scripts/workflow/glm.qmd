@@ -5,7 +5,7 @@ format: html
 editor: visual
 ---
 
-Here, I want to calculate the change in mortality from 0 to 1 neighbor.
+Here, I want to calculate the change in mortality from 1 to 0 neighbor.
 
 ```{r}
 library(dplyr)

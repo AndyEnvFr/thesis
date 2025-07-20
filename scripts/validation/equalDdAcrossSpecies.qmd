@@ -14,9 +14,9 @@ library(parallel)
 library(lattice)
 library(dplyr)
 library(stringr)
-# root <- "~/Uni/Master/MA/" # work from local machine
-root <- "~/cyber_synch/" # work from uni bayreuth server
-source(paste0(root, "/git_synch/scripts/functions.R"))
+root <- "~/Uni/Master/MA/" # work from local machine
+# root <- "~/cyber_synch/" # work from uni bayreuth server
+# source(paste0(root, "/git_synch/scripts/functions.R"))
 ```
 
 ## --------------------------------------------- load results

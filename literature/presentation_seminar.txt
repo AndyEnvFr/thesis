@@ -1,0 +1,48 @@
+16:49 03/07/2025
+
+PSF - Präsentation
+
+host abundance and key microbial traits drive net PSF. This leads to 
+	1) common plants experience lower local cndd
+	2) diversity is boosted
+
+more detailed background: Following early studies, it has been proposed that common species should accumulate more pathogens and thereby suffer greater localized pressure from natural enemies1,2. However, multiple experimental studies have shown the opposite is apparently true; common plant species generally exhibit weaker negative PSF than rare species
+
+traits, such as host affinity and dispersal, may differ between microbes with mutualistic and those with pathogenic effects on their hosts
+	therefore, we need to know how both types of microbes independently affect feedback
+
+Crucially, if it is possible for the strength of PSF to affect host abundance, is it also possible that host abundance affects the strength of PSF by influencing the dynamics of soil biota?
+
+Results
+	found correlation between host abundance and psf
+		common plants can have lower negative psf than rare plant (what is empirically found: common plants have lower cndd) [fig 2c]
+
+	semi selective pathogens:
+		can survive on non target (e.g., rare species) and maintain high number
+		under heterospecific Strees, common species then have higher pathogen pressure
+	selective pathogens:
+		on common species have higher abundance, creating higher pathogen pressure in environment
+		on rare species have low abundance
+	Abundance on Non-Target Hosts
+		Pathogens that have a higher affinity for common host species can maintain greater populations on non-target hosts compared to pathogens that prefer rare species.
+		This is because common species provide a larger overall "reservoir" for these generalist-leaning pathogens, even when they are on a non-target host.
+
+		
+Discussion
+	They specify: dispersal, persistance, host affinity, competitive ability --- I specify: host affinity
+	microbial traits, particularly the relative host affinity and effect of mutualists and pathogens on plant survival, are key to determining whether negative PSF develops !!!
+	Specifically, we found that the host affinity of pathogens and mutualists both strongly influence the direction of PSF
+		(more host-specific pathogens drive negative feedback, and more host-specific mutualists drive positive feedback).
+		In tropical forests, where PSF has been observed to be negative6, plantassociated mutualists appear to be less host-specific in their association patterns than pathogens9,23,24.
+	Environment: can shift primary driver of recruitment from P to M -> postive PSF -> decreasing diversity, as spatial aggregation
+		conversely, in resource rich areas P -> negative PSF -> increasing diversity
+	positive Correlation between Host abundance and PSF:
+		common plants
+			have weak away survival because non-specific pathogens accumulate relatively much beneath heterospecifics -> increased PSF for common plants (Fig 1 c)
+			have relatively high home scenario because also mutualists accumulate relatively much beneath conspecifics -> increased PSF
+		for rare plants
+			have high away survival, because low pathogen load beneath common plants -> lowered PSF
+			have weak home survival, because mutualists don't accumulate beneath con plants -> lowered PSF
+		--> rare species advantage
+	
+	
