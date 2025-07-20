@@ -4,7 +4,7 @@ format: html
 editor: visual
 ---
 
-This script first checks the change in mortality for the runs "\~/cyber_synch/local/runs/fat/20250602\_\[01,02,03,04,05\]". The change in mortality is defined as \[p(mort) with 1 neig.\] - \[p(mort) with 1 neig.\]. For runs with dc = 4, the estimate of the con parametr (effect of a neighbor) is multiplied by 12, because there are now 48 neighbors (?getCircularOffsets) instead of 4 with dc = 1. This dilutes the density effect. Multiplying by 12 compensates therefore.
+This script first checks the change in mortality for the runs "\~/cyber_synch/local/runs/fat/20250602\_\[01,02,03,04,05\]". The change in mortality is defined as \[p(mort) with 1 neig.\] - \[p(mort) with 0 neig.\]. For runs with dc = 4, the estimate of the con parametr (effect of a neighbor) is multiplied by 12, because there are now 48 neighbors (?getCircularOffsets) instead of 4 with dc = 1. This dilutes the density effect. Multiplying by 12 compensates therefore.
 
 ```{r}
 #| warning: false
