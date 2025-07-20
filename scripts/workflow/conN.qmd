@@ -13,12 +13,12 @@ optimized version because it operates with matrix addition instead of looping th
 #| warning: false
 library(PhyloSim)
 library(parallel)
-source("~/cyber_synch/git_synch/scripts/functions.R")
+# source("~/cyber_synch/git_synch/scripts/functions.R")
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr")
+runs <- readRDS("~/cyber_synch/local/runs/mstr/20250715_MstrRunz.rds")
 
 # runs <- readRDS("~/Uni/Master/MA/local/runs/fat/20250520_mortality")
 ```
@@ -26,7 +26,7 @@ runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr")
 # get names
 
 ```{r}
-nm <- run_name(runs = runs, batch = TRUE)
+nm <- getNames(runs = runs)
 names(runs) <- nm
 ```
 
@@ -37,7 +37,7 @@ names(runs) <- nm
 # also, the generations will get the name of the run (e.g., if 40 generations
 # are runned until year 200000, then the last generation = run$output["200000"]
 # keep in mind that from now on, the matrices are not of original size any longer
-runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
+runz <- get(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
 ```
 
 # transform matrix in df
