@@ -1,0 +1,16 @@
+15:20 17/07/2025
+
+meeting lisa crazy sheep
+
+Hypothesen aufbauen auf schroeder und anhand von 4 Metriken testen. I predict that:
+	low pathogen specificity, high pathogen dispersal, high mutualist specificity, low mutualist dispersal leads to
+		a ___correlation between abundance and CDD___. Even without dynamic microbial feedbacks
+		high species richness in the community
+		a more even species distribution
+		(a stronger CDD effect ?) … I forgot the last of the 4 metrics
+		
+
+How does my Model differ from Phylosim
+	no feedbacks possible
+		the changed mortality causes changes in the microbe community
+		in Phylosim Pathogens and Mutualists are acting implicitly

@@ -10,7 +10,6 @@ library(purrr)
 library(stringr)
 ```
 
-
 ```{r}
 # Define the base path to your runs
 root <- "~/cyber_synch"
@@ -118,7 +117,6 @@ for (suffix in run_suffixes) {
 }
 ```
 
-
 ```{r}
 # Combine all results into a single data frame
 final_results_df <- bind_rows(all_results_list)
@@ -139,5 +137,3 @@ final_results_df_ <- final_results_df %>%
 saveRDS(object = final_results_df_, file = file.path(root, "git_synch/scripts/validation/div_20250602"))
 saveRDS(object = final_results_df, file = file.path(root, "git_synch/scripts/validation/divExtended_20250602"))
 ```
-
-
