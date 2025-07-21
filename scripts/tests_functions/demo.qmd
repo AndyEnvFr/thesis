@@ -19,80 +19,185 @@ root <- "~/Uni/Master/MA/" # work from local machine
 ```{r}
 parNDD <- createCompletePar(x = 50, y = 50, type = "base",
                   dispersal = 1,
-                  runs = c(100,101,500,501,1000,1001),
+                  runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
                   negativeDensity = 1, nDensityCut = 1, nDDNicheWidth = .01,
-                  positiveDensity = 0, pDensityCut = 0, pDDNicheWidth = 0, 
-                  environment = 0, envNicheWidth = 0,
+                  positiveDensity = 0, 
                   specRate = 2,
                   fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
                   seed = 20250724,
-                  fission = 0, redQueen = 0, redQueenStrength = 0, protracted = 0,
-                  airmat = 0,scenario = "demo1")
+                  scenario = "demo1")
 
 parPDD <- createCompletePar(x = 50, y = 50, type = "base",
                   dispersal = 1,
-                  runs = c(100,101,500,501,1000,1001),
-                  negativeDensity = 0, nDensityCut = 0, nDDNicheWidth = 0,
+                  runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
+                  negativeDensity = 0,
                   positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .2, 
-                  environment = 0, envNicheWidth = 0,
                   specRate = 2,
                   fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
                   seed = 20250724,
-                  fission = 0, redQueen = 0, redQueenStrength = 0, protracted = 0,
-                  airmat = 0,scenario = "demo2")
+                  scenario = "demo2")
 
 parBoth <- createCompletePar(x = 50, y = 50, type = "base",
                   dispersal = 1,
-                  runs = c(100,101,500,501,1000,1001),
+                  runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
                   negativeDensity = 1, nDensityCut = 1, nDDNicheWidth = .01,
                   positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .01, 
-                  environment = 0, envNicheWidth = 0,
                   specRate = 2,
                   fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
                   seed = 20250724,
-                  fission = 0, redQueen = 0, redQueenStrength = 0, protracted = 0,
-                  airmat = 0, scenario = "demo3")
+                  scenario = "demo3")
 
 parNull <- createCompletePar(x = 50, y = 50, type = "base",
                   dispersal = 1,
-                  runs = c(100,101,500,501,1000,1001),
-                  negativeDensity = 0, nDensityCut = 0, nDDNicheWidth = 0,
-                  positiveDensity = 0, pDensityCut = 0, pDDNicheWidth = 0, 
-                  environment = 0, envNicheWidth = 0,
+                  runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
+                  negativeDensity = 0,
+                  positiveDensity = 0, 
                   specRate = 2,
                   fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
                   seed = 20250724,
-                  fission = 0, redQueen = 0, redQueenStrength = 0, protracted = 0,
-                  airmat = 0,scenario = "demo4")
+                  scenario = "demo4")
 
-parlist <- list(parNDD,parPDD, parBoth, parNull)
+parGlob <- createCompletePar(x = 50, y = 50, type = "base",
+                  dispersal = "global",
+                  runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
+                  negativeDensity = 0,
+                  positiveDensity = 0, 
+                  specRate = 2,
+                  fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
+                  seed = 20250724,
+                  scenario = "demo4")
+
+parlist <- list(parNDD,parPDD, parBoth, parNull, parGlob)
 ```
 
 # run
 
 ```{r}
-simu1 <- runSimulationBatch(pars = parlist, parallel = 4)
+simu1 <- runSimulationBatch(pars = parlist, parallel = 5)
 ```
 
 # analysis
-
 ```{r}
-names(simu1$Output)
-names(simu1$Output) <- getNames(simu1)
+names(simu1) <- getNames(simu1)
+
+simu1 <- lapply(simu1, function(x) {
+  names(x$Output) <- x$Model$runs
+  return(x)
+})
+
+class(simu1) <- "PhylosimList"
 ```
+
 ## species matrix
+
 ```{r}
-par(mfrow= c(2,2), mar=c(2,2,2,2))
-image(simu1$Output$`100`$specMat, main = "100")
-image(simu1$Output$`101`$specMat, main = "101")
-image(simu1$Output$`150`$specMat, main = "150")
-image(simu1$Output$`151`$specMat, main = "151")
-image(simu1$Output$`200`$specMat, main = "200")
-image(simu1$Output$`201`$specMat, main = "201")
-image(simu1$Output$`250`$specMat, main = "250")
-image(simu1$Output$`251`$specMat, main = "251")
-image(simu1$Output$`300`$specMat, main = "300")
-image(simu1$Output$`301`$specMat, main = "301")
+E <- matrix(c(2,2,2,2,2,
+              2,0,0,0,0,
+              2,0,0,0,0,
+              2,2,2,2,0,
+              2,0,0,0,0,
+              2,0,0,0,0,
+              2,2,2,2,2), nrow=7, byrow=TRUE)
+
+A <- matrix(c(0,1,1,1,0,
+              1,0,0,0,1,
+              1,0,0,0,1,
+              1,1,1,1,1,
+              1,0,0,0,1,
+              1,0,0,0,1,
+              1,0,0,0,1), nrow=7, byrow=TRUE)
+
+S <- matrix(c(0,4,4,4,4,
+              4,0,0,0,0,
+              4,0,0,0,0,
+              0,4,4,4,0,
+              0,0,0,0,4,
+              0,0,0,0,4,
+              4,4,4,4,0), nrow=7, byrow=TRUE)
+
+I <- matrix(c(3,3,3,3,3,
+              0,0,3,0,0,
+              0,0,3,0,0,
+              0,0,3,0,0,
+              0,0,3,0,0,
+              0,0,3,0,0,
+              3,3,3,3,3), nrow=7, byrow=TRUE)
+
+# Add spacing between letters (1 column of zeros)
+space <- matrix(0, nrow=7, ncol=1)
+
+# Combine letters with spacing
+easi_matrix <- cbind(E, space, A, space, S, space, I)
 ```
 
+```{r}
+par(mfrow= c(2,3), mar=c(2,2,2,2))
+
+image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "ndd_100")
+image(simu1$pdd1Var0.2Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "pdd_100")
+image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "both_100")
+image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "none_100")
+image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`100`$specMat, main = "glob_100")
+image(easi_matrix, col = rainbow(5))
+
+image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "ndd_101")
+image(simu1$pdd1Var0.2Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "pdd_101")
+image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "both_101")
+image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "none_101")
+image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`101`$specMat, main = "glob_101")
+image(easi_matrix, col = rainbow(5))
+
+
+image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "ndd_5000")
+image(simu1$pdd1Var0.2Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "pdd_5000")
+image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "both_5000")
+image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "none_5000")
+image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "glob_5000")
+image(easi_matrix, col = rainbow(5))
+
+
+image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "ndd_5001")
+image(simu1$pdd1Var0.2Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "pdd_5001")
+image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "both_5001")
+image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "none_5001")
+image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "glob_5001")
+image(easi_matrix, col = rainbow(5))
+
+```
+
+## richness
+```{r}
+par(mfrow = c(2,3))
+stats <- getSpecTime(simu1, ymax = 40, plot = T, title = c("nDD", "pDD", "both", "none", "global"))
+
+cat("mean S in nDD run: ", mean(stats[[1]]$spec_rich))
+cat("\nmean S in pDD run: ", mean(stats[[2]]$spec_rich))
+cat("\nmean S in nDD+pDD run: ", mean(stats[[3]]$spec_rich))
+cat("\nmean S in NULL run: ", mean(stats[[4]]$spec_rich))
+cat("\nmean S in global run: ", mean(stats[[5]]$spec_rich))
+
+cat("\n\nFor last 20 generations, mean S in nDD run: ", mean(stats[[1]]$spec_rich[80:100]))
+cat("\nFor last 20 generations, mean S in pDD run: ", mean(stats[[2]]$spec_rich[80:100]))
+cat("\nFor last 20 generations, mean S in nDD+pDD run: ", mean(stats[[3]]$spec_rich[80:100]))
+cat("\nFor last 20 generations, mean S in NULL run: ", mean(stats[[4]]$spec_rich[80:100]))
+cat("\nFor last 20 generations, mean S in global run: ", mean(stats[[5]]$spec_rich[80:100]))
+```
+## sac
+```{r}
+# positively bent curve (concave up) = clustering 
+# negatively bent curve (concave down) = more neutral distribution
+par(mfrow = c(2,3))
+
+sac(simu = simu1[[1]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
+sac(simu = simu1[[2]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
+sac(simu = simu1[[3]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
+sac(simu = simu1[[4]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
+sac(simu = simu1[[5]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
+```
+
+```{r}
+par(mfrow = c(2,3))
+
+rac(runs = simu1, ymax = 2000, xmax = 25, title = c("nDD", "pDD", "both", "none", "global"), plot_type = "line")
+```
 
