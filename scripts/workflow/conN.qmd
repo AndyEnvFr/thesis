@@ -13,51 +13,65 @@ optimized version because it operates with matrix addition instead of looping th
 #| warning: false
 library(PhyloSim)
 library(parallel)
-source("~/cyber_synch/git_synch/scripts/functions.R")
+root <- "~/Uni/Master/MA/" # work from local machine
+# root <- "~/cyber_synch/" # work from uni bayreuth server
+# source("~/cyber_synch/git_synch/scripts/functions.R")
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250528_fbmr")
-
-# runs <- readRDS("~/Uni/Master/MA/local/runs/fat/20250520_mortality")
+runs <- readRDS(paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRun.rds"))
 ```
 
 # get names
 
 ```{r}
-nm <- run_name(runs = runs, batch = TRUE)
+nm <- getNames(runs = runs)
 names(runs) <- nm
 ```
 
-# get mortMat, idMat and torus
+# get number of conspecific neighbors
 
-```{r}
-# by default when computing the torus mort and id mat will be calculated
-# also, the generations will get the name of the run (e.g., if 40 generations
-# are runned until year 200000, then the last generation = run$output["200000"]
-# keep in mind that from now on, the matrices are not of original size any longer
-runz <- torus_batch(runs, overwrite = TRUE, max_neighborhood_radius = NULL)
-```
+getConNeigh() automatically calculates
 
-# transform matrix in df
+-   species ID
+
+-   mortality status
+
+-   enlargens the matrix as torus
+
+-   names the runs
+
+-   names the generations with their generation nb. (1,2,3 -\> 500,501,1000)
 
 ```{r}
 
 # Run in parallel
 
-cl <- makeCluster(length(runz)) # make cluster with core nb
+cl <- makeCluster(length(runs)) # make cluster with core nb
 
 # export cluster with necessary functions
-clusterExport(cl, c("runz", "get_con_neigh", "get_circular_offsets"))
+clusterExport(cl, c("runs", "getConNeigh", "getTorus", "getCircularOffset",
+                    "getID", "getMortality"))
 
 parallel_function <- function(run){
-  offset <- get_circular_offsets(neigh_radius = run$Model$densityCut)
-  result <- get_con_neigh(run = run, radius = run$Model$densityCut, undo_torus = TRUE)
+  result <- getConNeigh(run = run)
   return(result)
 }
 
-#
-runz <- parLapply(cl, X = runz, fun = parallel_function)
-# saveRDS(runz, "~/cyber_synch/local/runs/fat/20250602_05_conN")
+# 
+runz <- parLapply(cl, X = runs, fun = parallel_function)
+# saveRDS(runz, paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRunConN.rds"))
+```
+
+```{r}
+image(runs[[1]]$Output[[300]]$specMat, col = rainbow(n = unique(as.vector(runs[[1]]$Output[[300]]$specMat))))
+```
+
+```{r}
+names(runs) <- getNames(runs)
+sublist <- runs[1:2]
+class(sublist) <- "PhylosimList"
+try <- getConNeigh(sublist)
+TEST <- getMatToTab(try, detailedParams = TRUE)
 ```

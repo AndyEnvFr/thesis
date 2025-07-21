@@ -1,0 +1,98 @@
+---
+title: "demo"
+format: html
+---
+
+# load
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+root <- "~/Uni/Master/MA/" # work from local machine
+# root <- "~/cyber_synch/" # work from uni bayreuth server
+# source("~/cyber_synch/git_synch/scripts/functions.R")
+# source("~/Uni/Master/MA/git_synch/scripts/functions.R")
+```
+
+# params
+
+```{r}
+parNDD <- createCompletePar(x = 50, y = 50, type = "base",
+                  dispersal = 1,
+                  runs = c(100,101,500,501,1000,1001),
+                  negativeDensity = 1, nDensityCut = 1, nDDNicheWidth = .01,
+                  positiveDensity = 0, pDensityCut = 0, pDDNicheWidth = 0, 
+                  environment = 0, envNicheWidth = 0,
+                  specRate = 2,
+                  fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
+                  seed = 20250724,
+                  fission = 0, redQueen = 0, redQueenStrength = 0, protracted = 0,
+                  airmat = 0,scenario = "demo1")
+
+parPDD <- createCompletePar(x = 50, y = 50, type = "base",
+                  dispersal = 1,
+                  runs = c(100,101,500,501,1000,1001),
+                  negativeDensity = 0, nDensityCut = 0, nDDNicheWidth = 0,
+                  positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .2, 
+                  environment = 0, envNicheWidth = 0,
+                  specRate = 2,
+                  fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
+                  seed = 20250724,
+                  fission = 0, redQueen = 0, redQueenStrength = 0, protracted = 0,
+                  airmat = 0,scenario = "demo2")
+
+parBoth <- createCompletePar(x = 50, y = 50, type = "base",
+                  dispersal = 1,
+                  runs = c(100,101,500,501,1000,1001),
+                  negativeDensity = 1, nDensityCut = 1, nDDNicheWidth = .01,
+                  positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .01, 
+                  environment = 0, envNicheWidth = 0,
+                  specRate = 2,
+                  fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
+                  seed = 20250724,
+                  fission = 0, redQueen = 0, redQueenStrength = 0, protracted = 0,
+                  airmat = 0, scenario = "demo3")
+
+parNull <- createCompletePar(x = 50, y = 50, type = "base",
+                  dispersal = 1,
+                  runs = c(100,101,500,501,1000,1001),
+                  negativeDensity = 0, nDensityCut = 0, nDDNicheWidth = 0,
+                  positiveDensity = 0, pDensityCut = 0, pDDNicheWidth = 0, 
+                  environment = 0, envNicheWidth = 0,
+                  specRate = 2,
+                  fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
+                  seed = 20250724,
+                  fission = 0, redQueen = 0, redQueenStrength = 0, protracted = 0,
+                  airmat = 0,scenario = "demo4")
+
+parlist <- list(parNDD,parPDD, parBoth, parNull)
+```
+
+# run
+
+```{r}
+simu1 <- runSimulationBatch(pars = parlist, parallel = 4)
+```
+
+# analysis
+
+```{r}
+names(simu1$Output)
+names(simu1$Output) <- getNames(simu1)
+```
+## species matrix
+```{r}
+par(mfrow= c(2,2), mar=c(2,2,2,2))
+image(simu1$Output$`100`$specMat, main = "100")
+image(simu1$Output$`101`$specMat, main = "101")
+image(simu1$Output$`150`$specMat, main = "150")
+image(simu1$Output$`151`$specMat, main = "151")
+image(simu1$Output$`200`$specMat, main = "200")
+image(simu1$Output$`201`$specMat, main = "201")
+image(simu1$Output$`250`$specMat, main = "250")
+image(simu1$Output$`251`$specMat, main = "251")
+image(simu1$Output$`300`$specMat, main = "300")
+image(simu1$Output$`301`$specMat, main = "301")
+```
+
+
