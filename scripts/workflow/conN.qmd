@@ -23,13 +23,6 @@ root <- "~/cyber_synch/" # work from uni bayreuth server
 runs <- readRDS(paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRun.rds"))
 ```
 
-# get names
-
-```{r}
-nm <- getNames(runs = runs)
-names(runs) <- nm
-```
-
 # get number of conspecific neighbors
 
 getConNeigh() automatically calculates
@@ -49,6 +42,10 @@ getConNeigh() automatically calculates
 
 # Run in parallel
 
+# cation... this will not automatically getNames(), because it
+# runs getConNeigh() on PhyloSim class. getNames() is only available for
+# PhylosimList class (sequential processing)
+
 cl <- makeCluster(length(runs)) # make cluster with core nb
 
 # export cluster with necessary functions
@@ -56,12 +53,13 @@ clusterExport(cl, c("runs", "getConNeigh", "getCircularOffsets",
                     "getID", "getMortality"))
 
 parallel_function <- function(run){
-  result <- getConNeigh(simu = run)
+  result <- getConNeigh(simu = run) 
   return(result)
 }
 
 # 
 runz <- parLapply(cl, X = runs, fun = parallel_function)
+names(runz) <- getNames(runs)
 saveRDS(runz, paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRunConN.rds"))
 ```
 
