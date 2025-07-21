@@ -32,6 +32,6 @@ runs <- readRDS(paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrR
 ```{r}
 cl <- makeCluster(length(runs))
 clusterExport(cl, c("getMatToTab", "runs"))
-res <- parLapply(cl = cl, X = runs, fun = getMatToTab)
+res <- parLapply(cl = cl, X = runs, fun = function(x) getMatToTab(x, detailedParams = TRUE))
 saveRDS(res, paste0(root, "local/runs/mstr/20250715_validation/tabular/20250715_MstrRunConNTab.rds"))
 ```
