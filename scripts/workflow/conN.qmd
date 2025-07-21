@@ -13,8 +13,8 @@ optimized version because it operates with matrix addition instead of looping th
 #| warning: false
 library(PhyloSim)
 library(parallel)
-root <- "~/Uni/Master/MA/" # work from local machine
-# root <- "~/cyber_synch/" # work from uni bayreuth server
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
 # source("~/cyber_synch/git_synch/scripts/functions.R")
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
@@ -44,6 +44,7 @@ getConNeigh() automatically calculates
 
 -   names the generations with their generation nb. (1,2,3 -> 500,501,1000)
 
+
 ```{r}
 
 # Run in parallel
@@ -51,22 +52,16 @@ getConNeigh() automatically calculates
 cl <- makeCluster(length(runs)) # make cluster with core nb
 
 # export cluster with necessary functions
-clusterExport(cl, c("runs", "getConNeigh", "getTorus", "getCircularOffset",
+clusterExport(cl, c("runs", "getConNeigh", "getCircularOffsets",
                     "getID", "getMortality"))
 
 parallel_function <- function(run){
-  result <- getConNeigh(run = run)
+  result <- getConNeigh(simu = run)
   return(result)
 }
 
 # 
 runz <- parLapply(cl, X = runs, fun = parallel_function)
-# saveRDS(runz, paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRunConN.rds"))
+saveRDS(runz, paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRunConN.rds"))
 ```
 
-```{r}
-test <- getConNeigh(simu = )
-
-test1 <- getConNeigh(simu = runz[[1]])
-
-```
