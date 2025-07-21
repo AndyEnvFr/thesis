@@ -14,23 +14,24 @@ library(parallel)
 library(dplyr)
 # root <- "~/Uni/Master/MA/" # work from local machine
 root <- "~/cyber_synch/" # work from uni bayreuth server
-source(paste0(root, "/git_synch/scripts/functions.R"))
+# source(paste0(root, "/git_synch/scripts/functions.R"))
 ```
 
 ```{r}
-runs <- readRDS(paste0(root, "/local/runs/fat/20250528_fbmr_conN"))
+runs <- readRDS(paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRunConN.rds"))
+
 # runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_01_conN")
 # runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_02_conN")
 # runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_03_conN")
 # runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_04_conN")
-runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_05_conN")
+# runs <- readRDS("~/cyber_synch/local/runs/fat/20250602_05_conN")
 ```
 
 # transform matrix in df - parallel
 
 ```{r}
 cl <- makeCluster(length(runs))
-clusterExport(cl, c("mat_to_tab", "runs"))
-res <- parLapply(cl = cl, X = runs, fun = mat_to_tab)
-saveRDS(res, "~/cyber_synch/local/runs/tabular/20250602_05")
+clusterExport(cl, c("getMatToTab", "runs"))
+res <- parLapply(cl = cl, X = runs, fun = function(x) getMatToTab(x, detailedParams = TRUE))
+saveRDS(res, paste0(root, "local/runs/mstr/20250715_validation/tabular/20250715_MstrRunConNTab.rds"))
 ```

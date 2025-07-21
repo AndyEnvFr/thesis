@@ -23,12 +23,9 @@ root <- "~/Uni/Master/MA/" # work from local machine
 runs <- readRDS(paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRun.rds"))
 ```
 
-# get names
+# get number of conspecific neighbors
 
-```{r}
-nm <- getNames(runs = runs)
-names(runs) <- nm
-```
+getConNeigh() automatically calculates
 
 # get number of conspecific neighbors
 
@@ -75,3 +72,4 @@ class(sublist) <- "PhylosimList"
 try <- getConNeigh(sublist)
 TEST <- getMatToTab(try, detailedParams = TRUE)
 ```
+
