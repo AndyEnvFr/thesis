@@ -188,11 +188,10 @@ cat("\nFor last 20 generations, mean S in global run: ", mean(stats[[5]]$spec_ri
 # negatively bent curve (concave down) = more neutral distribution
 par(mfrow = c(2,3))
 
-sac(simu = simu1[[1]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
-sac(simu = simu1[[2]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
-sac(simu = simu1[[3]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
-sac(simu = simu1[[4]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
-sac(simu = simu1[[5]], plot = TRUE, rep = 500, size = c(1,seq(0,50,5)[-1]))
+sac(runs = simu1, nested = TRUE,
+    title = c("nDD", "pDD", "both", "none", "global"),
+    rep = 500, size = c(1,seq(0,50,5)[-1]))
+
 ```
 
 ```{r}
