@@ -38,5 +38,6 @@ for (name in names(try128)) {
   image(mat, main = name)
 }
 
-getSpecTime(runs = test, ymax = 40)
+getSpecTime(runs = test, ymax = 45)
+
 

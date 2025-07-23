@@ -1,0 +1,110 @@
+---
+title: "Untitled"
+format: html
+---
+Here, I analyze the runs 20250722 50 x 50 (not 128 x 128)
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tibble)
+library(stringr)
+library(ggplot2)
+
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+```{r}
+runs <- readRDS(file.path(root, "local/runs/mstr/20250722/runs.rds"))
+```
+
+```{r}
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+S <- getSpecTime(runs, ymax = 50, plot = T)
+
+S <- lapply(S, function(x){
+  x$meanS <- mean(x$spec_rich)
+  return(x)
+})
+
+meanS <- sapply(S, function(x){
+  return(x$meanS[1])
+})
+
+sort(meanS)
+```
+```{r}
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+S <- getSpecTime(runs, ymax = 50, plot = T)
+
+S20 <- lapply(S, function(x){
+  x$meanS <- mean(x$spec_rich[(nrow(x) - 20) : nrow(x)])
+  return(x)
+})
+
+meanS20 <- sapply(S20, function(x){
+  return(x$meanS[1])
+})
+
+sort(meanS20)
+
+```
+
+# plot the results in heatmap
+
+For pseudoreplicates I took 5 mean values from these generations
+idx_min <- c(175, 200, 225, 250, 275)
+idx_max <- c(200, 225, 250, 275, 300)
+```{r}
+
+S <- getSpecTime(runs, ymax = 50, plot = F)
+
+idx_min <- c(175, 200, 225, 250, 275)
+idx_max <- c(200, 225, 250, 275, 300)
+
+S20 <- lapply(S, function(df) {
+  lapply(seq_along(idx_min), function(i) {
+    mean(df$spec_rich[idx_min[i]:idx_max[i]])
+  })
+})
+```
+
+```{r}
+S20_unlist <- unlist(S20)
+```
+
+```{r}
+df <- enframe(S20_unlist, name = "combo", value = "mean")
+
+df_parsed <- df %>%
+  mutate(
+    ndd     = str_extract(combo, "(?<=ndd)[0-9.]+"),
+    nddvar  = str_extract(combo, "ndd[0-9.]+var[0-9.]+") %>% str_remove("ndd[0-9.]+var"),
+    pdd     = str_extract(combo, "(?<=pdd)[0-9.]+"),
+    pddvar  = str_extract(combo, "pdd[0-9.]+var[0-9.]+") %>% str_remove("pdd[0-9.]+var") %>% str_remove(".$")
+  )
+```
+
+
+```{r}
+ggplot(df_parsed, aes(x = factor(ndd), y = factor(pdd), fill = mean)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "species\nrichness") +
+  theme_minimal() +
+  labs(x = "NDD Strength", y = "PDD Strength", title = "")
+```
+
+
+```{r}
+ggplot(df_parsed, aes(x = factor(nddvar), y = factor(pddvar), fill = mean)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "species\nrichness") +
+  theme_minimal() +
+  labs(x = "NDD Variance", y = "PDD Variance", title = "")
+```
+
+
+
+

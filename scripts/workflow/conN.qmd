@@ -13,14 +13,14 @@ optimized version because it operates with matrix addition instead of looping th
 #| warning: false
 library(PhyloSim)
 library(parallel)
-root <- "~/Uni/Master/MA/" # work from local machine
-# root <- "~/cyber_synch/" # work from uni bayreuth server
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
 # source("~/cyber_synch/git_synch/scripts/functions.R")
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
 
 ```{r}
-runs <- readRDS(paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRun.rds"))
+runs <- readRDS(paste0(root, "local/runs/mstr/20250722/runs.rds"))
 ```
 
 # get number of conspecific neighbors
@@ -45,31 +45,20 @@ getConNeigh() automatically calculates
 
 # Run in parallel
 
-cl <- makeCluster(length(runs)) # make cluster with core nb
+cl <- makeCluster(7) # make cluster with core nb
 
 # export cluster with necessary functions
-clusterExport(cl, c("runs", "getConNeigh", "getTorus", "getCircularOffset",
+clusterExport(cl, c("runs", "getConNeigh", "getCircularOffsets",
                     "getID", "getMortality"))
 
 parallel_function <- function(run){
-  result <- getConNeigh(run = run)
+  result <- getConNeigh(simu = run)
   return(result)
 }
 
 # 
 runz <- parLapply(cl, X = runs, fun = parallel_function)
-# saveRDS(runz, paste0(root, "local/runs/mstr/20250715_validation/20250715_MstrRunConN.rds"))
+# saveRDS(runz, paste0(root, "local/runs/mstr/20250722/runsConN.rds"))
 ```
 
-```{r}
-image(runs[[1]]$Output[[300]]$specMat, col = rainbow(n = unique(as.vector(runs[[1]]$Output[[300]]$specMat))))
-```
-
-```{r}
-names(runs) <- getNames(runs)
-sublist <- runs[1:2]
-class(sublist) <- "PhylosimList"
-try <- getConNeigh(sublist)
-TEST <- getMatToTab(try, detailedParams = TRUE)
-```
 

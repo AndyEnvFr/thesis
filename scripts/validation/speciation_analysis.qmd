@@ -1,0 +1,146 @@
+---
+title: "speciation_analysis"
+format: html
+---
+
+Here, I will check the influence of DD on community assembly on a spectiation gradient
+```{r}
+#| warning: false
+
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(stringr)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+```{r}
+runs <- readRDS(paste0(root,"local/runs/speciationVsDD/speciation.rds"))
+
+runs <- lapply(runs, function(x){
+  names(x$Output) <- x$Model$runs
+  return(x)
+})
+
+class(runs) <- "PhylosimList"
+```
+
+# species richness
+```{r}
+par(mfrow = c(3,5), mar = c(1,3,3,1))
+lst <- getSpecTime(runs, ymax = 100, plot = T)
+```
+
+```{r}
+tab <- bind_rows(lst, .id = "source")
+tab <- tab %>% mutate(
+  ndd = str_extract(string = source, pattern = "(?<=ndd)[0-9.]+"),
+  sr = str_extract(string = source, pattern = "(?<=sr)\\d")) %>% 
+  select(-source)
+  
+```
+
+```{r}
+boxplot(spec_rich ~ ndd + sr, data = tab, las = 2, cex = .8, col = rep(grey.colors(5)))
+```
+
+# Abundance
+
+## rac
+```{r}
+par(mfrow = c(3,2), mar = c(0,2,2,0), pty = "s")
+image(runs$ndd0sr1$Output$`262501`$specMat)
+image(runs$ndd1sr1$Output$`262501`$specMat)
+image(runs$ndd0sr3$Output$`262501`$specMat)
+image(runs$ndd1sr3$Output$`262501`$specMat)
+image(runs$ndd0sr5$Output$`262501`$specMat)
+image(runs$ndd1sr5$Output$`262501`$specMat)
+
+try <- as.data.frame(table(runs$ndd1sr5$Output$`262501`$specMat))
+```
+
+```{r}
+sr1 <- runs[which(str_detect(string = names(runs), pattern = "sr1"))]
+sr3 <- runs[which(str_detect(string = names(runs), pattern = "sr3"))]
+sr5 <- runs[which(str_detect(string = names(runs), pattern = "sr5"))]
+
+class(sr1) <- "PhylosimList"
+class(sr3) <- "PhylosimList"
+class(sr5) <- "PhylosimList"
+
+par(mfrow = c(2,3), mar = c(1,3,3,1), pty = "s")
+
+rac(runs = sr1, title = names(sr1), which.result = c(seq(270,300)), return_results = FALSE)
+plot(1,1, type = "n", xaxt = "n", yaxt = "n")
+rac(runs = sr3, title = names(sr3), which.result = c(seq(270,300)))
+plot(1,1, type = "n", xaxt = "n", yaxt = "n")
+rac(runs = sr5, title = names(sr5), which.result = c(seq(270,300)))
+```
+
+## variance
+```{r}
+par( mfrow = c(1,3) )
+
+sr1_ <- rac(runs = sr1, title = names(sr1), which.result = 280:300, plot = FALSE)
+sr3_ <- rac(runs = sr3, title = names(sr3), which.result = 280:300, plot = FALSE)
+sr5_ <- rac(runs = sr5, title = names(sr5), which.result = 280:300, plot = FALSE)
+
+names(sr1_)
+
+var1 <- sapply(sr1_, function(rac_list) {
+  mean(sapply(rac_list, function(df) var(df$Abundance)))
+})
+var3 <- sapply(sr3_, function(rac_list) {
+  mean(sapply(rac_list, function(df) var(df$Abundance)))
+})
+var5 <- sapply(sr5_, function(rac_list) {
+  mean(sapply(rac_list, function(df) var(df$Abundance)))
+})
+
+barplot(var1, las = 2, ylab = "Mean Abundance Variance", main = "Mean Variance per Group")
+barplot(var3, las = 2, ylab = "Mean Abundance Variance", main = "Mean Variance per Group")
+barplot(var5, las = 2, ylab = "Mean Abundance Variance", main = "Mean Variance per Group")
+
+```
+
+```{r}
+# Mittelwert und Standardabweichung
+plot_variance_with_error <- function(data_list, main_title) {
+  mean_sd <- function(x) c(mean = mean(x), sd = sd(x))
+
+  stats <- t(sapply(data_list, function(rac_list) {
+    v <- sapply(rac_list, function(df) var(df$Abundance))
+    mean_sd(v)
+  }))
+
+  bp <- barplot(stats[, "mean"],
+                las = 2,
+                ylim = c(0, max(stats[, "mean"] + stats[, "sd"])),
+                ylab = "Mean Abundance Variance",
+                main = main_title)
+
+  arrows(x0 = bp,
+         y0 = stats[, "mean"] - stats[, "sd"],
+         x1 = bp,
+         y1 = stats[, "mean"] + stats[, "sd"],
+         angle = 90,
+         code = 3,
+         length = 0.05)
+}
+```
+
+```{r}
+par(mar = c(8,8,8,8), mgp = c(5, 1, 0))
+plot_variance_with_error(sr1_, main_title = "sr1: Mean ± SD")
+plot_variance_with_error(sr3_, main_title = "sr3: Mean ± SD")
+plot_variance_with_error(sr5_, main_title = "sr5: Mean ± SD")
+
+```
+
+
+
+
+
+
+
