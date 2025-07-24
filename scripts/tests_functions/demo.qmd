@@ -276,7 +276,7 @@ mortChanges1 <- sapply(datasets1, calc_mortChange)
 # Display results
 
 plot(y = mortChanges1, x = 1:5, xaxt = "n")
-# points(y = mortChanges2, x = 1:5, xaxt = "n") # replicate
+# points(y = mortChanges2, x = 1:5, xaxt = "n", pch = 2) # replicate
 axis(1, at = 1:5, labels = c("NDD", "PDD", "Null", "Both", "Global"))
 ```
 
