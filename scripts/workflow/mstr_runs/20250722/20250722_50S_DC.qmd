@@ -17,14 +17,7 @@ root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
 
 ```{r}
-files <- list.files("~/cyber_synch/local/runs/mstr/tmp/", pattern = "\\.rds$", full.names = TRUE)
-runs_list <- lapply(files, readRDS)
-class(runs_list) <- "PhylosimList"
-names <- sapply(runs, function(x){
-  return(x$Model$scenario)
-})
-names(runs) <- names
-
+runs <- readRDS(file.path(root, "local/runs/mstr/20250722/runsDC.rds"))
 ```
 
 ```{r}
