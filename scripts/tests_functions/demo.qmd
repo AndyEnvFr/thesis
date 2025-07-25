@@ -33,7 +33,7 @@ parPDD <- createCompletePar(x = 50, y = 50, type = "base",
                   dispersal = 1,
                   runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
                   negativeDensity = 0,
-                  positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .2, 
+                  positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .01, 
                   specRate = 2,
                   fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
                   seed = 20250724,
@@ -272,7 +272,7 @@ calc_mortChange <- function(data) {
   fm <- glm("mortNextGen ~ con", family = "binomial", data = data)
   int <- fm$coefficients["(Intercept)"]
   est <- fm$coefficients["con"]
-  mortChange <- plogis((int + est) - int) # logit link
+  mortChange <- plogis((int + est)) - plogis(int) # logit link
   return(mortChange)
 }
 
