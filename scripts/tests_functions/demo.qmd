@@ -4,6 +4,7 @@ format: html
 ---
 
 # load
+
 ```{r}
 #| warning: false
 library(PhyloSim)
@@ -78,6 +79,7 @@ simu1 <- runSimulationBatch(pars = parlist, parallel = 5)
 ```
 
 # visualization
+
 ```{r}
 names(simu1) <- getNames(simu1)
 
@@ -167,6 +169,7 @@ image(easi_matrix, col = rainbow(5))
 ```
 
 ## richness
+
 ```{r}
 par(mfrow = c(2,3))
 stats <- getSpecTime(simu1, ymax = 40, plot = T, title = c("nDD", "pDD", "both", "none", "global"))
@@ -183,7 +186,9 @@ cat("\nFor last 20 generations, mean S in nDD+pDD run: ", mean(stats[[3]]$spec_r
 cat("\nFor last 20 generations, mean S in NULL run: ", mean(stats[[4]]$spec_rich[80:100]))
 cat("\nFor last 20 generations, mean S in global run: ", mean(stats[[5]]$spec_rich[80:100]))
 ```
+
 ## sac
+
 ```{r}
 # positively bent curve (concave up) = clustering 
 # negatively bent curve (concave down) = more neutral distribution
@@ -201,27 +206,28 @@ par(mfrow = c(2,3))
 rac(runs = simu1, ymax = 2000, xmax = 25, title = c("nDD", "pDD", "both", "none", "global"), plot_type = "line")
 ```
 
-
 # density dependence
 
 ```{r}
 simuCon1 <- getConNeigh(simu = simu1)
 ```
 
-
 ```{r}
 par(mfrow= c(2,3), mar=c(2,2,2,2))
 
 image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "ndd_101 spec")
 image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$conNeighMat, main = "ndd_101 conN")
-image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$mortMat, main = "ndd_101 mort")
+image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$mortMat, main = "ndd_101 mort",
+      col = heat.colors(2))
 
 image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "ndd_5000 spec")
 image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$conNeighMat, main = "ndd_5000 conN")
-image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$mortMat, main = "ndd_5000 mort")
+image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$mortMat, main = "ndd_5000 mort",
+      col = heat.colors(2))
 ```
 
 ## get matrix to table
+
 ```{r}
 # simuTab <- getMatToTab(simuCon1, detailedParams = TRUE)
 # saveRDS(simuTab, "~/Uni/Master/MA/local/runs/others/demoTab.rds")
@@ -240,6 +246,7 @@ tail(simuTab1)
 ```
 
 # statistical model
+
 ```{r}
 # filter all runs
 simuNDD <- simuTab1 %>% filter(nDD == 1 & pDD == 0 & disp == 1)
@@ -258,7 +265,6 @@ datasets1 <- list(
 
 ```
 
-
 ```{r}
 
 # Function to calculate mortality change
@@ -266,7 +272,7 @@ calc_mortChange <- function(data) {
   fm <- glm("mortNextGen ~ con", family = "binomial", data = data)
   int <- fm$coefficients["(Intercept)"]
   est <- fm$coefficients["con"]
-  mortChange <- plogis((int + est) - int)
+  mortChange <- plogis((int + est) - int) # logit link
   return(mortChange)
 }
 
@@ -319,4 +325,3 @@ calc_mortChange <- function(data) {
 # Apply function to each dataset
 mortChanges2 <- sapply(datasets2, calc_mortChange)
 ```
-
