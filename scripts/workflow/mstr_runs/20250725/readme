@@ -1,0 +1,5 @@
+in 20250722 i had densitycut at 1 and 3 for ndd and pdd.
+
+This makes hte statistical analysis more difficult, as the density effect is diluted on a different number of neighbors in ndd and pdd
+
+Therrefore I run the same runs, but with DC fixed at 1 for pdd and ndd
