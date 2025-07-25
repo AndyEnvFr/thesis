@@ -1,0 +1,28 @@
+15:33 24/07/2025
+
+Vortag Meeting
+
+(Ndd and pdd with global dispersal)
+
+Yenni: how do rare species escape competitive exclusion ?
+	this question is still open in the yenni paper
+	still, the correlation is surprising (read the paper more detailed)
+
+It was shown that local feedbacks structure diversity patterns, but everything is not well funded
+	how does it scale up?
+	How to answer this question?
+
+Schroeder: rare and common species may have the same CNDD strength, however, other aspects of the process can be differently (dispersal, persistence ...)
+	so it only seems that CNDD is higher but actually isn't
+
+Hypothese: is the dynamic microbe community needed ? Before it was shown that it is (schroder) we test in a simpler model, if it really is needed.
+	Or is it possible tot Micic the patterns in a non-coupled model as well?
+
+specificity of mutualist and pathogens legit?
+specificity of different across latitudes
+
+
+Would i expect hat the detection of correlation in PhyloSim is even possible?
+
+
+
