@@ -137,14 +137,14 @@ easi_matrix <- cbind(E, space, A, space, S, space, I)
 par(mfrow= c(2,3), mar=c(2,2,2,2))
 
 image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "ndd_100")
-image(simu1$pdd1Var0.2Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "pdd_100")
+image(simu1$pdd1Var0.01Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "pdd_100")
 image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "both_100")
 image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "none_100")
 image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`100`$specMat, main = "glob_100")
 image(easi_matrix, col = rainbow(5))
 
 image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "ndd_101")
-image(simu1$pdd1Var0.2Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "pdd_101")
+image(simu1$pdd1Var0.01Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "pdd_101")
 image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "both_101")
 image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "none_101")
 image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`101`$specMat, main = "glob_101")
@@ -152,7 +152,7 @@ image(easi_matrix, col = rainbow(5))
 
 
 image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "ndd_5000")
-image(simu1$pdd1Var0.2Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "pdd_5000")
+image(simu1$pdd1Var0.01Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "pdd_5000")
 image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "both_5000")
 image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "none_5000")
 image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "glob_5000")
@@ -160,7 +160,7 @@ image(easi_matrix, col = rainbow(5))
 
 
 image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "ndd_5001")
-image(simu1$pdd1Var0.2Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "pdd_5001")
+image(simu1$pdd1Var0.01Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "pdd_5001")
 image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "both_5001")
 image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "none_5001")
 image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "glob_5001")
@@ -229,10 +229,10 @@ image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$mortMat,
 ## get matrix to table
 
 ```{r}
-# simuTab <- getMatToTab(simuCon1, detailedParams = TRUE)
-# saveRDS(simuTab, "~/Uni/Master/MA/local/runs/others/demoTab.rds")
-simuTab1 <- readRDS(paste0(root, "/local/runs/others/demoTab.rds"))
-simuTab2 <- readRDS(paste0(root, "/local/runs/others/demoTab1.rds"))
+simuTab <- getMatToTab(simuCon1, detailedParams = TRUE)
+saveRDS(simuTab, "~/Uni/Master/MA/local/runs/others/demoTab.rds")
+# simuTab1 <- readRDS(paste0(root, "/local/runs/others/demoTab.rds"))
+# simuTab2 <- readRDS(paste0(root, "/local/runs/others/demoTab1.rds"))
 ```
 
 ```{r}
@@ -284,44 +284,6 @@ mortChanges1 <- sapply(datasets1, calc_mortChange)
 plot(y = mortChanges1, x = 1:5, xaxt = "n")
 # points(y = mortChanges2, x = 1:5, xaxt = "n", pch = 2) # replicate
 axis(1, at = 1:5, labels = c("NDD", "PDD", "Null", "Both", "Global"))
+abline( h = 0)
 ```
 
-## replication
-
-```{r}
-row.names(x = simuTab2) <- NULL # because too long 
-
-simuTab2 <- simuTab2 %>%
-  filter(census %% 2 == 0) # only analyse status at beginning of census
-
-head(simuTab2)
-tail(simuTab2)
-
-# filter all runs
-simuNDD <- simuTab2 %>% filter(nDD == 1 & pDD == 0 & disp == 1)
-simuPDD <- simuTab2 %>% filter(nDD == 0 & pDD == 1 & disp == 1)
-simuNull <- simuTab2 %>% filter(nDD == 0 & pDD == 0 & disp == 1)
-simuBoth <- simuTab2 %>% filter(nDD == 1 & pDD == 1 & disp == 1)
-simuGlob <- simuTab2 %>% filter(disp == "global")
-
-datasets2 <- list(
-  simuNDD,
-  simuPDD,
-  simuNull,
-  simuBoth,
-  simuGlob
-)
-
-
-# Function to calculate mortality change
-calc_mortChange <- function(data) {
-  fm <- glm("mortNextGen ~ con", family = "binomial", data = data)
-  int <- fm$coefficients["(Intercept)"]
-  est <- fm$coefficients["con"]
-  mortChange <- plogis((int + est) - int)
-  return(mortChange)
-}
-
-# Apply function to each dataset
-mortChanges2 <- sapply(datasets2, calc_mortChange)
-```
