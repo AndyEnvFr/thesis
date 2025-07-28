@@ -10,6 +10,7 @@ I implemented ndd and pdd. The Process works for small runs. Here, I run it in a
 #| warning: false
 library(PhyloSim)
 library(parallel)
+library(dplyr)
 # root <- "~/Uni/Master/MA/" # work from local machine
 root <- "~/cyber_synch/" # work from uni bayreuth server
 # source(paste0(root, "/git_synch/scripts/functions.R"))
@@ -94,5 +95,15 @@ runz <- runSimulationBatch(params, parallel = 49, backup_path = "~/cyber_synch/l
 saveRDS(runz, "~/cyber_synch/local/runs/mstr/20250725/runs_i.rds")
 ```
 
-Error: WARNING: Session forced to suspend due to system upgrade, restart, maintenance, or other issue. Your session data was saved however running computations may have been interrupted.
+```{r}
+runz <- getConNeigh(runz)
+```
+
+```{r}
+cl <- makeCluster(length(7))
+clusterExport(cl, c("getMatToTab", "runz"))
+res <- parLapply(cl = cl, X = runz, fun = function(x) getMatToTab(x, detailedParams = TRUE))
+saveRDS(res, paste0(root, "local/runs/mstr/20250725/tab.rds"))
+```
+
 

@@ -1,0 +1,717 @@
+---
+title: "stats_cdd"
+author: "ai"
+format: html
+editor: visual
+---
+
+Here, I want to calculate the change in mortality from 0 to 1 neighbor.
+
+```{r}
+library(tidyr)
+library(lattice)
+library(stringr)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+# loading and filtering
+
+```{r}
+# read in tabular data
+tab <- readRDS(paste0(root, "local/runs/mstr/20250725/tab_i.rds"))
+```
+
+```{r}
+namesShort <- names(tab) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_remove("Cut1")
+```
+
+```{r}
+# keep only first timespot in census
+tab_ <- lapply(tab, function(x){
+  res <- x %>%
+  filter(census %% 2 == 0,
+         census > 175000) # focus only on last censii
+  return(res)
+})
+
+# calculate number of censii in which species occur
+NbyCen <- lapply(tab, function(x){
+  res <- x %>% 
+    group_by(specId) %>%
+    summarise(n_census = n_distinct(census))
+  return(res)
+})
+
+# add abundances and (abundances / number of censii in which they occur)
+tab <- lapply(seq_along(tab), function(i){
+  res <- tab[[i]] %>%
+    group_by(specId) %>% 
+    mutate(abund = n()) %>%
+    left_join(NbyCen[[i]], by = "specId") %>%
+    mutate(NperCen = abund / n_census) %>%
+    ungroup()
+  return(res)
+})
+
+names(tab) <- namesShort
+```
+
+# calculate the change in probability(mortality) from 0 to 1 neighbor for all species aggregated
+
+```{r}
+mort_change <- sapply(tab, function(x){
+  fm <- glm(formula = "mortNextGen ~ con", family = binomial(), data = x)
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  # return(c(mort0, mort1))
+  return(c(mort_change = (mort1 - mort0),
+                    nDD = x$nDD[1],
+                    pDD = x$pDD[1],
+                    nDDVar = x$nDDVar[1],
+                    pDDVar = x$pDDVar[1]
+                    ))
+}) %>% as.data.frame()
+
+```
+
+## visualize results
+
+```{r}
+#| fig-width: 15
+#| fig-height: 5
+
+par(mar = c(13,4,1,1))
+plot(y = mort_change["mort_change",], x = 1:ncol(mort_change), ylab = "mortChange", xlab = "", xaxt = "n")
+axis(1, at = 1:ncol(mort_change), labels = namesShort, las = 2)
+```
+
+### aggregated
+
+```{r}
+mort_long <- mort_change %>%
+  tibble::rownames_to_column("metric") %>%
+  pivot_longer(
+    cols = -metric,
+    names_to = "param_combo",
+    values_to = "value"
+  ) %>%
+  pivot_wider(
+    names_from = metric,
+    values_from = value
+  )
+
+  ggplot(mort_long, aes(x = factor(nDD), y = factor(pDD), fill = mort_change)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "change in\nmortality") +
+  theme_minimal() +
+  labs(x = "NDD Strength", y = "PDD Strength", title = "")
+
+  ggplot(mort_long, aes(x = factor(nDDVar), y = factor(pDDVar), fill = mort_change)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "change in\nmortality") +
+  theme_minimal() +
+  labs(x = "NDD Variance", y = "PDD Variance", title = "")
+```
+
+### param-wise
+
+```{r}
+library(plotly)
+
+set.seed(1)  # for reproducibility
+mort_long_jit <- mort_long %>%
+  mutate(
+    ndd_jit = nDD + runif(n(), -0.1, 0.1),
+    pdd_jit = pDD + runif(n(), -0.1, 0.1),
+  )
+
+
+plot_ly(
+  mort_long_jit,
+  x = ~ndd_jit,
+  y = ~pdd_jit,
+  z = ~nDDVar,
+  color = ~mort_change,
+  colors = viridisLite::viridis(100),
+  type = "scatter3d",
+  mode = "markers",
+  marker = list(size = 4)
+) %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "nDD"),
+      yaxis = list(title = "pDD"),
+      zaxis = list(title = "nDDVar"),
+      camera = list(eye = list(x = -1.5, y = -2, z = 2))
+    )
+  )
+
+plot_ly(
+  mort_long_jit,
+  x = ~ndd_jit,
+  y = ~pdd_jit,
+  z = ~pDDVar,
+  color = ~mort_change,
+  colors = viridisLite::viridis(100),
+  type = "scatter3d",
+  mode = "markers",
+  marker = list(size = 4)
+) %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "nDD"),
+      yaxis = list(title = "pDD"),
+      zaxis = list(title = "pDDVar"),
+      camera = list(
+        eye = list(x = -1.5, y = -2, z = 2)  # adjust this vector
+    )
+  )
+  )
+
+```
+
+# calculate the change in probability(mortality) from 0 to 1 neighbor for each species
+
+The idea is to find a correlation between abundance and change in mortality
+
+```{r}
+# filter out species that are too rare to detect an effect
+
+tabS <- lapply(tab, function(x){
+  res <- x %>%
+    filter(abund > 100)
+  return(res)
+})
+```
+
+```{r}
+mort_changeS <- lapply(tabS, function(x){
+  
+  i <- 1 # index i++
+  
+  # results df 
+  len <- length(unique(x$specId))
+
+  res <- data.frame(specId = rep(NA, len),
+                    abund = rep(NA, len),
+                    mort_change = rep(NA, len))
+  
+  for (sID in unique(x$specId)) {
+    
+  fm <- glm(formula = "mortNextGen ~ con", family = binomial(), data = x[which(x$specId == sID),])
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  res$mort_change[i] <- (mort1 - mort0)
+  res$abund[i] <- x$abund[which(x$specId == sID)][1]
+  res$specId[i] <- sID
+  
+  i <- i + 1
+  }
+  
+  return(res)
+})
+```
+
+```{r}
+
+# maybe a faster alternative, but not tested yet
+
+# cl <- makeCluster(length(tabS))
+# clusterEvalQ(cl, library(stats)) 
+# 
+# mort_changeS <- parLapply(cl, tabS, function(x) {
+#   i <- 1  # index
+#   i <- i + 1  # results df
+#   len <- length(unique(x$specId))
+#   res <- data.frame(SpecID = rep(NA, len), 
+#                     abund = rep(NA, len), 
+#                     mort_change = rep(NA, len))
+#   
+#   for (sID in unique(x$specId)) {
+#     fm <- glm(formula = "mortNextGen ~ con", 
+#               family = binomial(), 
+#               data = x[which(x$specId == sID), ])
+#     sfm <- summary(fm)$coefficients
+#     mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+#     mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+#     res$mort_change[i] <- (mort1 - mort0)
+#     res$abund[i] <- x$abund[which(x$specId == sID)][1]
+#     res$specId[i] <- sID
+#     i <- i + 1
+#   }
+#   return(res)
+# })
+# 
+# # Stop the cluster
+# stopCluster(cl)
+```
+
+## visualize results
+
+### standard abundance
+
+```{r}
+# add regressionline mc ~ abund
+mort_changeS <- lapply(mort_changeS, function(x){
+  fm <- lm("mort_change ~ abund", data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+
+names <- names(mort_changeS)
+
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+invisible(sapply(seq_along(mort_changeS), function(i){
+  x <- mort_changeS[[i]]
+  plot(x = x$abund, y = x$mort_change,
+       ylim = c(-0.1, 0.1), xlab = "abund", ylab = "mortality\nchange",
+       cex = .3, col = rgb(0,0,0,.3),
+       main = namesShort[i], cex.main = .8) 
+  abline(h = 0, col = "steelblue")
+  abline(x$int[1], x$slope[1], lty = 2, col = "orange")
+}))
+```
+
+### log abundance
+
+```{r}
+# add regressionline mc ~ abund
+mort_changeS <- lapply(mort_changeS, function(x){
+  fm <- lm(mort_change ~ log(abund), data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+
+names <- names(mort_changeS)
+
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+invisible(sapply(seq_along(mort_changeS), function(i){
+  x <- mort_changeS[[i]]
+  plot(x = log(x$abund), y = x$mort_change,
+       ylim = c(-0.1, 0.1), xlab = "log(abund)", ylab = "mortality\nchange",
+       cex = .3, col = rgb(0,0,0,.3),
+       main = namesShort[i], cex.main = .8) 
+  abline(h = 0, col = "steelblue")
+  abline(x$int[1], x$slope[1], lty = 2, col = "orange")
+}))
+```
+
+
+
+
+
+
+
+# ... for NperCen instead of abund for each species
+
+## filtering out low abundances
+```{r}
+# filter out species that are too rare to detect an effect
+
+# for that, first plot distribution of abudnances
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+
+lapply(tab, function(x){
+  x %>%
+    distinct(specId, abund) %>% 
+    pull(abund) %>% 
+    hist(xlim = c(0,1000), breaks = 1000)
+})
+```
+
+```{r}
+tabS2 <- lapply(tab, function(x){
+  res <- x %>%
+    filter(abund > 100,
+           )
+  return(res)
+})
+```
+
+```{r}
+# mort_changeS <- lapply(tabS, function(x){
+#   
+#   i <- 1 # index i++
+#   
+#   # results df 
+#   len <- length(unique(x$specId))
+# 
+#   res <- data.frame(specId = rep(NA, len),
+#                     abund = rep(NA, len),
+#                     mort_change = rep(NA, len))
+#   
+#   for (sID in unique(x$specId)) {
+#     
+#   fm <- glm(formula = "mortNextGen ~ con", family = binomial(), data = x[which(x$specId == sID),])
+#   
+#   sfm <- summary(fm)$coefficients
+#   
+#   mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+#   mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+#   
+#   res$mort_change[i] <- (mort1 - mort0)
+#   res$abund[i] <- x$abund[which(x$specId == sID)][1]
+#   res$specId[i] <- sID
+#   
+#   i <- i + 1
+#   }
+#   
+#   return(res)
+# })
+
+```
+
+```{r}
+
+# maybe a faster alternative, but not tested yet
+
+cl <- makeCluster(length(tabS2))
+clusterEvalQ(cl, library(stats))
+
+mort_changeS2 <- parLapply(cl, tabS2, function(x) {
+  i <- 1  # index
+  len <- length(unique(x$specId))
+  res <- data.frame(specId = rep(NA, len),
+                    abund = rep(NA, len),
+                    NperCen = rep(NA, len),
+                    SE = rep(NA, len),
+                    mort_change = rep(NA, len),
+                    ndd = rep(NA, len),
+                    nddVar = rep(NA, len),
+                    pdd = rep(NA, len),
+                    pddVar = rep(NA, len)
+                    )
+
+  for (sID in unique(x$specId)) {
+    fm <- summary(glm(formula = "mortNextGen ~ con",
+              family = binomial(),
+              data = x[which(x$specId == sID), ]))
+    sfm <- fm$coefficients
+    mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+    mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+    res$SE[i] <- plogis(sfm["con", "Std. Error"])
+    res$mort_change[i] <- (mort1 - mort0)
+    res$abund[i] <- x$abund[which(x$specId == sID)][1]
+    res$specId[i] <- sID
+    res$NperCen[i] <- x$NperCen[which(x$specId == sID)][1]
+    res$ndd[i] <- x$nDD[which(x$specId == sID)][1]
+    res$nddVar[i] <- x$nDDVar[which(x$specId == sID)][1]
+    res$pdd[i] <- x$pDD[which(x$specId == sID)][1]
+    res$pddVar[i] <- x$pDDVar[which(x$specId == sID)][1]
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+## visualize results
+
+### abundance
+
+```{r}
+# add regressionline mc ~ abund
+mort_changeS2 <- lapply(mort_changeS2, function(x){
+  fm <- lm("mort_change ~ abund", data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+
+names <- names(mort_changeS2)
+
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+invisible(sapply(seq_along(mort_changeS2), function(i){
+  x <- mort_changeS2[[i]]
+  plot(x = x$abund, y = x$mort_change,
+       ylim = c(-0.1, 0.1), xlab = "abund", ylab = "mortality\nchange",
+       cex = .3, col = rgb(0,0,0,.3),
+       main = namesShort[i], cex.main = .8) 
+  abline(h = 0, col = "steelblue")
+  abline(x$int[1], x$slope[1], lty = 2, col = "orange")
+}))
+```
+
+### log abundance
+
+```{r}
+# add regressionline mc ~ abund
+mort_changeS2 <- lapply(mort_changeS2, function(x){
+  fm <- lm(mort_change ~ log(abund), data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+
+names <- names(mort_changeS2)
+
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+invisible(sapply(seq_along(mort_changeS2), function(i){
+  x <- mort_changeS2[[i]]
+  plot(x = log(x$abund), y = x$mort_change,
+       ylim = c(-0.1, 0.1), xlab = "log(abund)", ylab = "mortality\nchange",
+       cex = .3, col = rgb(0,0,0,.3),
+       main = namesShort[i], cex.main = .8) 
+  abline(h = 0, col = "steelblue")
+  abline(x$int[1], x$slope[1], lty = 2, col = "orange")
+}))
+```
+
+
+### New approach abundance / census
+
+```{r}
+# add regression
+mort_changeS2 <- lapply(mort_changeS2, function(x){
+  fm <- lm("mort_change ~ NperCen", data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+```
+
+```{r}
+# Define grouping patterns
+group_patterns <- list(
+  ndd0 = "ndd0$",
+  pdd0 = "pdd0_",
+  ndd05pdd05 = c("ndd0\\.5", "pdd0\\.5"),
+  ndd05pdd1 = c("ndd0\\.5", "pdd1"),
+  ndd1pdd05 = c("ndd1", "pdd0\\.5"),
+  ndd1pdd1 = c("ndd1", "pdd1")
+)
+
+# Automatically create groups
+mc_groups <- list()
+for(group_name in names(group_patterns)) {
+  pattern <- group_patterns[[group_name]]
+  if(length(pattern) == 1) {
+    # Single pattern
+    selected_names <- names[stringr::str_detect(names, pattern)]
+  } else {
+    # Multiple patterns (AND condition)
+    selected_names <- names
+    for(p in pattern) {
+      selected_names <- selected_names[stringr::str_detect(selected_names, p)]
+    }
+  }
+  mc_groups[[group_name]] <- mort_changeS2[selected_names]
+}
+```
+
+```{r}
+par(pty = "s")
+
+# Approach 2: Automated plotting function
+create_regression_plot <- function(group_data, group_name, xrange = c(0, 2000), yrange = c(-0.1, 0.1)) {
+  # Get the null scenario (first dataset) for reference
+  null_data <- group_data[[1]]
+  
+  # Create base plot
+  plot(x = null_data$NperCen, y = null_data$mort_change, type = "n",
+       main = paste("mc", group_name, sep = "_"), 
+       xlab = "abundance / nb. census in which spec occurs", 
+       ylab = "mortality\nchange",
+       xlim = xrange, ylim = yrange)
+  
+  # Add horizontal reference line
+  abline(0, 0, col = 1, lty = 2, lwd = 0.5)
+  
+  # Define expanded colors and line types for more group members
+  colors <- c(1, 2, 3, 4, 5, 6, 7, 8, "darkgreen", "orange", "purple", "brown", 
+              "pink", "gray", "cyan", "magenta", "yellow", "navy", "darkred", "lightblue")
+  line_types <- c(1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4)
+  
+  # Add regression lines for all datasets in the group
+  legend_labels <- character(length(group_data))
+  for(i in seq_along(group_data)) {
+    data <- group_data[[i]]
+    abline(data$int[1], data$slope[1], 
+           col = colors[i], lty = line_types[i], lwd = 1)
+    legend_labels[i] <- names(group_data)[i]
+  }
+  
+  # Add legend
+  legend("topright", legend = legend_labels, 
+         col = colors[1:length(group_data)], 
+         lty = line_types[1:length(group_data)], 
+         lwd = 1, cex = 0.3, bg = "white",
+         bty = "n", ncol = 3)
+}
+
+# Generate all plots automatically
+for(group_name in names(mc_groups)) {
+  create_regression_plot(mc_groups[[group_name]], group_name)
+}
+```
+### log (abundance / census)
+```{r}
+# add regression
+mort_changeS2 <- lapply(mort_changeS2, function(x){
+  fm <- lm(mort_change ~ log(NperCen), data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+```
+
+```{r}
+# Define grouping patterns
+group_patterns <- list(
+  ndd0 = "ndd0$",
+  pdd0 = "pdd0_",
+  ndd05pdd05 = c("ndd0\\.5", "pdd0\\.5"),
+  ndd05pdd1 = c("ndd0\\.5", "pdd1"),
+  ndd1pdd05 = c("ndd1", "pdd0\\.5"),
+  ndd1pdd1 = c("ndd1", "pdd1")
+)
+
+# Automatically create groups
+mc_groups <- list()
+for(group_name in names(group_patterns)) {
+  pattern <- group_patterns[[group_name]]
+  if(length(pattern) == 1) {
+    # Single pattern
+    selected_names <- names[stringr::str_detect(names, pattern)]
+  } else {
+    # Multiple patterns (AND condition)
+    selected_names <- names
+    for(p in pattern) {
+      selected_names <- selected_names[stringr::str_detect(selected_names, p)]
+    }
+  }
+  mc_groups[[group_name]] <- mort_changeS2[selected_names]
+}
+```
+
+```{r}
+par(pty = "s")
+
+# Approach 2: Automated plotting function
+create_regression_plot <- function(group_data, group_name, xrange = c(0, log(2000)), yrange = c(-0.1, 0.1)) {
+  # Get the null scenario (first dataset) for reference
+  null_data <- group_data[[1]]
+  
+  # Create base plot
+  plot(x = log(null_data$NperCen), y = null_data$mort_change, type = "n",
+       main = paste("mc", group_name, sep = "_"), 
+       xlab = "abundance / nb. census in which spec occurs", 
+       ylab = "mortality\nchange",
+       xlim = xrange, ylim = yrange)
+  
+  # Add horizontal reference line
+  abline(0, 0, col = 1, lty = 2, lwd = 0.5)
+  
+  # Define expanded colors and line types for more group members
+  colors <- c(1, 2, 3, 4, 5, 6, 7, 8, "darkgreen", "orange", "purple", "brown", 
+              "pink", "gray", "cyan", "magenta", "yellow", "navy", "darkred", "lightblue")
+  line_types <- c(1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4)
+  
+  # Add regression lines for all datasets in the group
+  legend_labels <- character(length(group_data))
+  for(i in seq_along(group_data)) {
+    data <- group_data[[i]]
+    abline(data$int[1], data$slope[1], 
+           col = colors[i], lty = line_types[i], lwd = 1)
+    legend_labels[i] <- names(group_data)[i]
+  }
+  
+  # Add legend
+  legend("topright", legend = legend_labels, 
+         col = colors[1:length(group_data)], 
+         lty = line_types[1:length(group_data)], 
+         lwd = 1, cex = 0.3, bg = "white",
+         bty = "n", ncol = 3)
+}
+
+# Generate all plots automatically
+for(group_name in names(mc_groups)) {
+  create_regression_plot(mc_groups[[group_name]], group_name)
+}
+```
+
+
+# Analysis with meta for: account for std. err. in regression
+
+```{r}
+library(metafor)
+head(mort_changeS2[[1]])
+```
+## restart from the model 
+
+```{r}
+
+# maybe a faster alternative, but not tested yet
+
+cl <- makeCluster(length(tabS2))
+
+mcS_err <- parLapply(cl, tabS2, function(x) {
+  specIDs <- unique(x$specId)
+  res <- vector("list", length(specIDs))
+  
+  i <- 1
+  for (sID in specIDs) {
+    dat <- x[x$specId == sID, ]
+    mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
+    sfm <- summary(mod)$coefficients
+    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    
+    res[[i]] <- list(
+      specId = sID,
+      abund = dat$abund[1],
+      NperCen = dat$NperCen[1],
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      vcov = vc
+    )
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+## compute variance of the marginal effect through a "posterior" simulation
+```{r}
+library(MASS)
+
+mcS_err_sim <- lapply(mcS_err, function(x){
+  lapply(x, function(y){
+    sim <- mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
+    mort0 <- plogis(sim[, 1])
+    mort1 <- plogis(sim[, 1] + sim[, 2])
+    mort_diff <- mort1 - mort0
+    
+        return(data.frame(
+      specId = y$specId,
+      mean = mean(mort_diff),
+      se = sd(mort_diff),
+      ci_low = quantile(mort_diff, 0.025),
+      ci_high = quantile(mort_diff, 0.975)
+    ))
+        
+  })
+})
+```
+
