@@ -1,0 +1,285 @@
+---
+title: "abund"
+output: html_document
+---
+
+
+```{r}
+library(tidyr)
+library(lattice)
+library(stringr)
+library(metafor)
+library(plotly)
+library(MASS)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+load the data
+```{r}
+# read in tabular data
+tab <- readRDS(paste0(root, "local/runs/mstr/20250725/tab_i.rds"))
+```
+
+store the paramss of the runs in their names
+```{r}
+namesShort <- names(tab) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_remove("Cut1")
+```
+
+filter:
+- keep onyl census start (%%2)
+- keep only late generations
+- 
+```{r}
+# keep only first timespot in census
+tab_ <- lapply(tab, function(x){
+  res <- x %>%
+  filter(census %% 2 == 0,
+         census > 175000) # focus only on last censii
+  return(res)
+})
+
+
+# add abundances and (abundances / number of censii in which they occur)
+tab <- lapply(seq_along(tab), function(i){
+  res <- tab[[i]] %>%
+    group_by(specId) %>% 
+    mutate(abund = n())  %>%
+    dplyr::select(census, specId, mortNextGen, con, abund)
+  return(res)
+})
+
+names(tab) <- namesShort
+```
+
+apply filtering to the abundance
+```{r}
+tab <- lapply(tab, function(x){
+  res <- x %>%
+    filter(abund > 100,
+           )
+  return(res)
+})
+```
+
+run model and extract estimate and se
+```{r}
+cl <- makeCluster(length(tab))
+
+mc <- parLapply(cl, tab, function(x) {
+  specIDs <- unique(x$specId)
+  res <- vector("list", length(specIDs))
+  
+  i <- 1
+  for (sID in specIDs) {
+    dat <- x[x$specId == sID, ]
+    mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
+    sfm <- summary(mod)$coefficients
+    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    
+    res[[i]] <- list(
+      specId = sID,
+      abund = dat$abund[1],
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      vcov = vc
+    )
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+compute variance of the marginal effect through a "posterior" simulation
+```{r}
+
+mcSim <- lapply(mc, function(x){
+  lapply(x, function(y){
+    sim <- mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
+    mort0 <- plogis(sim[, 1])
+    mort1 <- plogis(sim[, 1] + sim[, 2])
+    mort_diff <- mort1 - mort0
+    
+        return(data.frame(
+      abund = y$abund,
+      specId = y$specId,
+      mean = mean(mort_diff),
+      se = sd(mort_diff),
+      ci_low = quantile(mort_diff, 0.025),
+      ci_high = quantile(mort_diff, 0.975)
+    ))
+        
+  })
+})
+```
+
+unlist inner lists and add log abund
+```{r}
+m4 <- lapply(mcSim, function(group) {
+  do.call(rbind, group)
+})
+
+m4 <- lapply(m4, function(group) {
+  row.names(group) <- NULL
+  group <- group %>% 
+    mutate(log_N = log(abund))
+  return(group)
+})
+```
+
+```{r}
+# saveRDS(m4, paste0(root, "local/runs/mstr/20250725/metafor_interim/metafor_abund.rds"))
+# m4 <- readRDS(paste0(root, "local/runs/mstr/20250725/metafor_interim/metafor_abund.rds"))
+```
+
+## fitting model
+```{r}
+dat_meta <- lapply(m4, function(x) {
+  escalc(measure = "GEN", yi = x$mean, sei = x$se, slab = x$specId, data = x)
+})
+```
+
+```{r}
+cl <- makeCluster(length(dat_meta))
+
+metamod <- parLapply(cl, dat_meta, function(x) {
+  metafor::rma(yi = x$yi, vi = x$vi, mods = ~ x$log_N, method = "REML", data = x)
+})
+
+stopCluster(cl)
+```
+
+```{r}
+summary(metamod$pdd0_ndd0)
+summary(metamod$pdd1Var0.01_ndd1Var0.5)
+```
+
+```{r}
+plot(metamod$pdd0_ndd0)
+plot(metamod$pdd1Var0.01_ndd1Var0.5)
+```
+predictions
+```{r}
+pred <- lapply(dat_meta, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 50))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_N)
+  return(x)
+})
+# Bind predictions to dataframe
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamod[[i]]
+  
+  return(cbind(x, predict(object = y, newmods = x$log_N)))
+})
+```
+
+```{r}
+# # maybe this is not needed, takes ages to run
+# observed_values <- lapply(metamod, function(x) broom::augment(x))
+# 
+# # --------------
+# cl <- makeCluster(length(metamod))  # or specify manually
+# clusterExport(cl, "metamod")
+# 
+# observed_values <- parLapply(cl, metamod, broom::augment)
+# 
+# stopCluster(cl)
+# # --------------
+# 
+# tst <- broom::augment(metamod[[1]])
+```
+
+```{r}
+# save some results
+# saveRDS(pred, paste0(root, "local/runs/mstr/20250725/metafor_interim/pred_abund.rds"))
+# saveRDS(metamod, paste0(root, "local/runs/mstr/20250725/metafor_interim/metamod_abund.rds"))
+# saveRDS(dat_meta, paste0(root, "local/runs/mstr/20250725/metafor_interim/datmeta_abund.rds"))
+
+# saveRDS(observed_values, paste0(root, "local/runs/mstr/20250725/metafor_interim/obs_val.rds"))
+
+```
+
+```{r}
+abundances_x_axis <- c(25, 50, 100, 1000, 5000, 10000)
+x_lim <- c(100,10000)
+y_lim <- c(-0.02, 0.02) 
+
+# Define grouping patterns
+group_patterns <- list(
+  ndd0 = "ndd0$",
+  pdd0 = "pdd0_",
+  ndd05pdd05 = c("ndd0\\.5", "pdd0\\.5"),
+  ndd05pdd1 = c("ndd0\\.5", "pdd1"),
+  ndd1pdd05 = c("ndd1", "pdd0\\.5"),
+  ndd1pdd1 = c("ndd1", "pdd1")
+)
+
+
+# Automatically create groups
+mc_groups <- list()
+for(group_name in names(group_patterns)) {
+  pattern <- group_patterns[[group_name]]
+  if(length(pattern) == 1) {
+    selected_names <- namesShort[stringr::str_detect(namesShort, pattern)]
+  } else {
+    selected_names <- namesShort
+    for(p in pattern) {
+      selected_names <- selected_names[stringr::str_detect(selected_names, p)]
+    }
+  }
+  mc_groups[[group_name]] <- selected_names
+}
+
+# Create one plot per group with all lines
+group_plots <- lapply(names(mc_groups), function(group_name) {
+  group_indices <- which(names(dat_meta) %in% mc_groups[[group_name]])
+  
+  if(length(group_indices) == 0) return(NULL)
+  
+  # Combine data from all items in the group
+  combined_data <- do.call(rbind, lapply(group_indices, function(i) {
+    data <- pred[[i]]
+    data$scenario <- names(dat_meta)[i]  # Add scenario identifier
+    return(data)
+  }))
+  
+  # Create the plot
+  p <- ggplot(combined_data, aes(x = log_N, y = pred, color = scenario, fill = scenario)) + 
+    geom_ribbon(aes(ymin = ci.lb, ymax = ci.ub), alpha = 0.3) +
+    geom_line(size = 1) +
+    geom_hline(yintercept = 0, lty = 2) +
+    labs(x = "Species Abundance", y = "mortality\nchange", title = group_name) +
+    scale_x_continuous(breaks = log(abundances_x_axis), labels = abundances_x_axis) +
+    scale_y_continuous(limits = y_lim) +
+    theme_bw(15) +
+    theme(legend.position = "right")
+  
+  print(p)
+  return(p)
+})
+
+names(group_plots) <- names(mc_groups)
+```
+
+```{r}
+pdf(paste0(root, "/local/figures/mstr/20250725/metafor/abund.pdf"), width = 8, height = 6)
+for (p in group_plots) {
+  if (!is.null(p)) print(p)
+}
+dev.off()
+```
+

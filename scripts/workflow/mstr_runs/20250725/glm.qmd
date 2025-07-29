@@ -11,6 +11,9 @@ Here, I want to calculate the change in mortality from 0 to 1 neighbor.
 library(tidyr)
 library(lattice)
 library(stringr)
+library(metafor)
+library(plotly)
+library(MASS)
 # root <- "~/Uni/Master/MA/" # work from local machine
 root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
@@ -124,8 +127,6 @@ mort_long <- mort_change %>%
 ### param-wise
 
 ```{r}
-library(plotly)
-
 set.seed(1)  # for reproducibility
 mort_long_jit <- mort_long %>%
   mutate(
@@ -380,7 +381,6 @@ tabS2 <- lapply(tab, function(x){
 # maybe a faster alternative, but not tested yet
 
 cl <- makeCluster(length(tabS2))
-clusterEvalQ(cl, library(stats))
 
 mort_changeS2 <- parLapply(cl, tabS2, function(x) {
   i <- 1  # index
@@ -388,7 +388,6 @@ mort_changeS2 <- parLapply(cl, tabS2, function(x) {
   res <- data.frame(specId = rep(NA, len),
                     abund = rep(NA, len),
                     NperCen = rep(NA, len),
-                    SE = rep(NA, len),
                     mort_change = rep(NA, len),
                     ndd = rep(NA, len),
                     nddVar = rep(NA, len),
@@ -403,15 +402,10 @@ mort_changeS2 <- parLapply(cl, tabS2, function(x) {
     sfm <- fm$coefficients
     mort0 <- plogis(sfm["(Intercept)", "Estimate"])
     mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
-    res$SE[i] <- plogis(sfm["con", "Std. Error"])
     res$mort_change[i] <- (mort1 - mort0)
     res$abund[i] <- x$abund[which(x$specId == sID)][1]
     res$specId[i] <- sID
     res$NperCen[i] <- x$NperCen[which(x$specId == sID)][1]
-    res$ndd[i] <- x$nDD[which(x$specId == sID)][1]
-    res$nddVar[i] <- x$nDDVar[which(x$specId == sID)][1]
-    res$pdd[i] <- x$pDD[which(x$specId == sID)][1]
-    res$pddVar[i] <- x$pDDVar[which(x$specId == sID)][1]
     i <- i + 1
   }
   return(res)
@@ -452,7 +446,7 @@ invisible(sapply(seq_along(mort_changeS2), function(i){
 
 ```{r}
 # add regressionline mc ~ abund
-mort_changeS2 <- lapply(mort_changeS2, function(x){
+mort_changeS2_log <- lapply(mort_changeS2, function(x){
   fm <- lm(mort_change ~ log(abund), data = x)
   x$int = fm$coefficients[1]
   x$slope = fm$coefficients[2]
@@ -650,15 +644,11 @@ for(group_name in names(mc_groups)) {
 # Analysis with meta for: account for std. err. in regression
 
 ```{r}
-library(metafor)
 head(mort_changeS2[[1]])
 ```
 ## restart from the model 
 
 ```{r}
-
-# maybe a faster alternative, but not tested yet
-
 cl <- makeCluster(length(tabS2))
 
 mcS_err <- parLapply(cl, tabS2, function(x) {
@@ -694,7 +684,6 @@ stopCluster(cl)
 
 ## compute variance of the marginal effect through a "posterior" simulation
 ```{r}
-library(MASS)
 
 mcS_err_sim <- lapply(mcS_err, function(x){
   lapply(x, function(y){
@@ -704,6 +693,7 @@ mcS_err_sim <- lapply(mcS_err, function(x){
     mort_diff <- mort1 - mort0
     
         return(data.frame(
+      abund = y$abund,
       specId = y$specId,
       mean = mean(mort_diff),
       se = sd(mort_diff),
@@ -713,5 +703,153 @@ mcS_err_sim <- lapply(mcS_err, function(x){
         
   })
 })
+```
+
+## unlist inner lists and add log abund
+```{r}
+m4 <- lapply(mcS_err_sim, function(group) {
+  do.call(rbind, group)
+})
+
+m4 <- lapply(m4, function(group) {
+  row.names(group) <- NULL
+  group <- group %>% 
+    mutate(log_N = log(abund))
+  return(group)
+})
+```
+
+```{r}
+# saveRDS(mcS_err_sim, paste0(root, "local/runs/mstr/20250725/metafor_interim/metafor.rds"))
+# mcS_err_sim <- readRDS(paste0(root, "local/runs/mstr/20250725/metafor_interim/metafor.rds"))
+```
+
+## fitting model
+```{r}
+dat_meta <- lapply(m4, function(x) {
+  escalc(measure = "GEN", yi = x$mean, sei = x$se, slab = x$specId, data = x)
+})
+```
+
+```{r}
+metamod <- lapply(dat_meta, function(x) {
+  metafor::rma(yi = x$yi, vi = x$vi, mods = ~ x$log_N, method = "REML", data = x)
+})
+```
+
+```{r}
+summary(metamod$pdd0_ndd0)
+summary(metamod$pdd1Var0.01_ndd1Var0.5)
+```
+```{r}
+plot(metamod$pdd0_ndd0)
+plot(metamod$pdd1Var0.01_ndd1Var0.5)
+```
+## predictions
+```{r}
+pred <- lapply(dat_meta, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 50))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_N)
+  return(x)
+})
+# Bind predictions to dataframe
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamod[[i]]
+  
+  return(cbind(x, predict(object = y, newmods = x$log_N)))
+})
+```
+
+```{r}
+# maybe this is not needed, takes ages to run
+observed_values <- lapply(metamod, function(x) broom::augment(x))
+
+# --------------
+cl <- makeCluster(length(metamod))  # or specify manually
+clusterExport(cl, "metamod")
+
+observed_values <- parLapply(cl, metamod, broom::augment)
+
+stopCluster(cl)
+# --------------
+
+tst <- broom::augment(metamod[[1]])
+```
+
+```{r}
+# save some results
+
+saveRDS(pred, paste0(root, "local/runs/mstr/20250725/metafor_interim/pred.rds"))
+# saveRDS(observed_values, paste0(root, "local/runs/mstr/20250725/metafor_interim/obs_val.rds"))
+
+```
+
+```{r}
+abundances_x_axis <- c(25, 50, 100, 1000, 5000, 10000)
+x_lim <- c(100,10000)
+y_lim <- c(-0.02, 0.02) 
+
+# Define grouping patterns
+group_patterns <- list(
+  ndd0 = "ndd0$",
+  pdd0 = "pdd0_",
+  ndd05pdd05 = c("ndd0\\.5", "pdd0\\.5"),
+  ndd05pdd1 = c("ndd0\\.5", "pdd1"),
+  ndd1pdd05 = c("ndd1", "pdd0\\.5"),
+  ndd1pdd1 = c("ndd1", "pdd1")
+)
+
+# Get the names from your data
+names <- names(dat_meta)
+
+# Automatically create groups
+mc_groups <- list()
+for(group_name in names(group_patterns)) {
+  pattern <- group_patterns[[group_name]]
+  if(length(pattern) == 1) {
+    selected_names <- names[stringr::str_detect(names, pattern)]
+  } else {
+    selected_names <- names
+    for(p in pattern) {
+      selected_names <- selected_names[stringr::str_detect(selected_names, p)]
+    }
+  }
+  mc_groups[[group_name]] <- selected_names
+}
+
+# Create one plot per group with all lines
+group_plots <- lapply(names(mc_groups), function(group_name) {
+  group_indices <- which(names(dat_meta) %in% mc_groups[[group_name]])
+  
+  if(length(group_indices) == 0) return(NULL)
+  
+  # Combine data from all items in the group
+  combined_data <- do.call(rbind, lapply(group_indices, function(i) {
+    data <- pred[[i]]
+    data$scenario <- names(dat_meta)[i]  # Add scenario identifier
+    return(data)
+  }))
+  
+  # Create the plot
+  p <- ggplot(combined_data, aes(x = log_N, y = pred, color = scenario, fill = scenario)) + 
+    geom_ribbon(aes(ymin = ci.lb, ymax = ci.ub), alpha = 0.3) +
+    geom_line(size = 1) +
+    geom_hline(yintercept = 0, lty = 2) +
+    labs(x = "Species Abundance", y = "mortality\nchange", title = group_name) +
+    scale_x_continuous(breaks = log(abundances_x_axis), labels = abundances_x_axis) +
+    scale_y_continuous(limits = y_lim) +
+    theme_bw(15) +
+    theme(legend.position = "right")
+  
+  print(p)
+  return(p)
+})
+
+names(group_plots) <- names(mc_groups)
 ```
 
