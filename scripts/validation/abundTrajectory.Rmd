@@ -1,0 +1,85 @@
+---
+title: "abundTrajectory"
+output: html_document
+---
+
+Here, I follow the trajectories of the species abundances, to understand, how species develop in time.
+Maybe this gives a better understanding, of why rare species seem to have a lower mortality.
+
+According to Yenni et al. 2012, in a high NDD scenario, abundances should recover more, compared to a low NDD scenario.
+```{r}
+#| warning: false
+
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+```{r}
+runs <- readRDS(paste0(root,"local/runs/abundTraj/runsAbundTraj.rds"))
+```
+
+```{r}
+runs <- getConNeigh(runs)
+```
+
+
+```{r}
+cl <- parallel::makeCluster(2)
+clusterExport(cl, c("getMatToTab", "runs"))
+tab <- parLapply(cl, runs, function(x){
+  res <- getMatToTab(x, detailedParams = FALSE)
+  return(res)
+})
+stopCluster(cl)
+```
+
+## get abundances
+```{r}
+tab_aggr <- lapply(tab, function(x){
+  res <- x %>%
+    filter(census >100000) %>% 
+  group_by(specId, census) %>% 
+  mutate(abund = n())
+  
+  return(res)
+})
+
+tab_aggr <- lapply(tab_aggr, function(x){
+  res <- x %>%
+    group_by(specId, census, abund) %>% 
+  summarise(.groups = "drop")
+  return(res)
+})
+```
+
+## plot
+```{r}
+# draw some random specId
+
+all_id <- unique(tab_aggr$pdd1Var0.5Cut1_ndd0_disp1_sr2_fbmr10_faoM$specId)
+
+id <- sample(x = all_id, size = 50, replace = FALSE)
+
+final <- tab_aggr[[1]] %>%
+  filter(specId %in% id)
+
+# Create the plot
+plot(NULL, xlim = range(final$census), ylim = range(final$abund),
+     xlab = "Census", ylab = "Abundance", main = "Species Abundance Over Time")
+
+# Add a line for each species
+for(i in 1:length(id)) {
+  spec_data <- final[which(final$specId == id[i]),]
+  lines(x = spec_data$census, y = spec_data$abund, col = i)
+}
+
+# Add legend if needed
+# legend("topright", legend = paste("Species", id[1:min(10, length(id))]), 
+#        col = 1:min(10, length(id)), lty = 1, cex = 0.8)
+
+```
+
+```{r}

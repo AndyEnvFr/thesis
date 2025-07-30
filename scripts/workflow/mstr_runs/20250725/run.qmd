@@ -105,5 +105,3 @@ clusterExport(cl, c("getMatToTab", "runz"))
 res <- parLapply(cl = cl, X = runz, fun = function(x) getMatToTab(x, detailedParams = TRUE))
 saveRDS(res, paste0(root, "local/runs/mstr/20250725/tab.rds"))
 ```
-
-
