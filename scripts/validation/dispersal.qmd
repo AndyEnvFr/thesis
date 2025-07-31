@@ -1,0 +1,83 @@
+---
+title: "dispersal"
+format: html
+---
+
+I check the impact of dispersal on DD
+
+```{r}
+#| warning: false
+
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(stringr)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+```{r}
+runs <- readRDS(paste0(root, "local/runs/dispVsDD/runsDisp.rds"))
+```
+
+```{r}
+runs <- getConNeigh(runs)
+```
+
+```{r}
+names <- sapply(runs, function(x){
+  res <- x$Model$getName
+  return(res)
+})
+
+names <- names %>% str_remove("_sr2.+")
+
+names(runs) <- names
+```
+
+```{r}
+cl <- makeCluster(36)
+clusterExport(cl, c("runs", "getMatToTab"))
+tab <- parLapply(cl, runs, getMatToTab, detailedParams = TRUE)
+stopCluster(cl)
+
+tab <- lapply(tab, function(x){
+  res <- x %>%
+    select(-nDDVar, -pDDVar, -fbmr, -fao, -sr, -pDC, -nDC)
+  return(res)
+})
+```
+
+```{r}
+# saveRDS(tab, paste0(root, "local/runs/dispVsDD/tab.rds"))
+```
+
+# richness
+```{r}
+par(mfrow = c(6,6), mar = c(1,3,3,1))
+S <- getSpecTime(runs,ymax = 40)
+```
+
+```{r}
+names <- names(S) %>%
+  str_remove_all("_sr2.+|Var[0-9.]+|Cut1")
+
+S <- lapply(S, function(x){
+  res <- x %>%
+  mutate(
+    ndd     = str_extract(combo, "(?<=ndd)[0-9.]+"),
+    pdd     = str_extract(combo, "(?<=pdd)[0-9.]+"),
+    disp     = str_extract(combo, "(?<=pdd)[0-9.]+"),
+  )
+  return(res)
+})
+
+names(S) <- names
+
+unlistS <- unlist(S)
+
+head(unlistS)
+```
+
+
+
