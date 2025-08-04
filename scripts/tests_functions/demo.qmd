@@ -10,8 +10,8 @@ format: html
 library(PhyloSim)
 library(parallel)
 library(dplyr)
-root <- "~/Uni/Master/MA/" # work from local machine
-# root <- "~/cyber_synch/" # work from uni bayreuth server
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
 # source("~/cyber_synch/git_synch/scripts/functions.R")
 # source("~/Uni/Master/MA/git_synch/scripts/functions.R")
 ```
@@ -22,7 +22,7 @@ root <- "~/Uni/Master/MA/" # work from local machine
 parNDD <- createCompletePar(x = 50, y = 50, type = "base",
                   dispersal = 1,
                   runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
-                  negativeDensity = 1, nDensityCut = 1, nDDNicheWidth = .01,
+                  negativeDensity = 1, nDensityCut = 1, nDDNicheWidth = .001,
                   positiveDensity = 0, 
                   specRate = 2,
                   fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
@@ -33,7 +33,7 @@ parPDD <- createCompletePar(x = 50, y = 50, type = "base",
                   dispersal = 1,
                   runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
                   negativeDensity = 0,
-                  positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .01, 
+                  positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .001, 
                   specRate = 2,
                   fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
                   seed = 20250724,
@@ -42,8 +42,8 @@ parPDD <- createCompletePar(x = 50, y = 50, type = "base",
 parBoth <- createCompletePar(x = 50, y = 50, type = "base",
                   dispersal = 1,
                   runs = sort(c(seq(100,5000,50),seq(100,5000,50)+1)),
-                  negativeDensity = 1, nDensityCut = 1, nDDNicheWidth = .01,
-                  positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .01, 
+                  negativeDensity = 1, nDensityCut = 1, nDDNicheWidth = .001,
+                  positiveDensity = 1, pDensityCut = 1, pDDNicheWidth = .001, 
                   specRate = 2,
                   fitnessActsOn = "mortality", fitnessBaseMortalityRatio = 10,
                   seed = 20250724,
@@ -136,32 +136,32 @@ easi_matrix <- cbind(E, space, A, space, S, space, I)
 ```{r}
 par(mfrow= c(2,3), mar=c(2,2,2,2))
 
-image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "ndd_100")
-image(simu1$pdd1Var0.01Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "pdd_100")
-image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "both_100")
+image(simu1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "ndd_100")
+image(simu1$pdd1Var0.001Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "pdd_100")
+image(simu1$pdd1Var0.001Cut1_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "both_100")
 image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`100`$specMat, main = "none_100")
 image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`100`$specMat, main = "glob_100")
 image(easi_matrix, col = rainbow(5))
 
-image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "ndd_101")
-image(simu1$pdd1Var0.01Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "pdd_101")
-image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "both_101")
+image(simu1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "ndd_101")
+image(simu1$pdd1Var0.001Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "pdd_101")
+image(simu1$pdd1Var0.001Cut1_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "both_101")
 image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "none_101")
 image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`101`$specMat, main = "glob_101")
 image(easi_matrix, col = rainbow(5))
 
 
-image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "ndd_5000")
-image(simu1$pdd1Var0.01Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "pdd_5000")
-image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "both_5000")
+image(simu1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "ndd_5000")
+image(simu1$pdd1Var0.001Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "pdd_5000")
+image(simu1$pdd1Var0.001Cut1_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "both_5000")
 image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "none_5000")
 image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "glob_5000")
 image(easi_matrix, col = rainbow(5))
 
 
-image(simu1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "ndd_5001")
-image(simu1$pdd1Var0.01Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "pdd_5001")
-image(simu1$pdd1Var0.01Cut1_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "both_5001")
+image(simu1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "ndd_5001")
+image(simu1$pdd1Var0.001Cut1_ndd0_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "pdd_5001")
+image(simu1$pdd1Var0.001Cut1_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "both_5001")
 image(simu1$pdd0_ndd0_disp1_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "none_5001")
 image(simu1$pdd0_ndd0_dispG_sr2_fbmr10_faoM$Output$`5001`$specMat, main = "glob_5001")
 image(easi_matrix, col = rainbow(5))
@@ -209,20 +209,20 @@ rac(runs = simu1, ymax = 2000, xmax = 25, title = c("nDD", "pDD", "both", "none"
 # density dependence
 
 ```{r}
-simuCon1 <- getConNeigh(simu = simu1)
+simuCon1 <- getConNeigh(simu1)
 ```
 
 ```{r}
 par(mfrow= c(2,3), mar=c(2,2,2,2))
 
-image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "ndd_101 spec")
-image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$conNeighMat, main = "ndd_101 conN")
-image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$mortMat, main = "ndd_101 mort",
+image(simuCon1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$specMat, main = "ndd_101 spec")
+image(simuCon1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$conNeighMat, main = "ndd_101 conN")
+image(simuCon1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`101`$mortMat, main = "ndd_101 mort",
       col = heat.colors(2))
 
-image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "ndd_5000 spec")
-image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$conNeighMat, main = "ndd_5000 conN")
-image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$mortMat, main = "ndd_5000 mort",
+image(simuCon1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$specMat, main = "ndd_5000 spec")
+image(simuCon1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$conNeighMat, main = "ndd_5000 conN")
+image(simuCon1$pdd0_ndd1Var0.001Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$mortMat, main = "ndd_5000 mort",
       col = heat.colors(2))
 ```
 
@@ -230,9 +230,12 @@ image(simuCon1$pdd0_ndd1Var0.01Cut1_disp1_sr2_fbmr10_faoM$Output$`5000`$mortMat,
 
 ```{r}
 simuTab <- getMatToTab(simuCon1, detailedParams = TRUE)
-saveRDS(simuTab, "~/Uni/Master/MA/local/runs/others/demoTab.rds")
-# simuTab1 <- readRDS(paste0(root, "/local/runs/others/demoTab.rds"))
-# simuTab2 <- readRDS(paste0(root, "/local/runs/others/demoTab1.rds"))
+# saveRDS(simuTab, paste0(root, "local/runs/others/demoTabDDAmplitude100.rds"))
+# simuTab1 <- readRDS(paste0(root, "/local/runs/others/demoTabDDAmplitude100.rds"))
+```
+
+```{r}
+simuTab1 <- simuTab
 ```
 
 ```{r}

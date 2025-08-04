@@ -5,13 +5,9 @@ format: html
 editor: visual
 ---
 
---------------------------------CAUTION !!!--------------------------------
-THIS ANALYSIS IS WRONG NOW, AS DC IS NOT 1 FOR PDD AND NDD, BUT THE STATISTICAL ANALYSIS ASSUMES SO.
+--------------------------------CAUTION !!!-------------------------------- THIS ANALYSIS IS WRONG NOW, AS DC IS NOT 1 FOR PDD AND NDD, BUT THE STATISTICAL ANALYSIS ASSUMES SO.
 
-BECAUSE
-mort0 <- plogis(sfm["(Intercept)", "Estimate"])
-mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
---------------------------------CAUTION !!!--------------------------------
+BECAUSE mort0 \<- plogis(sfm\["(Intercept)", "Estimate"\]) mort1 \<- plogis(sfm\["con", "Estimate"\] \* 1 + sfm\["(Intercept)", "Estimate"\]) --------------------------------CAUTION !!!--------------------------------
 
 Here, I want to calculate the change in mortality from 0 to 1 neighbor.
 
@@ -23,6 +19,7 @@ root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
 
 # loading and filtering
+
 ```{r}
 # read in tabular data
 tab <- readRDS(paste0(root, "local/runs/mstr/20250722/runs50DDTab.rds"))
@@ -45,10 +42,8 @@ tab <- lapply(tab, function(x){
 })
 ```
 
-
-
-
 # calculate the change in probability(mortality) from 0 to 1 neighbor for all species aggregated
+
 ```{r}
 mort_change <- sapply(tab, function(x){
   fm <- glm(formula = "mortNextGen ~ con", family = binomial(), data = x)
@@ -70,6 +65,7 @@ mort_change <- sapply(tab, function(x){
 ```
 
 ## visualize results
+
 ```{r}
 #| fig-width: 15
 #| fig-height: 5
@@ -80,6 +76,7 @@ axis(1, at = 1:ncol(mort_change), labels = colnames(mort_change), las = 2)
 ```
 
 ### aggregated
+
 ```{r}
 mort_long <- mort_change %>%
   tibble::rownames_to_column("metric") %>%
@@ -107,6 +104,7 @@ mort_long <- mort_change %>%
 ```
 
 ### param-wise
+
 ```{r}
 library(plotly)
 
@@ -161,7 +159,6 @@ plot_ly(
   )
 
 ```
-
 
 # calculate the change in probability(mortality) from 0 to 1 neighbor for each species
 
@@ -246,6 +243,7 @@ mort_changeS <- lapply(tabS, function(x){
 ## visualize results
 
 ### standard abundance
+
 ```{r}
 # add regressionline mc ~ abund
 mort_changeS <- lapply(mort_changeS, function(x){
@@ -270,6 +268,7 @@ invisible(sapply(seq_along(mort_changeS), function(i){
 ```
 
 ### log abundance
+
 ```{r}
 # add regressionline mc ~ abund
 mort_changeS <- lapply(mort_changeS, function(x){
@@ -292,7 +291,3 @@ invisible(sapply(seq_along(mort_changeS), function(i){
   abline(x$int[1], x$slope[1], lty = 2, col = "orange")
 }))
 ```
-
-
-
-

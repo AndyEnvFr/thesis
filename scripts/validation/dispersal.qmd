@@ -12,6 +12,10 @@ library(PhyloSim)
 library(parallel)
 library(dplyr)
 library(stringr)
+library(plotly)
+library(ggplot2)
+library(tidyr)
+
 # root <- "~/Uni/Master/MA/" # work from local machine
 root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
@@ -43,6 +47,7 @@ stopCluster(cl)
 
 tab <- lapply(tab, function(x){
   res <- x %>%
+    filter(census %% 2 == 0) %>% 
     select(-nDDVar, -pDDVar, -fbmr, -fao, -sr, -pDC, -nDC)
   return(res)
 })
@@ -51,6 +56,61 @@ tab <- lapply(tab, function(x){
 ```{r}
 # saveRDS(tab, paste0(root, "local/runs/dispVsDD/tab.rds"))
 ```
+# mortchange
+
+```{r}
+mort_change <- sapply(tab, function(x){
+  fm <- glm(formula = "mortNextGen ~ con", family = binomial(), data = x)
+  
+  sfm <- summary(fm)$coefficients
+  
+  mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+  mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+  
+  # return(c(mort0, mort1))
+  return(c(mort_change = (mort1 - mort0),
+                    nDD = x$nDD[1],
+                    pDD = x$pDD[1],
+                    disp = x$disp[1]
+                    ))
+}) %>% as.data.frame()
+```
+
+```{r}
+#| fig-width: 15
+#| fig-height: 5
+
+par(mar = c(13,4,1,1))
+plot(y = mort_change["mort_change",], x = 1:ncol(mort_change), ylab = "mortChange", xlab = "", xaxt = "n")
+axis(1, at = 1:ncol(mort_change), labels = names, las = 2)
+```
+
+```{r}
+mort_long <- mort_change %>%
+  tibble::rownames_to_column("metric") %>%
+  pivot_longer(
+    cols = -metric,
+    names_to = "param_combo",
+    values_to = "value"
+  ) %>%
+  pivot_wider(
+    names_from = metric,
+    values_from = value
+  )
+
+  ggplot(mort_long, aes(x = factor(nDD), y = factor(pDD), fill = mort_change)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "change in\nmortality") +
+  theme_minimal() +
+  labs(x = "NDD Strength", y = "PDD Strength", title = "")
+
+  ggplot(mort_long, aes(x = disp, y = mort_change)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  theme_minimal() +
+  labs(x = "Dispersal", y = "change in\nmortality", title = "")
+```
+
+
 
 # richness
 ```{r}
@@ -62,22 +122,59 @@ S <- getSpecTime(runs,ymax = 40)
 names <- names(S) %>%
   str_remove_all("_sr2.+|Var[0-9.]+|Cut1")
 
-S <- lapply(S, function(x){
-  res <- x %>%
-  mutate(
-    ndd     = str_extract(combo, "(?<=ndd)[0-9.]+"),
-    pdd     = str_extract(combo, "(?<=pdd)[0-9.]+"),
-    disp     = str_extract(combo, "(?<=pdd)[0-9.]+"),
-  )
-  return(res)
-})
-
 names(S) <- names
+Sframe <- bind_rows(S, .id = "params")
 
-unlistS <- unlist(S)
-
-head(unlistS)
+Sframe <- Sframe %>%
+  filter(year %% 2 == 0) %>% 
+  mutate(
+    ndd     = as.numeric(str_extract(params, "(?<=ndd)[0-9.]+")),
+    pdd     = as.numeric(str_extract(params, "(?<=pdd)[0-9.]+")),
+    disp     = as.numeric(str_extract(params, "(?<=disp)[0-9]")),
+  )
 ```
+
+```{r}
+ggplot(df_parsed, aes(x = factor(nddvar), y = factor(pddvar), fill = mean)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "species\nrichness") +
+  theme_minimal() +
+  labs(x = "NDD Variance", y = "PDD Variance", title = "")
+```
+
+```{r}
+
+set.seed(1)  # for reproducibility
+Sframe_jit <- Sframe %>%
+  mutate(
+    ndd_jit = ndd + runif(n(), -0.1, 0.1),
+    pdd_jit = pdd + runif(n(), -0.1, 0.1),
+    disp_jit = disp + runif(n(), -0.1, 0.1),
+  )
+
+
+plot_ly(
+  Sframe_jit,
+  x = ~ndd_jit,
+  y = ~pdd_jit,
+  z = ~disp_jit,
+  color = ~spec_rich,
+  colors = viridisLite::viridis(100),
+  type = "scatter3d",
+  mode = "markers",
+  marker = list(size = 4)
+) %>%
+  layout(
+    scene = list(
+      xaxis = list(title = "nDD"),
+      yaxis = list(title = "pDD"),
+      zaxis = list(title = "disp"),
+      camera = list(eye = list(x = -1.5, y = -2, z = 2))
+    )
+  )
+
+```
+
 
 
 
