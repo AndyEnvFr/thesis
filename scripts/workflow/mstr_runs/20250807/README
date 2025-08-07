@@ -1,0 +1,8 @@
+implemented exponential kernel for variance in density processes
+
+run_i: strenght(0, .5, 1); var(20, 5, 1); 50*50; 260k generations
+
+TODO
+- i need to test the estiamtes of MC of ndd and pdd
+- do the same thing species wise
+- dont do the meta-for regression, as Lisa is sceptical
