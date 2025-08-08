@@ -1,23 +1,28 @@
 ---
 title: "PhyloSim Changes"
 author: "A.I."
-format: html
+format:
+  html:
+    number-sections: true
 editor: visual
 ---
+
 ```{r}
 #| warning: false
 library(PhyloSim)
 library(parallel)
 library(dplyr)
+library(tidyverse)
 # root <- "~/Uni/Master/MA/" # work from local machine
 root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
 
-
 #### Abbreviations
-[n,p]DD = [neagitve, positive] density dependence
+
+\[n,p\]DD = \[neagitve, positive\] density dependence
 
 # Changes in Phylosim - Master Thesis Andrea Ingrosso: Negative- and Positive Density Dependece
+
 To investigate my research question, I modified PhyloSim. Here, I shall present the changes and explain them.
 
 Research question: Is dynamic feedback in the density dependent process (as in Schreder et al. 2020) needed to increase species richness and simulate the, empirically observed, correaltion between abundance and stabilization strength (Yenni et al. 2012) / stab. CDD (Hülsmann et al. 2024). Or, can the partitioning in positive (e.g., mutualistic) and negative (e.g., competitive) density dependence with different distance- and specificity kernel alone show mentioned pattern ?
@@ -25,12 +30,13 @@ Research question: Is dynamic feedback in the density dependent process (as in S
 I added negative and positive density dependence process. The strenght, distance, and specificity (with regard to the phylogenetic differences between focal and neighbor cell) can be defined by the user. The higher the specificity, the stronger the impact of (phenomenologically-) genetically identical/similar neighbors.
 
 ## Specificty of Density Dpendence: Exponential Kernel
-Following Schroeder et al. 2020, the specificity of pathogens and mutualists towards their hosts was an important (Random Forest) microbial parameter to generate a strong correlation between abundance and stabilizing CDD. Therefore, I included this parameter in Phylosim: in the c++ code it is called *Lambda*, in lign with the exponential function. In the R parameter creator it is called [n,p]DDNicheWidth.
+
+Following Schroeder et al. 2020, the specificity of pathogens and mutualists towards their hosts was an important (Random Forest) microbial parameter to generate a strong correlation between abundance and stabilizing CDD. Therefore, I included this parameter in Phylosim: in the c++ code it is called *Lambda*, in lign with the exponential function. In the R parameter creator it is called \[n,p\]DDNicheWidth.
 
 Phylosim already had a negative density dependent effet with user defineable strength and distance. However, the specificity was fixed and linear, as this cpp example shows:
 
-
 ### Original implementation: nDD with fixed specificty
+
 ```{r}
 #| eval: false
 # c++ code
@@ -78,8 +84,9 @@ double Individual::getFitness(double temp, bool env, bool dd, int generation, do
 ```
 
 ### New implementation: nDD and pDD with Exp Kernel
-Each individual has a trait ".m_[n,p]LocalDensity".
-Notice the user-defined dispersal kernel "cellsWithin_[N,P]_DensCutoff" 
+
+Each individual has a trait ".m\_\[n,p\]LocalDensity". Notice the user-defined dispersal kernel "cellsWithin\_\[N,P\]\_DensCutoff"
+
 ```{r}
 #| eval: false
 # c++ code
@@ -124,15 +131,14 @@ double Individual::getFitness(...) {
 }
 ```
 
-
 ### Exponential Kernel
-Now, the imapct of differences is not linear but follow and exponential kernel with a norm factor and a normalization term.
-Lambda is user-defined. The higher lambda, the more specific is the process.
-The norm factor is needed to make the curves steeper.
-The normalization term (1/20) is needed to brong results between 0 and 1. However, this requires Lambda <= 20. 
+
+Now, the imapct of differences is not linear but follow and exponential kernel with a norm factor and a normalization term. Lambda is user-defined. The higher lambda, the more specific is the process. The norm factor is needed to make the curves steeper. The normalization term (1/20) is needed to brong results between 0 and 1. However, this requires Lambda \<= 20.
+
 ```{r}
 #| fig-width: 5
 #| fig-height: 5
+#| fig-cap: ["Exponential kernel function with- and without norm-factor * 20", "Exponential function with different Lambda values from 20 (i.e., the steepest-) to 0.01 (i.e, the shallowest-) curve"]
 
 kernel <- function(x, lambda = 1, factor = 20) {
   norm_factor <- lambda / (1 - exp(-lambda))
@@ -156,32 +162,32 @@ lines(kernel(seq(0,.2,0.001),lambda = .01, factor = 20), x = seq(0,.2,0.001))
 
 #### kernel is based on phyllogenetic differences between individuals
 
-*Why do we need the 20 x factor, that makes the curves steeper?*
-The curves must be steeper, because median phylogenetic differences are low.
-The kernel must fit to the magnitude of phylogenetic differences between individuals.
-These differences are encoded in the competitionMatrices that are returned at the end of the simulatios.
-We can use this matrix, to asses mean difference values between focal cell and neighbours within the defined radius.
-We'll do so for a neutral scenario (i.e., without density dependence or environment).
+*Why do we need the 20 x factor, that makes the curves steeper?* The curves must be steeper, because median phylogenetic differences are low. The kernel must fit to the magnitude of phylogenetic differences between individuals. These differences are encoded in the competitionMatrices that are returned at the end of the simulatios. We can use this matrix, to asses mean difference values between focal cell and neighbours within the defined radius. We'll do so for a neutral scenario (i.e., without density dependence or environment).
+
 ```{r}
 # load batch and extract null scenario
-runs <- readRDS(paste0(root, "local/runs/mstr/20250722/runs128DD.rds"))
-run <- runs$ndd0var0.01_ndd0var0.01
+# runs <- readRDS(paste0(root, "local/runs/mstr/20250722/runs128DD.rds"))
+# run <- runs$ndd0var0.01_pdd0var0.01
+
+# or faster
+runNeut <- readRDS(paste0(root, "local/summary/runNeut.rds"))
 # name generation
-names(run$Output) <- run$Model$runs
+names(runNeut$Output) <- runNeut$Model$runs
 ```
 
 Display the species Distribution and the corresponding competition trait values.
+
 ```{r}
 #| fig-width: 7
 #| fig-height: 4
-
+#| fig-cap: "Result matrix for a neutral run after 262501 generations. Left: species matrix shows the species ID and their local distribution. Right: competition Matrix shows the competition trait that shows phyllogenetic vicintiy of the individuals (I.e., same colors show high phyllogenetic simmilarity)"
 par(mfrow = c(1,2))
-image(run$Output$`262501`$specMat, main = "species ID\nneutral run")
-image(run$Output$`262501`$compMat, main = "Competition Matrix\nneutral run")
+image(runNeut$Output$`262501`$specMat, main = "species ID\nneutral run", xaxt = "n", yaxt = "n")
+image(runNeut$Output$`262501`$compMat, main = "Competition Matrix\nneutral run", xaxt = "n", yaxt = "n")
 ```
 
-Now, we use the competition matrix to get the phyllogenetic differences, as they are calculated in the c++ simulations.
-First we get interspecific phyllogenetic differences, then intraspecific.
+Now, we use the competition matrix to get the phyllogenetic differences, as they are calculated in the c++ simulations. First we get interspecific phyllogenetic differences, then intraspecific.
+
 ```{r}
 # define function to extract the values (function only for simple von Neumann neighborhood)
 getDif <- function(mat) {
@@ -226,66 +232,76 @@ getDif <- function(mat) {
 }
 ```
 
-**Total Differences**
-Check the median phyllogenetic difference for a neutral run across all individuals.
+**Total Differences** Check the median phyllogenetic difference for a neutral run across all individuals.
+
 ```{r}
 #| fig-width: 5
 #| fig-height: 5
+#| fig-cap: "Most individuals have very low phyllogenetic differences with their neighbors, because they belong to the same species."
 
-dif <- getDif(run$Output$`262501`$compMat)
+dif <- getDif(runNeut$Output$`262501`$compMat)
 
 q_tot <- quantile(dif) %>% t() %>%  as.data.frame()
 
+cat("quantiles of phyllogenetic differences between all individuals:\n")
 print(q_tot)
 
-hist(dif, breaks = 1000, main = "phyllogenetic differences\nbetween all individuals")
+hist(dif, breaks = 1000, main = "phyllogenetic differences\nbetween all individuals",
+     xlab = "phyllogenetic difference")
 abline(v = q_tot$`50%`, lty = 2, col = "blue", lwd = 2)
 legend("right", legend = "diff. median", lty = 2, col = "blue", bty = "n")
 ```
 
-**Intraspecific Differences**
-Check the median phyllogenetic difference for a neutral run within one species.
+**Intraspecific Differences** Check the median phyllogenetic difference for a neutral run within one species.
 
 ```{r}
 #| fig-width: 5
 #| fig-height: 5
+#| fig-cap: "Plotted in the histogram are the intraspecific medians. Within one species median differences seem equal to total differences. This results from most neighbors beeing conspecific."
 
 # get species and calculate differences for all species
-spec = unique(as.vector(run$Output$`262501`$specMat))
+spec = unique(as.vector(runNeut$Output$`262501`$specMat))
 
 q_intra <- sapply(spec, function(s) {
-  idx <- run$Output$`262501`$specMat == s
+  idx <- runNeut$Output$`262501`$specMat == s
   quantile(dif[idx])
 })
 
 q_intra <- t(q_intra) %>%  as.data.frame()
   
 hist(q_intra$`50%`, breaks = 30, main = "phyllogenetic differences\nspecies wise median", xlab = "dif")
-abline(v = q_inter$`50%`, lty = 2, col = "blue", lwd = 2)
-legend("right", legend = "inter+intra spec. diff. median", lty = 2, col = "blue", bty = "n")
-
+abline(v = q_tot$`50%`, lty = 2, col = "blue", lwd = 2)
+legend("right", legend = "diff. median", lty = 2, col = "blue", bty = "n")
 ```
-We see that most differences are extremly narrow. For total individuals, as well as within the same species. Therefore, I implemented the * 20 factor, that makes the curves steeper, declining earlier. We can add the median to previous plot and show that the kernel fits the median differences.
 
-Crucially, if the differences are even smaller, the density effect will have much higher impact for high lambda values.
-However, feedbacks within the simulations will alter difference values, as e.g., in a ndd scenario differences will be much smaller then in an nDD scenario. Therefore, it is difficult to find a balance between where the curves should ideally intersect. The core idea is that on the left side from the intersection low differences increase the effect
+We see that most differences are extremly narrow. For total individuals, as well as within the same species. Therefore, I implemented the \* 20 factor, that makes the curves steeper, declining earlier. We can add the median to previous plot and show that the kernel fits the median differences.
+
+Crucially, if the differences are even smaller, the density effect will have much higher impact for high lambda values. However, feedbacks within the simulations will alter difference values, as e.g., in a ndd scenario differences will be much smaller then in an nDD scenario. Therefore, it is difficult to find a balance between where the curves should ideally intersect. The core idea is that on the left side from the intersection low differences increase the effect
 
 ```{r}
 #| fig-width: 5
 #| fig-height: 5
+#| fig-cap: "Differences can alter drastically, depending on parameterization. The implemented exponential kernel allows -with high compared to low lambda- for stronger responses if the relatedness is high, and -with low compared to high lambda- for stronger responses if the relatedness is low. This way, the low specificity of the density effect hits stronger for unrelated neighbors"
 
 # show that in ndd sceanrio differences are much different then nDD
-runndd <- runs$ndd0var0.01_ndd0.5var0.1
-names(runndd$Output) <- runndd$Model$runs
+# runPDD <- runs$ndd0var0.01_pdd1var0.01
 
-runNDD <- runs$ndd1var0.01_ndd0var0.01
+runPDD <- readRDS(paste0(root, "local/summary/runPDD.rds"))
+names(runPDD$Output) <- runPDD$Model$runs
+
+# runNDD <- runs$ndd1var0.01_pdd0var0.01
+runNDD <- readRDS(paste0(root, "local/summary/runNDD.rds"))
 names(runNDD$Output) <- runNDD$Model$runs
 
-difndd <- getDif(runndd$Output$`262501`$compMat)
-q_ndd <- quantile(difndd) %>% t() %>%  as.data.frame()
-print(q_ndd)
+difPDD <- getDif(runPDD$Output$`262501`$compMat)
+q_PDD <- quantile(difPDD) %>% t() %>%  as.data.frame()
 difNDD <- getDif(runNDD$Output$`262501`$compMat)
 q_NDD <- quantile(difNDD) %>% t() %>%  as.data.frame()
+
+cat("\nquantiles of phyllogenetic differences between all individuals:\n",
+    "For pDD scenario\n")
+print(q_PDD)
+cat("\n For nDD scenario\n")
 print(q_NDD)
 
 plot(kernel(seq(0,.16,0.001),lambda = 20, factor = 20), type = "l",
@@ -298,22 +314,23 @@ lines(kernel(seq(0,.16,0.001),lambda = .5, factor = 20), x = seq(0,.16,0.001))
 lines(kernel(seq(0,.16,0.001),lambda = .01, factor = 20), x = seq(0,.16,0.001))
 
 abline(v = q_tot$`50%`, lty = 2, lwd = 2, col = "blue")
-abline(v = q_ndd$`50%`, lty = 2, lwd = 2, col = "red")
+abline(v = q_PDD$`50%`, lty = 2, lwd = 2, col = "red")
 abline(v = q_NDD$`50%`, lty = 2, lwd = 2, col = "grey")
 
 legend("center", legend = c("neutral", "ndd", "nDD"), lty = 2, col = c("blue", "red", "grey"), bty = "n", lwd = 2)
 
 ```
+
 ### Demo: calculate fitness values from local densities
 
-here, I demonstrate the results of the exponential kernel in the simulations.
-The used txt files are generated from the debug mode of PhyloSim
+here, I demonstrate the results of the exponential kernel in the simulations. The used txt files are generated from the debug mode of PhyloSim
 
-Remember: high Lambda values = high specificity.
-**pDD**
+Remember: high Lambda values = high specificity. **pDD**
+
 ```{r}
-#| fig-width: 5
-#| fig-height: 5
+#| fig-width: 10
+#| fig-height: 10
+#| fig-cap: "Each panel shows the same pDD simulation with different lambda values. The ordinate shows the fitness values. They are bounded between 1 and 2, because the starting fitness is 1 and can go up to 2 if pDD is max. The scatter plots show that, for high lambda values, the pDD boosts fitness (for closely related neighbors) and that the boost itself is bounded between 0 and 1."
 
 pdd001 <- read.delim(paste0(root, "/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P0.01.txt"), col.names = c("event", "fit", "deathChance", "N_relat", "P_relat"))
 pdd01 <- read.delim(paste0(root, "/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P0.1.txt"), col.names = c("event", "fit", "deathChance", "N_relat", "P_relat"))
@@ -339,24 +356,24 @@ pdd15 <- pdd15[c((l-10000):l),]
 l <- nrow(pdd20)
 pdd20 <- pdd20[c((l-10000):l),]
 
-
-plot(pdd001$fit,  xlab = "individuals", ylab = "fitness werte", main = "pdd_lambda0.01", ylim = c(1,2), col = rgb(0,0,0,.3))
-plot(pdd01$fit,  xlab = "individuals", ylab = "fitness werte", main = "pdd_lambda0.1", ylim = c(1,2), col = rgb(0,0,0,.3))
-plot(pdd1$fit,  xlab = "individuals", ylab = "fitness werte", main = "pdd_lambda1", ylim = c(1,2), col = rgb(0,0,0,.3))
-plot(pdd5$fit,  xlab = "individuals", ylab = "fitness werte", main = "pdd_lambda5", ylim = c(1,2), col = rgb(0,0,0,.3))
-plot(pdd10$fit,  xlab = "individuals", ylab = "fitness werte", main = "pdd_lambda10", ylim = c(1,2), col = rgb(0,0,0,.3))
-plot(pdd15$fit,  xlab = "individuals", ylab = "fitness werte", main = "pdd_lambda15", ylim = c(1,2), col = rgb(0,0,0,.3))
-plot(pdd20$fit,  xlab = "individuals", ylab = "fitness werte", main = "pdd_lambda20", ylim = c(1,2), col = rgb(0,0,0,.3))
+par(mfrow = c(3,3))
+plot(pdd001$fit,  xlab = "individuals", ylab = "fitness werte", main = "lambda 0.01", ylim = c(1,2), col = rgb(0,0,0,.3))
+plot(pdd01$fit,  xlab = "individuals", ylab = "fitness werte", main = "lambda 0.1", ylim = c(1,2), col = rgb(0,0,0,.3))
+plot(pdd1$fit,  xlab = "individuals", ylab = "fitness werte", main = "lambda 1", ylim = c(1,2), col = rgb(0,0,0,.3))
+plot(pdd5$fit,  xlab = "individuals", ylab = "fitness werte", main = "lambda 5", ylim = c(1,2), col = rgb(0,0,0,.3))
+plot(pdd10$fit,  xlab = "individuals", ylab = "fitness werte", main = "lambda 10", ylim = c(1,2), col = rgb(0,0,0,.3))
+plot(pdd15$fit,  xlab = "individuals", ylab = "fitness werte", main = "lambda 15", ylim = c(1,2), col = rgb(0,0,0,.3))
+plot(pdd20$fit,  xlab = "individuals", ylab = "fitness werte", main = "lambda 20", ylim = c(1,2), col = rgb(0,0,0,.3))
 ```
-For high Lambda values we see much scattering, as closely related neighborhoods have a much stronger impact on density effect.
-For low Lambda values, the effect is weaker for all neighbors, even for closely ones.
-With increasing Lambda the gap of impacts -between unrelated and closely related neighbors- widens.
 
-**pDD and nDD**
-Another example that shows both processes at the same time
+For high Lambda values we see much scattering, as closely related neighborhoods have a much stronger impact on density effect. For low Lambda values, the effect is weaker for all neighbors, even for closely ones. With increasing Lambda the gap of impacts -between unrelated and closely related neighbors- widens.
+
+**pDD and nDD** Another example that shows both processes at the same time
+
 ```{r}
-#| fig-width: 5
-#| fig-height: 5
+#| fig-width: 10
+#| fig-height: 10
+#| fig-cap: "Now both processes are on. Notice that if both processes have the same strenght and specificity, the effects will be neutralized."
 
 N1_P1 <- read.delim(paste0(root, "/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N1_P1.txt"), col.names = c("event", "fit", "deathChance", "N_relat", "P_relat"))
 N1_P10 <- read.delim(paste0(root, "/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N1_P10.txt"), col.names = c("event", "fit", "deathChance", "N_relat", "P_relat"))
@@ -387,73 +404,372 @@ N20_P10 <- N20_P10[c((l-10000):l),]
 l <- nrow(N20_P20)
 N20_P20 <- N20_P20[c((l-10000):l),]
 
+par(mfrow = c(3,3))
 plot(N1_P1$fit,  xlab = "individuals", ylab = "fitness", main = "N1_P1", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 plot(N1_P10$fit,  xlab = "individuals", ylab = "fitness", main = "N1_P10", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 plot(N1_P20$fit,  xlab = "individuals", ylab = "fitness", main = "N1_P20", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 plot(N10_P1$fit,  xlab = "individuals", ylab = "fitness", main = "N10_P1", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 plot(N10_P10$fit,  xlab = "individuals", ylab = "fitness", main = "N10_P10", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 plot(N10_P20$fit,  xlab = "individuals", ylab = "fitness", main = "N10_P20", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 plot(N20_P1$fit,  xlab = "individuals", ylab = "fitness", main = "N20_P1", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 plot(N20_P10$fit,  xlab = "individuals", ylab = "fitness", main = "N20_P10", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 plot(N20_P20$fit,  xlab = "individuals", ylab = "fitness", main = "N20_P20", ylim = c(0,3), col = rgb(0,0,0,.1), cex = .3)
-abline( h = 1)
+abline( h = 1, lty = 2, col = "grey", lwd = 2)
 ```
+
 Notice that if both Lambda's (for nDD and pDD) are the same, the effects is neutralized.
 
-## Quantification of stabilazation: Mortality change for + 1 conspecific individual
-According to Hülsmann et al. 2024 I quantify the effect of stab CDD by
-- fitting a binomial model
-- calculate probability of mortality without conspecific neighbors (= mort0)
-- calculate probability of mortality with *one* conspecific neighbor (= mort1)
-- calcualte change in probability (mortChange = mort1 - mort0)
+## Quantification of stabilazation: Mortality change for + 1 conspecific individual{#sec-mortality-change}
 
-This approach has one problem. For a greater distance kernel, the total DD effects remains the same, but allocated and diluted among multiple conspecific neighbors. However, the mortChange quantifies the effect of both, pDD and nDD per one added neighbor. Thus, if e.g., distance kernel pDD > nDD, pDD will be underestimated, as its effect is spread across multiple conspecific neighbors.
+According to Hülsmann et al. 2024 I quantify the effect of stab CDD by - fitting a binomial model - calculate probability of mortality without conspecific neighbors (= mort0) - calculate probability of mortality with *one* conspecific neighbor (= mort1) - calcualte change in probability (mortChange = mort1 - mort0)
+
+This approach has one problem. For a greater distance kernel, the total DD effects remains the same, but allocated and diluted among multiple conspecific neighbors. However, the mortChange quantifies the effect of both, pDD and nDD per one added neighbor. Thus, if e.g., distance kernel pDD \> nDD, pDD will be underestimated, as its effect is spread across multiple conspecific neighbors.
+
+This approach is done twice. First, the mort_change through all individuals is measured. Second, the species-wise mort_change is measured and checked, if it correlates with the species abundance.
+
+### Mortality change through all individuals
+#### Data preparation
+
+*Fitness base mortality ratio = 10*.
+
+the fitness base mortality ratio (fbmr) skips fitness dependent death every fbmr'th step. E.g., fbmr = 10 would cause always death, independent of fitness. In this batch, it is set to 10. In the next, to 3000. We'll see if fbmr changes the mortChange coefficient dramatically. But, first things first.
+
 ```{r}
+#| eval: false
+
+# load in runs with exp kernel
+runs_i <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_i.rds"))
+```
+
+Next, we
+
+-   calculate the numbers of conspecific neighbors
+-   asess if an individuls dies in the consequent generation. Therefore, we ran the simulations with sort(c(seq(x,y), seq(x,y)+1)). Again, we assess death after each period in time trough the immediately next generation (e.g, focal generation 1000 -\> individuals dead at 1001 ?)
+
+```{r}
+#| eval: false
+
+# get conspecific neighbors and proper naming
+runs_i <- getConNeigh(runs_i)
+```
+
+Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.
+
+```{r}
+#| eval: false
+
+# convert matrices to tabular data. This is done parallel, as it takes longer
+cl <- makeCluster(length(runs_i))
+clusterExport(cl, c("getMatToTab", "runs_i"))
+tab_i <- parLapply(cl = cl, X = runs_i, fun = function(x) getMatToTab(x, detailedParams = TRUE))
+
+# saveRDS(tab_i, paste0(root, "local/runs/mstr/20250807/tab_i.rds"))
+```
+
+We only keep important parameters in the naming
+```{r}
+tab_i <- readRDS(paste0(root, "local/runs/mstr/20250807/tab_i.rds"))
+```
+
+```{r}
+namesShort <- names(tab_i) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_remove("Cut1") %>% 
+  paste0("_fbmr10")
+```
+
+Now, we delete every second generation. Remember, we had to calculate the death in the consequent generation. After doing so, the generation x + 1 is no longer needed and is discarded.
+
+```{r}
+# keep only first timespot in census
+tab_ix <- lapply(tab_i, function(x){
+  res <- x %>%
+  filter(census %% 2 == 0,
+         census > 175000) # focus only on last censii
+  return(res)
+})
+
+names(tab_ix) <- namesShort
+```
+
+#### Statistical analysis
+We use a binomial glm and calculate the change in mortality for (one conspecific neighbor) - (no conspecific neighbors). As also described in @ref(sec-mortality-change). To calculate uncertainties, we use a non-parametric boot strap approach, because we want to aknowledge error propagation of each term.
+```{r}
+#| eval: false
+
+boot_mort_change <- function(x, B = 1000) {
+  boot_vals <- numeric(B)
+  
+  for (i in seq_len(B)) {
+    xb <- x[sample(nrow(x), replace = TRUE), ]
+    fm <- tryCatch(glm(mortNextGen ~ con, family = binomial(), data = xb),
+                   error = function(e) return(NA))
+    if (is.na(fm)[1]) {
+      boot_vals[i] <- NA
+    } else {
+      est <- coef(fm)
+      mort0 <- plogis(est["(Intercept)"])
+      mort1 <- plogis(est["(Intercept)"] + est["con"])
+      boot_vals[i] <- mort1 - mort0
+    }
+  }
+  
+  ci <- quantile(boot_vals, c(0.025, 0.975), na.rm = TRUE) # allows error propagation
+  point <- mean(boot_vals, na.rm = TRUE)
+  
+  return(c(mort_change = point, ci_lower = ci[1], ci_upper = ci[2]))
+}
 
 ```
 
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(tab_ix))
+clusterExport(cl, c("boot_mort_change", "tab_ix"))
+boot_results <- parLapply(cl = cl, X = tab_ix, fun = function(x) boot_mort_change(x, B = 500))
+```
+
+```{r}
+#| eval: false
+
+boot_results_x <- do.call(cbind, boot_results) %>%  as.data.frame()
+
+# saveRDS(boot_results_x, "~/cyber_synch/local/summary/boot_results_x.rds")
+```
+
+```{r}
+boot_results_x <- readRDS(paste0(root, "local/summary/boot_results_x.rds"))
+```
 
 
+#### Visualization
+```{r}
+#| fig-width: 15
+#| fig-height: 5
+#| fig-cap: "Mortality change (mortality with 1 conspecific neighbor - mortality without conspecific neighbors) for all individuals. Error bars are Q0.25 and Q0.75 from bootstrapping, while dots are mean values across bootstraps."
+
+par(mar = c(13,4,1,1))
+
+x <- 1:ncol(boot_results_x)
+y <- as.numeric(boot_results_x["mort_change",])
+ci_lower <- as.numeric(boot_results_x["ci_lower",])
+ci_upper <- as.numeric(boot_results_x["ci_upper",])
+
+plot(y = y, x = x, ylab = "mortChange", xlab = "", xaxt = "n", ylim = range(ci_lower, ci_upper))
+axis(1, at = x, labels = namesShort, las = 2)
+
+arrows(x0 = x, y0 = ci_lower, 
+       x1 = x, y1 = ci_upper, 
+       angle = 90, code = 3, length = 0.05)
 
 
+```
+Next, we show the effect of the density strength and variance on the mortality change
+```{r}
+#| fig-width: 5
+#| fig-height: 5
+#| fig-cap: ["A point contains informations of one run with a unique paramter setting. Filtering already occured in the section 'Data preparation'. The parameter Settings can be read on the axis","A point contains informations of one run with a unique paramter setting. Filtering already occured in the section 'Data preparation'. The parameter Settings can be read on the axis"]
+
+mort_long <- boot_results_x %>%
+  tibble::rownames_to_column("metric") %>%
+  pivot_longer(cols = -metric, names_to = "param_combo", values_to = "value") %>%
+  pivot_wider(names_from = metric, values_from = value)
+
+meta_df <- lapply(tab_ix, function(x) {
+  data.frame(
+    nDD = x$nDD[1],
+    pDD = x$pDD[1],
+    nDDVar = x$nDDVar[1],
+    pDDVar = x$pDDVar[1]
+  )
+}) %>% bind_rows()
+
+mort_long <- bind_cols(mort_long, meta_df)
+
+# Plot 1: change in mortality vs NDD/PDD strength
+ggplot(mort_long, aes(x = factor(nDD), y = factor(pDD), fill = mort_change)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "change in\nmortality") +
+  theme_minimal() +
+  labs(x = "NDD Strength", y = "PDD Strength")
+
+# Plot 2: change in mortality vs NDD/PDD variance
+ggplot(mort_long, aes(x = factor(nDDVar), y = factor(pDDVar), fill = mort_change)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "change in\nmortality") +
+  theme_minimal() +
+  labs(x = "NDD Variance", y = "PDD Variance")
+```
+
+### Mortality change species-wise: correaltion between species abundance and change in mortality
+Literature often finds a correlation between stabilizing strength and the abundance of a species. To test this, we redo the analysis but now species-wise and add abundance and "NperCen", a correct abundance measure, to the data.
+
+#### Data preparation
+Additionally, besides using abundance as metric for the correaltion(abund. , stabilization), we correct for the number of generations, where a species is present. E.g, if specId 1 survives long enough, it will be present in 3 generation $x_{n}, x_{n+1}, x_{n+2}$. This creates a bias. We correct by dividing the total abundance (throughout the whole time series) by number of generations, the species is present (E.g., $\frac{5041}{3}$). This new metric is called *NbyCen*. Finally, we join all information together.
+
+Also, we filter out very rare species, to increase statistical power.
+```{r}
+# calculate number of censii in which species occur
+NbyCen <- lapply(tab_ix, function(x){
+  res <- x %>% 
+    group_by(specId) %>%
+    summarise(n_census = n_distinct(census))
+  return(res)
+})
+
+# add abundances and (abundances / number of censii in which they occur)
+tab_ixx <- lapply(seq_along(tab_ix), function(i){
+  res <- tab_ix[[i]] %>%
+    group_by(specId) %>% 
+    mutate(abund = n()) %>%
+    left_join(NbyCen[[i]], by = "specId") %>%
+    mutate(NperCen = abund / n_census) %>%
+    ungroup()
+  return(res)
+})
+
+tab_iS <- lapply(tab_ixx, function(x){
+  res <- x %>%
+    filter(abund > 30)
+  return(res)
+})
+```
+
+#### Statistical Analysis
+```{r}
+
+cl <- makeCluster(length(tab_iS))
+
+mort_changeS <- parLapply(cl, tab_iS, function(x) {
+  i <- 1  # index
+  len <- length(unique(x$specId))
+  res <- data.frame(specId = rep(NA, len),
+                    abund = rep(NA, len),
+                    NperCen = rep(NA, len),
+                    mort_change = rep(NA, len))
+
+  for (sID in unique(x$specId)) {
+    fm <- glm(formula = "mortNextGen ~ con",
+              family = binomial(),
+              data = x[which(x$specId == sID), ])
+    sfm <- summary(fm)$coefficients
+    mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+    mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+    res$mort_change[i] <- (mort1 - mort0)
+    res$abund[i] <- x$abund[which(x$specId == sID)][1]
+    res$NperCen[i] <- x$NperCen[which(x$specId == sID)][1]
+    res$specId[i] <- sID
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+```{r}
+# add regressionline mc ~ abund
+mort_changeS <- lapply(mort_changeS, function(x){
+  fm <- lm(mort_change ~ log(abund), data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+
+mort_changeSx <- lapply(mort_changeS, function(x){
+  fm <- lm(mort_change ~ log(NperCen), data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+```
+
+#### Visualization
+
+```{r}
+#| fig-width: 15
+#| fig-height: 15
+#| fig-cap: "Each point represents one species. Shown is the relation between species abundance and mortality change. The blue line is y = 0, the orange line is a linear regression between mort_change and log(abundance). Notice: for the neutral scenario, there is no relationship. The strongest relationship can be seen in nDD1Var20_pDD1Var5."
 
 
+names <- names(tab_ix) %>% stringr::str_remove("_fbmr10")
+
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+invisible(sapply(seq_along(mort_changeS), function(i){
+  x <- mort_changeS[[i]]
+  plot(x = log(x$abund), y = x$mort_change,
+       ylim = c(-0.1, 0.1), xlab = "abund", ylab = "mortality\nchange",
+       cex = .3, col = rgb(0,0,0,.05),
+       main = names[i], cex.main = .8) 
+  abline(h = 0, col = "steelblue")
+  abline(x$int[1], x$slope[1], lty = 2, col = "orange")
+}))
+```
+
+```{r}
+#| fig-width: 15
+#| fig-height: 15
+#| fig-cap: "Same plot as previous, but for corrected abundance: abundance is divided by the number of generations the species appears"
 
 
+names <- names(tab_ix) %>% stringr::str_remove("_fbmr10")
+
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+invisible(sapply(seq_along(mort_changeSx), function(i){
+  x <- mort_changeSx[[i]]
+  plot(x = log(x$NperCen), y = x$mort_change,
+       ylim = c(-0.1, 0.1), xlab = "abund", ylab = "mortality\nchange",
+       cex = .3, col = rgb(0,0,0,.05),
+       main = names[i], cex.main = .8) 
+  abline(h = 0, col = "steelblue")
+  abline(x$int[1], x$slope[1], lty = 2, col = "orange")
+}))
+```
+
+## Analyzing Species richness as a measure of coexistence
+
+Scientific consensus is that stabilization increases Coexistence. Coexistence can be described by the number of species that coexist within a community.
+
+```{r}
+# if not loaded, load raw runs
+runs_i <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_i.rds"))
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+#| fig-cap: "Species richness through the whole run for different parameter combinations. The ordinate shows the species richness, the abscissa the generations"
+
+par(mfrow = c(11,4), mar = c(1,3,3,1), oma = c(5,5,5,5))
+S <- getSpecTime(runs_i, ymax = 40, title = names(runs_i))
+
+meanS <- sapply(S, function(x) mean(x$spec_rich))
+```
 
 
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+#| fig-cap: "mean species richness through the whole runs for different parameter settings. Notice that nDD increases species richness"
 
+par(mar = c(15,6,1,3))
+plot(meanS, xaxt = "n", xlab = "", ylab = "species richness")
+axis(1, at = x, labels = names(runs_i), las = 2)
 
+segments(x0 = x, y0 = 0, x1 = x, y1 = meanS, lty = 2)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 

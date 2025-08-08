@@ -49,7 +49,7 @@ for (ndd in ndd_options) {
               dispersal = 1,
               specRate = 2,
               environment = 0,
-              fitnessBaseMortalityRatio = 10,
+              fitnessBaseMortalityRatio = 3000,
               seed = current_seed,
               type = "base",
               protracted = 0,
@@ -74,7 +74,7 @@ for (ndd in ndd_options) {
 }
 
 runz <- runSimulationBatch(params, parallel = 43, backup_path = paste0(root, "/local/runs/mstr/backups/"))
-saveRDS(runz, paste0(root, "/local/runs/mstr/20250807/runs.rds"))
+saveRDS(runz, paste0(root, "/local/runs/mstr/20250807/runs_ii.rds"))
 
 
 

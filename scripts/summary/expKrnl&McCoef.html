@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.57">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="A.I.">
+
+<title>PhyloSim Changes</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="expKrnl&amp;McCoef_files/libs/clipboard/clipboard.min.js"></script>
+<script src="expKrnl&amp;McCoef_files/libs/quarto-html/quarto.js"></script>
+<script src="expKrnl&amp;McCoef_files/libs/quarto-html/popper.min.js"></script>
+<script src="expKrnl&amp;McCoef_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="expKrnl&amp;McCoef_files/libs/quarto-html/anchor.min.js"></script>
+<link href="expKrnl&amp;McCoef_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="expKrnl&amp;McCoef_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="expKrnl&amp;McCoef_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="expKrnl&amp;McCoef_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="expKrnl&amp;McCoef_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">PhyloSim Changes</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>A.I. </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(PhyloSim)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(parallel)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># root &lt;- "~/Uni/Master/MA/" # work from local machine</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>root <span class="ot">&lt;-</span> <span class="st">"~/cyber_synch/"</span> <span class="co"># work from uni bayreuth server</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="abbreviations" class="level4" data-number="0.0.0.1">
+<h4 data-number="0.0.0.1" class="anchored" data-anchor-id="abbreviations"><span class="header-section-number">0.0.0.1</span> Abbreviations</h4>
+<p>[n,p]DD = [neagitve, positive] density dependence</p>
+</section>
+<section id="changes-in-phylosim---master-thesis-andrea-ingrosso-negative--and-positive-density-dependece" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Changes in Phylosim - Master Thesis Andrea Ingrosso: Negative- and Positive Density Dependece</h1>
+<p>To investigate my research question, I modified PhyloSim. Here, I shall present the changes and explain them.</p>
+<p>Research question: Is dynamic feedback in the density dependent process (as in Schreder et al.&nbsp;2020) needed to increase species richness and simulate the, empirically observed, correaltion between abundance and stabilization strength (Yenni et al.&nbsp;2012) / stab. CDD (Hülsmann et al.&nbsp;2024). Or, can the partitioning in positive (e.g., mutualistic) and negative (e.g., competitive) density dependence with different distance- and specificity kernel alone show mentioned pattern ?</p>
+<p>I added negative and positive density dependence process. The strenght, distance, and specificity (with regard to the phylogenetic differences between focal and neighbor cell) can be defined by the user. The higher the specificity, the stronger the impact of (phenomenologically-) genetically identical/similar neighbors.</p>
+<section id="specificty-of-density-dpendence-exponential-kernel" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="specificty-of-density-dpendence-exponential-kernel"><span class="header-section-number">1.1</span> Specificty of Density Dpendence: Exponential Kernel</h2>
+<p>Following Schroeder et al.&nbsp;2020, the specificity of pathogens and mutualists towards their hosts was an important (Random Forest) microbial parameter to generate a strong correlation between abundance and stabilizing CDD. Therefore, I included this parameter in Phylosim: in the c++ code it is called <em>Lambda</em>, in lign with the exponential function. In the R parameter creator it is called [n,p]DDNicheWidth.</p>
+<p>Phylosim already had a negative density dependent effet with user defineable strength and distance. However, the specificity was fixed and linear, as this cpp example shows:</p>
+<section id="original-implementation-ndd-with-fixed-specificty" class="level3" data-number="1.1.1">
+<h3 data-number="1.1.1" class="anchored" data-anchor-id="original-implementation-ndd-with-fixed-specificty"><span class="header-section-number">1.1.1</span> Original implementation: nDD with fixed specificty</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># c++ code</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># density calculation in grid.cpp</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>void Landscape<span class="sc">::</span><span class="fu">densityUpdate</span>(...){... </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>double a <span class="ot">=</span> m_Individuals[focus_x][focus_y].m_CompetitionMarker;</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>double b <span class="ot">=</span> m_Individuals[neighborX][neighborY].m_CompetitionMarker;</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="sc">/</span><span class="er">/</span> THIS IS THE PHYLLOGENETIC DIFFERENCE CALCULATION, ON WHICH THE DENSITY EFFECT IS BASED ON</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="sc">/</span><span class="er">/</span> DIFFERENCES ARE BOUNDED BETWEEN O AND <span class="dv">1</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>double diff <span class="ot">=</span> std<span class="sc">::</span><span class="fu">abs</span>(a <span class="sc">-</span> b);</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="sc">/</span><span class="er">/</span> LINEAR IMPLEMENTATION</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>relatedness <span class="sc">+</span><span class="er">=</span> diff;</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>...</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>m_Individuals[focus_x][focus_y].m_LocalDensity <span class="ot">=</span> relatedness <span class="sc">/</span> cellsWithinDensityCutoff;</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="co"># then local density is used to calculate fitness in individual.cpp</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>double Individual<span class="sc">::</span><span class="fu">getFitness</span>(double temp, bool env, bool dd, int generation, double redQueenStrength, double redQueen) {</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    double out <span class="ot">=</span> (DBL_MIN <span class="sc">*</span> <span class="fl">100.0</span>); </span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (env) out <span class="sc">+</span><span class="er">=</span> m_envStrength <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.5</span> <span class="sc">*</span> <span class="fu">pow</span>((temp <span class="sc">-</span> m_Mean) <span class="sc">/</span> m_nicheWidth, <span class="fl">2.0</span>)) <span class="sc">+</span> <span class="dv">1</span> <span class="sc">-</span> m_envStrength; </span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (dd) out <span class="sc">+</span><span class="er">=</span> m_compStrength <span class="sc">*</span> m_LocalDensity <span class="sc">+</span> <span class="dv">1</span> <span class="sc">-</span> m_compStrength <span class="sc">+</span> (DBL_MIN <span class="sc">*</span> <span class="fl">100.0</span>);</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    ...</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        out <span class="ot">=</span> out <span class="sc">+</span> (out <span class="sc">*</span> redQueenStrength <span class="sc">*</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>                     std<span class="sc">::</span><span class="fu">pow</span>(<span class="fl">2.71828</span>, (<span class="sc">-</span>redQueen <span class="sc">*</span> (generation <span class="sc">-</span> <span class="dv">1</span> <span class="sc">-</span> m_Species<span class="ot">-&gt;</span>m_Date_of_Emergence))));</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    return out;</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="er">}</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="co"># then for "mortality acts on fitness" fitness allows to escape death in grid.cpp</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> (numberDeath <span class="sc">&lt;</span> numberOfRuns) {</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>        event<span class="sc">++</span>;</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>      ...</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (m_mortality <span class="sc">&amp;&amp;</span> event % m_mortalityStrength <span class="sc">!=</span> <span class="dv">0</span>) {</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>            double weight <span class="ot">=</span> m_Individuals[x_coordinate][y_coordinate]<span class="fu">.getFitness</span>(</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>                    m_Environment[x_coordinate <span class="sc">*</span> m_Ydimensions <span class="sc">+</span> y_coordinate].first, m_Env, m_DD, generation,</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>                    m_redQueenStrength, m_redQueen);</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>            double chanceOfDeath <span class="ot">=</span> <span class="fu">m_RandomGenerator.randomDouble</span>(<span class="fl">0.0</span>, <span class="fl">1.0</span>);</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> (weight <span class="sc">&gt;</span> chanceOfDeath) continue;</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>        numberDeath<span class="sc">++</span>;</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>        ...</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="new-implementation-ndd-and-pdd-with-exp-kernel" class="level3" data-number="1.1.2">
+<h3 data-number="1.1.2" class="anchored" data-anchor-id="new-implementation-ndd-and-pdd-with-exp-kernel"><span class="header-section-number">1.1.2</span> New implementation: nDD and pDD with Exp Kernel</h3>
+<p>Each individual has a trait “.m_[n,p]LocalDensity”. Notice the user-defined dispersal kernel “cellsWithin_[N,P]_DensCutoff”</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># c++ code</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># generic density calculation in grid.cpp</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>double LocalEnvironment<span class="sc">::</span><span class="fu">calculateRelatedness</span>(...) {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>double a <span class="ot">=</span> m_Individuals[focus_x][focus_y].m_CompetitionMarker;</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>double b <span class="ot">=</span> m_Individuals[neighborX][neighborY].m_CompetitionMarker;</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>double difference <span class="ot">=</span> std<span class="sc">::</span><span class="fu">abs</span>(a <span class="sc">-</span> b);</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>double norm_factor <span class="ot">=</span> lambda <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>lambda));</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="sc">/</span><span class="er">/</span> EXPONENTIAL KERNEL IMPLEMENTATION</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>relatedness <span class="sc">+</span><span class="er">=</span> (norm_factor <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span>lambda <span class="sc">*</span> difference <span class="sc">*</span> <span class="dv">20</span>)) <span class="sc">/</span> <span class="fl">20.0</span>;</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># specific density calculations: shown for nDD but also implemented for ndd in grid.cpp</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>void LocalEnvironment<span class="sc">::</span><span class="fu">densityUpdate</span>(...) {...</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (int <span class="at">X =</span> <span class="sc">-</span>m_nDensCutoff; X <span class="sc">&lt;=</span> m_nDensCutoff; X<span class="sc">++</span>) {</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    int yLims <span class="ot">=</span> <span class="fu">floor</span>(<span class="fu">sqrt</span>(m_nDensCutoff <span class="sc">*</span> m_nDensCutoff <span class="sc">-</span> X <span class="sc">*</span> X));</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (int <span class="at">Y =</span> <span class="sc">-</span>yLims; Y <span class="sc">&lt;=</span> yLims; Y<span class="sc">++</span>) {</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>      int focus_x <span class="ot">=</span> ((x <span class="sc">+</span> X <span class="sc">+</span> m_Xdimensions) % m_Xdimensions);</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>      int focus_y <span class="ot">=</span> ((y <span class="sc">+</span> Y <span class="sc">+</span> m_Ydimensions) % m_Ydimensions);</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>      double nRelatedness <span class="ot">=</span> <span class="fu">calculateRelatedness</span>(focus_x, focus_y, m_nDensCutoff, m_nDDNicheWidth);</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>      m_Individuals[focus_x][focus_y].m_nLocalDensity <span class="ot">=</span> nRelatedness <span class="sc">/</span> cellsWithin_N_DensCutoff;</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a><span class="co"># use the [n,p]LocalDensity to get Fitness in individual.cpp</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>double Individual<span class="sc">::</span><span class="fu">getFitness</span>(...) {</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  double out <span class="ot">=</span> <span class="fl">1.0</span>; <span class="sc">/</span><span class="er">/</span> baseline fitness allows subtraction via ndd</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (env)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    out <span class="sc">+</span><span class="er">=</span> m_envStrength <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span><span class="fl">0.5</span> <span class="sc">*</span> <span class="fu">pow</span>((temp <span class="sc">-</span> m_Mean) <span class="sc">/</span> m_envNicheWidth, <span class="fl">2.0</span>)); <span class="sc">/</span><span class="er">/</span> environmental niche</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (ndd)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>    out <span class="sc">-</span><span class="er">=</span> m_nDDStrength <span class="sc">*</span> m_nLocalDensity;</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (ndd)</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>    out <span class="sc">+</span><span class="er">=</span> m_nddStrength <span class="sc">*</span> m_pLocalDensity;</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>...</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>    out <span class="ot">=</span> out <span class="sc">+</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>          (out <span class="sc">*</span> redQueenStrength <span class="sc">*</span> std<span class="sc">::</span><span class="fu">pow</span>(<span class="fl">2.71828</span>, (<span class="sc">-</span>redQueen <span class="sc">*</span> (generation <span class="sc">-</span> <span class="dv">1</span> <span class="sc">-</span> m_Species<span class="ot">-&gt;</span>m_Date_of_Emergence))));</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  return out;</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="exponential-kernel" class="level3" data-number="1.1.3">
+<h3 data-number="1.1.3" class="anchored" data-anchor-id="exponential-kernel"><span class="header-section-number">1.1.3</span> Exponential Kernel</h3>
+<p>Now, the imapct of differences is not linear but follow and exponential kernel with a norm factor and a normalization term. Lambda is user-defined. The higher lambda, the more specific is the process. The norm factor is needed to make the curves steeper. The normalization term (1/20) is needed to brong results between 0 and 1. However, this requires Lambda &lt;= 20.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>kernel <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">lambda =</span> <span class="dv">1</span>, <span class="at">factor =</span> <span class="dv">20</span>) {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  norm_factor <span class="ot">&lt;-</span> lambda <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> <span class="fu">exp</span>(<span class="sc">-</span>lambda))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>((norm_factor <span class="sc">*</span> <span class="fu">exp</span>(<span class="sc">-</span>lambda <span class="sc">*</span> x <span class="sc">*</span> factor)) <span class="sc">/</span> <span class="dv">20</span>) </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">20</span>, <span class="at">factor =</span> <span class="dv">1</span>), <span class="at">type =</span> <span class="st">"l"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="fl">0.001</span>), <span class="at">xlab =</span> <span class="st">"difference"</span>, <span class="at">ylab =</span> <span class="st">"lambda"</span>, <span class="at">main =</span> <span class="st">"factor 1 VS 20 - Lambda = 20"</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">20</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,<span class="dv">1</span>,<span class="fl">0.001</span>), <span class="at">col =</span> <span class="st">"red"</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"topright"</span>, <span class="fu">c</span>(<span class="st">"factor 1"</span>, <span class="st">"factor 20"</span>), <span class="at">lty =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="480"></p>
+<figcaption>Exponential kernel function with- and without norm-factor * 20</figcaption>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">20</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">type =</span> <span class="st">"l"</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>), <span class="at">xlab =</span> <span class="st">"difference"</span>, <span class="at">ylab =</span> <span class="st">"lambda"</span>, <span class="at">main =</span> <span class="st">"Lambda = (0.01 : 20)"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>), <span class="at">lambda =</span> <span class="dv">10</span>, <span class="at">factor =</span> <span class="dv">20</span>),<span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">5</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>))</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">2</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">1</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> .<span class="dv">5</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> .<span class="dv">01</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">2</span>,<span class="fl">0.001</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-4-2.png" class="img-fluid figure-img" width="480"></p>
+<figcaption>Exponential function with different Lambda values from 20 (i.e., the steepest-) to 0.01 (i.e, the shallowest-) curve</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="kernel-is-based-on-phyllogenetic-differences-between-individuals" class="level4" data-number="1.1.3.1">
+<h4 data-number="1.1.3.1" class="anchored" data-anchor-id="kernel-is-based-on-phyllogenetic-differences-between-individuals"><span class="header-section-number">1.1.3.1</span> kernel is based on phyllogenetic differences between individuals</h4>
+<p><em>Why do we need the 20 x factor, that makes the curves steeper?</em> The curves must be steeper, because median phylogenetic differences are low. The kernel must fit to the magnitude of phylogenetic differences between individuals. These differences are encoded in the competitionMatrices that are returned at the end of the simulatios. We can use this matrix, to asses mean difference values between focal cell and neighbours within the defined radius. We’ll do so for a neutral scenario (i.e., without density dependence or environment).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load batch and extract null scenario</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co"># runs &lt;- readRDS(paste0(root, "local/runs/mstr/20250722/runs128DD.rds"))</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co"># run &lt;- runs$ndd0var0.01_pdd0var0.01</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># or faster</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>runNeut <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">paste0</span>(root, <span class="st">"local/summary/runNeut.rds"</span>))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># name generation</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(runNeut<span class="sc">$</span>Output) <span class="ot">&lt;-</span> runNeut<span class="sc">$</span>Model<span class="sc">$</span>runs</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Display the species Distribution and the corresponding competition trait values.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>(runNeut<span class="sc">$</span>Output<span class="sc">$</span><span class="st">`</span><span class="at">262501</span><span class="st">`</span><span class="sc">$</span>specMat, <span class="at">main =</span> <span class="st">"species ID</span><span class="sc">\n</span><span class="st">neutral run"</span>, <span class="at">xaxt =</span> <span class="st">"n"</span>, <span class="at">yaxt =</span> <span class="st">"n"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">image</span>(runNeut<span class="sc">$</span>Output<span class="sc">$</span><span class="st">`</span><span class="at">262501</span><span class="st">`</span><span class="sc">$</span>compMat, <span class="at">main =</span> <span class="st">"Competition Matrix</span><span class="sc">\n</span><span class="st">neutral run"</span>, <span class="at">xaxt =</span> <span class="st">"n"</span>, <span class="at">yaxt =</span> <span class="st">"n"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption>Result matrix for a neutral run after 262501 generations. Left: species matrix shows the species ID and their local distribution. Right: competition Matrix shows the competition trait that shows phyllogenetic vicintiy of the individuals (I.e., same colors show high phyllogenetic simmilarity)</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Now, we use the competition matrix to get the phyllogenetic differences, as they are calculated in the c++ simulations. First we get interspecific phyllogenetic differences, then intraspecific.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># define function to extract the values (function only for simple von Neumann neighborhood)</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>getDif <span class="ot">&lt;-</span> <span class="cf">function</span>(mat) {</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Get matrix dimensions</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  nrows <span class="ot">&lt;-</span> <span class="fu">nrow</span>(mat)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  ncols <span class="ot">&lt;-</span> <span class="fu">ncol</span>(mat)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create shifted versions of the matrix for each neighbor direction</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># We'll use NA padding to handle edges</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># North neighbor (shift down)</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  north <span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="cn">NA</span>, mat[<span class="sc">-</span>nrows, , <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># South neighbor (shift up)  </span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  south <span class="ot">&lt;-</span> <span class="fu">rbind</span>(mat[<span class="sc">-</span><span class="dv">1</span>, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="cn">NA</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># West neighbor (shift right)</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  west <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="cn">NA</span>, mat[, <span class="sc">-</span>ncols, <span class="at">drop =</span> <span class="cn">FALSE</span>])</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># East neighbor (shift left)</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  east <span class="ot">&lt;-</span> <span class="fu">cbind</span>(mat[, <span class="sc">-</span><span class="dv">1</span>, <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="cn">NA</span>)</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate differences for each neighbor</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  diff_north <span class="ot">&lt;-</span> mat <span class="sc">-</span> north</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  diff_south <span class="ot">&lt;-</span> mat <span class="sc">-</span> south</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  diff_west <span class="ot">&lt;-</span> mat <span class="sc">-</span> west</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>  diff_east <span class="ot">&lt;-</span> mat <span class="sc">-</span> east</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Stack all differences into a 3D array for easy calculation</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Each "slice" represents differences with one neighbor type</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  diff_array <span class="ot">&lt;-</span> <span class="fu">array</span>(<span class="fu">abs</span>(<span class="fu">c</span>(diff_north, diff_south, diff_west, diff_east)), </span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>                      <span class="at">dim =</span> <span class="fu">c</span>(nrows, ncols, <span class="dv">4</span>))</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate mean difference (ignoring NA values at edges)</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  mean_diff <span class="ot">&lt;-</span> <span class="fu">apply</span>(diff_array, <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), mean, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Handle edge cases where all neighbors are NA (corners/edges)</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Replace NaN with NA for cleaner output</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>  mean_diff[<span class="fu">is.nan</span>(mean_diff)] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(mean_diff)</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p><strong>Total Differences</strong> Check the median phyllogenetic difference for a neutral run across all individuals.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>dif <span class="ot">&lt;-</span> <span class="fu">getDif</span>(runNeut<span class="sc">$</span>Output<span class="sc">$</span><span class="st">`</span><span class="at">262501</span><span class="st">`</span><span class="sc">$</span>compMat)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>q_tot <span class="ot">&lt;-</span> <span class="fu">quantile</span>(dif) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="sc">%&gt;%</span>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"quantiles of phyllogenetic differences between all individuals:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>quantiles of phyllogenetic differences between all individuals:</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(q_tot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            0%         25%        50%        75%      100%
+1 0.0005798852 0.008532692 0.01533289 0.04222442 0.3055058</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(dif, <span class="at">breaks =</span> <span class="dv">1000</span>, <span class="at">main =</span> <span class="st">"phyllogenetic differences</span><span class="sc">\n</span><span class="st">between all individuals"</span>,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"phyllogenetic difference"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> q_tot<span class="sc">$</span><span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"right"</span>, <span class="at">legend =</span> <span class="st">"diff. median"</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">bty =</span> <span class="st">"n"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="480"></p>
+<figcaption>Most individuals have very low phyllogenetic differences with their neighbors, because they belong to the same species.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p><strong>Intraspecific Differences</strong> Check the median phyllogenetic difference for a neutral run within one species.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get species and calculate differences for all species</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>spec <span class="ot">=</span> <span class="fu">unique</span>(<span class="fu">as.vector</span>(runNeut<span class="sc">$</span>Output<span class="sc">$</span><span class="st">`</span><span class="at">262501</span><span class="st">`</span><span class="sc">$</span>specMat))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>q_intra <span class="ot">&lt;-</span> <span class="fu">sapply</span>(spec, <span class="cf">function</span>(s) {</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  idx <span class="ot">&lt;-</span> runNeut<span class="sc">$</span>Output<span class="sc">$</span><span class="st">`</span><span class="at">262501</span><span class="st">`</span><span class="sc">$</span>specMat <span class="sc">==</span> s</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">quantile</span>(dif[idx])</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>q_intra <span class="ot">&lt;-</span> <span class="fu">t</span>(q_intra) <span class="sc">%&gt;%</span>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(q_intra<span class="sc">$</span><span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="at">breaks =</span> <span class="dv">30</span>, <span class="at">main =</span> <span class="st">"phyllogenetic differences</span><span class="sc">\n</span><span class="st">species wise median"</span>, <span class="at">xlab =</span> <span class="st">"dif"</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> q_tot<span class="sc">$</span><span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"right"</span>, <span class="at">legend =</span> <span class="st">"diff. median"</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">bty =</span> <span class="st">"n"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="480"></p>
+<figcaption>Plotted in the histogram are the intraspecific medians. Within one species median differences seem equal to total differences. This results from most neighbors beeing conspecific.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>We see that most differences are extremly narrow. For total individuals, as well as within the same species. Therefore, I implemented the * 20 factor, that makes the curves steeper, declining earlier. We can add the median to previous plot and show that the kernel fits the median differences.</p>
+<p>Crucially, if the differences are even smaller, the density effect will have much higher impact for high lambda values. However, feedbacks within the simulations will alter difference values, as e.g., in a ndd scenario differences will be much smaller then in an nDD scenario. Therefore, it is difficult to find a balance between where the curves should ideally intersect. The core idea is that on the left side from the intersection low differences increase the effect</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># show that in ndd sceanrio differences are much different then nDD</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># runPDD &lt;- runs$ndd0var0.01_pdd1var0.01</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>runPDD <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">paste0</span>(root, <span class="st">"local/summary/runPDD.rds"</span>))</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(runPDD<span class="sc">$</span>Output) <span class="ot">&lt;-</span> runPDD<span class="sc">$</span>Model<span class="sc">$</span>runs</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># runNDD &lt;- runs$ndd1var0.01_pdd0var0.01</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>runNDD <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">paste0</span>(root, <span class="st">"local/summary/runNDD.rds"</span>))</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(runNDD<span class="sc">$</span>Output) <span class="ot">&lt;-</span> runNDD<span class="sc">$</span>Model<span class="sc">$</span>runs</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>difPDD <span class="ot">&lt;-</span> <span class="fu">getDif</span>(runPDD<span class="sc">$</span>Output<span class="sc">$</span><span class="st">`</span><span class="at">262501</span><span class="st">`</span><span class="sc">$</span>compMat)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>q_PDD <span class="ot">&lt;-</span> <span class="fu">quantile</span>(difPDD) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="sc">%&gt;%</span>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>difNDD <span class="ot">&lt;-</span> <span class="fu">getDif</span>(runNDD<span class="sc">$</span>Output<span class="sc">$</span><span class="st">`</span><span class="at">262501</span><span class="st">`</span><span class="sc">$</span>compMat)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>q_NDD <span class="ot">&lt;-</span> <span class="fu">quantile</span>(difNDD) <span class="sc">%&gt;%</span> <span class="fu">t</span>() <span class="sc">%&gt;%</span>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">quantiles of phyllogenetic differences between all individuals:</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"For pDD scenario</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+quantiles of phyllogenetic differences between all individuals:
+ For pDD scenario</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(q_PDD)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            0%         25%         50%        75%       100%
+1 0.0003371805 0.005536309 0.007776223 0.01070271 0.03765915</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st"> For nDD scenario</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+ For nDD scenario</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(q_NDD)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            0%        25%       50%       75%      100%
+1 0.0006036661 0.07486065 0.1581124 0.2748111 0.9358281</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">20</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">type =</span> <span class="st">"l"</span>,</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>     <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>), <span class="at">xlab =</span> <span class="st">"difference"</span>, <span class="at">ylab =</span> <span class="st">"lambda"</span>, <span class="at">main =</span> <span class="st">"Lambda = (0.01 : 20) +</span><span class="sc">\n</span><span class="st"> median differences"</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>), <span class="at">lambda =</span> <span class="dv">10</span>, <span class="at">factor =</span> <span class="dv">20</span>),<span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>))</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">5</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>))</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">2</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>))</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> <span class="dv">1</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>))</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> .<span class="dv">5</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>))</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="fu">lines</span>(<span class="fu">kernel</span>(<span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>),<span class="at">lambda =</span> .<span class="dv">01</span>, <span class="at">factor =</span> <span class="dv">20</span>), <span class="at">x =</span> <span class="fu">seq</span>(<span class="dv">0</span>,.<span class="dv">16</span>,<span class="fl">0.001</span>))</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> q_tot<span class="sc">$</span><span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"blue"</span>)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> q_PDD<span class="sc">$</span><span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> q_NDD<span class="sc">$</span><span class="st">`</span><span class="at">50%</span><span class="st">`</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">lwd =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>)</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="fu">legend</span>(<span class="st">"center"</span>, <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">"neutral"</span>, <span class="st">"ndd"</span>, <span class="st">"nDD"</span>), <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="fu">c</span>(<span class="st">"blue"</span>, <span class="st">"red"</span>, <span class="st">"grey"</span>), <span class="at">bty =</span> <span class="st">"n"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="480"></p>
+<figcaption>Differences can alter drastically, depending on parameterization. The implemented exponential kernel allows -with high compared to low lambda- for stronger responses if the relatedness is high, and -with low compared to high lambda- for stronger responses if the relatedness is low. This way, the low specificity of the density effect hits stronger for unrelated neighbors</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="demo-calculate-fitness-values-from-local-densities" class="level3" data-number="1.1.4">
+<h3 data-number="1.1.4" class="anchored" data-anchor-id="demo-calculate-fitness-values-from-local-densities"><span class="header-section-number">1.1.4</span> Demo: calculate fitness values from local densities</h3>
+<p>here, I demonstrate the results of the exponential kernel in the simulations. The used txt files are generated from the debug mode of PhyloSim</p>
+<p>Remember: high Lambda values = high specificity. <strong>pDD</strong></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>pdd001 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P0.01.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>pdd01 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P0.1.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>pdd1 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P1.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>pdd5 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P5.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>pdd10 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P10.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>pdd15 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P15.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>pdd20 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20L/fitness_mortality_N0_P20.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a><span class="co"># filter to get only the last 100 generations</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pdd001)</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>pdd001 <span class="ot">&lt;-</span> pdd001[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pdd01)</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>pdd01 <span class="ot">&lt;-</span> pdd01[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pdd1)</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>pdd1 <span class="ot">&lt;-</span> pdd1[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pdd5)</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>pdd5 <span class="ot">&lt;-</span> pdd5[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pdd10)</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>pdd10 <span class="ot">&lt;-</span> pdd10[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pdd15)</span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>pdd15 <span class="ot">&lt;-</span> pdd15[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(pdd20)</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>pdd20 <span class="ot">&lt;-</span> pdd20[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">3</span>))</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pdd001<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness werte"</span>, <span class="at">main =</span> <span class="st">"lambda 0.01"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">3</span>))</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pdd01<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness werte"</span>, <span class="at">main =</span> <span class="st">"lambda 0.1"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">3</span>))</span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pdd1<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness werte"</span>, <span class="at">main =</span> <span class="st">"lambda 1"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">3</span>))</span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pdd5<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness werte"</span>, <span class="at">main =</span> <span class="st">"lambda 5"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">3</span>))</span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pdd10<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness werte"</span>, <span class="at">main =</span> <span class="st">"lambda 10"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">3</span>))</span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pdd15<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness werte"</span>, <span class="at">main =</span> <span class="st">"lambda 15"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">3</span>))</span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pdd20<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness werte"</span>, <span class="at">main =</span> <span class="st">"lambda 20"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">3</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img" width="960"></p>
+<figcaption>Each panel shows the same pDD simulation with different lambda values. The ordinate shows the fitness values. They are bounded between 1 and 2, because the starting fitness is 1 and can go up to 2 if pDD is max. The scatter plots show that, for high lambda values, the pDD boosts fitness (for closely related neighbors) and that the boost itself is bounded between 0 and 1.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>For high Lambda values we see much scattering, as closely related neighborhoods have a much stronger impact on density effect. For low Lambda values, the effect is weaker for all neighbors, even for closely ones. With increasing Lambda the gap of impacts -between unrelated and closely related neighbors- widens.</p>
+<p><strong>pDD and nDD</strong> Another example that shows both processes at the same time</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>N1_P1 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N1_P1.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>N1_P10 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N1_P10.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>N1_P20 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N1_P20.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>N10_P1 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N10_P1.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>N10_P10 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N10_P10.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>N10_P20 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N10_P20.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>N20_P1 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N20_P1.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>N20_P10 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N20_P10.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>N20_P20 <span class="ot">&lt;-</span> <span class="fu">read.delim</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/debug_pdd_ndd/expKernel/factor20NDDPDD/fitness_mortality_N20_P20.txt"</span>), <span class="at">col.names =</span> <span class="fu">c</span>(<span class="st">"event"</span>, <span class="st">"fit"</span>, <span class="st">"deathChance"</span>, <span class="st">"N_relat"</span>, <span class="st">"P_relat"</span>))</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N1_P1)</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>N1_P1 <span class="ot">&lt;-</span> N1_P1[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N1_P10)</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>N1_P10 <span class="ot">&lt;-</span> N1_P10[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N1_P20)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>N1_P20 <span class="ot">&lt;-</span> N1_P20[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N10_P1)</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>N10_P1 <span class="ot">&lt;-</span> N10_P1[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N10_P10)</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>N10_P10 <span class="ot">&lt;-</span> N10_P10[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N10_P20)</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>N10_P20 <span class="ot">&lt;-</span> N10_P20[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N20_P1)</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>N20_P1 <span class="ot">&lt;-</span> N20_P1[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N20_P10)</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>N20_P10 <span class="ot">&lt;-</span> N20_P10[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>l <span class="ot">&lt;-</span> <span class="fu">nrow</span>(N20_P20)</span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>N20_P20 <span class="ot">&lt;-</span> N20_P20[<span class="fu">c</span>((l<span class="dv">-10000</span>)<span class="sc">:</span>l),]</span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">3</span>))</span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N1_P1<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N1_P1"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N1_P10<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N1_P10"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N1_P20<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N1_P20"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N10_P1<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N10_P1"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb25-39"><a href="#cb25-39" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N10_P10<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N10_P10"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-40"><a href="#cb25-40" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb25-41"><a href="#cb25-41" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N10_P20<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N10_P20"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-42"><a href="#cb25-42" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb25-43"><a href="#cb25-43" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N20_P1<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N20_P1"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-44"><a href="#cb25-44" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb25-45"><a href="#cb25-45" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N20_P10<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N20_P10"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-46"><a href="#cb25-46" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb25-47"><a href="#cb25-47" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(N20_P20<span class="sc">$</span>fit,  <span class="at">xlab =</span> <span class="st">"individuals"</span>, <span class="at">ylab =</span> <span class="st">"fitness"</span>, <span class="at">main =</span> <span class="st">"N20_P20"</span>, <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">3</span>), <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">1</span>), <span class="at">cex =</span> .<span class="dv">3</span>)</span>
+<span id="cb25-48"><a href="#cb25-48" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>( <span class="at">h =</span> <span class="dv">1</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="960"></p>
+<figcaption>Now both processes are on. Notice that if both processes have the same strenght and specificity, the effects will be neutralized.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Notice that if both Lambda’s (for nDD and pDD) are the same, the effects is neutralized.</p>
+</section>
+</section>
+<section id="sec-mortality-change" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="sec-mortality-change"><span class="header-section-number">1.2</span> Quantification of stabilazation: Mortality change for + 1 conspecific individual</h2>
+<p>According to Hülsmann et al.&nbsp;2024 I quantify the effect of stab CDD by - fitting a binomial model - calculate probability of mortality without conspecific neighbors (= mort0) - calculate probability of mortality with <em>one</em> conspecific neighbor (= mort1) - calcualte change in probability (mortChange = mort1 - mort0)</p>
+<p>This approach has one problem. For a greater distance kernel, the total DD effects remains the same, but allocated and diluted among multiple conspecific neighbors. However, the mortChange quantifies the effect of both, pDD and nDD per one added neighbor. Thus, if e.g., distance kernel pDD &gt; nDD, pDD will be underestimated, as its effect is spread across multiple conspecific neighbors.</p>
+<p>This approach is done twice. First, the mort_change through all individuals is measured. Second, the species-wise mort_change is measured and checked, if it correlates with the species abundance.</p>
+<section id="mortality-change-through-all-individuals" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" class="anchored" data-anchor-id="mortality-change-through-all-individuals"><span class="header-section-number">1.2.1</span> Mortality change through all individuals</h3>
+<section id="data-preparation" class="level4" data-number="1.2.1.1">
+<h4 data-number="1.2.1.1" class="anchored" data-anchor-id="data-preparation"><span class="header-section-number">1.2.1.1</span> Data preparation</h4>
+<p><em>Fitness base mortality ratio = 10</em>.</p>
+<p>the fitness base mortality ratio (fbmr) skips fitness dependent death every fbmr’th step. E.g., fbmr = 10 would cause always death, independent of fitness. In this batch, it is set to 10. In the next, to 3000. We’ll see if fbmr changes the mortChange coefficient dramatically. But, first things first.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># load in runs with exp kernel</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>runs_i <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/runs/mstr/20250807/runs_i.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next, we</p>
+<ul>
+<li>calculate the numbers of conspecific neighbors</li>
+<li>asess if an individuls dies in the consequent generation. Therefore, we ran the simulations with sort(c(seq(x,y), seq(x,y)+1)). Again, we assess death after each period in time trough the immediately next generation (e.g, focal generation 1000 -&gt; individuals dead at 1001 ?)</li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get conspecific neighbors and proper naming</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>runs_i <span class="ot">&lt;-</span> <span class="fu">getConNeigh</span>(runs_i)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># convert matrices to tabular data. This is done parallel, as it takes longer</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(<span class="fu">length</span>(runs_i))</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">clusterExport</span>(cl, <span class="fu">c</span>(<span class="st">"getMatToTab"</span>, <span class="st">"runs_i"</span>))</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>tab_i <span class="ot">&lt;-</span> <span class="fu">parLapply</span>(<span class="at">cl =</span> cl, <span class="at">X =</span> runs_i, <span class="at">fun =</span> <span class="cf">function</span>(x) <span class="fu">getMatToTab</span>(x, <span class="at">detailedParams =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="co"># saveRDS(tab_i, paste0(root, "local/runs/mstr/20250807/tab_i.rds"))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>We only keep important parameters in the naming</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>tab_i <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">paste0</span>(root, <span class="st">"local/runs/mstr/20250807/tab_i.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>namesShort <span class="ot">&lt;-</span> <span class="fu">names</span>(tab_i) <span class="sc">%&gt;%</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  stringr<span class="sc">::</span><span class="fu">str_remove</span>(<span class="st">"_disp.+"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  stringr<span class="sc">::</span><span class="fu">str_remove</span>(<span class="st">"Cut1"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  stringr<span class="sc">::</span><span class="fu">str_remove</span>(<span class="st">"Cut1"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">paste0</span>(<span class="st">"_fbmr10"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now, we delete every second generation. Remember, we had to calculate the death in the consequent generation. After doing so, the generation x + 1 is no longer needed and is discarded.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># keep only first timespot in census</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>tab_ix <span class="ot">&lt;-</span> <span class="fu">lapply</span>(tab_i, <span class="cf">function</span>(x){</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> x <span class="sc">%&gt;%</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(census <span class="sc">%%</span> <span class="dv">2</span> <span class="sc">==</span> <span class="dv">0</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>         census <span class="sc">&gt;</span> <span class="dv">175000</span>) <span class="co"># focus only on last censii</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(tab_ix) <span class="ot">&lt;-</span> namesShort</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="statistical-analysis" class="level4" data-number="1.2.1.2">
+<h4 data-number="1.2.1.2" class="anchored" data-anchor-id="statistical-analysis"><span class="header-section-number">1.2.1.2</span> Statistical analysis</h4>
+<p>We use a binomial glm and calculate the change in mortality for (one conspecific neighbor) - (no conspecific neighbors). As also described in <span class="citation" data-cites="ref">@ref</span>(sec-mortality-change). To calculate uncertainties, we use a non-parametric boot strap approach, because we want to aknowledge error propagation of each term.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>boot_mort_change <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">B =</span> <span class="dv">1000</span>) {</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  boot_vals <span class="ot">&lt;-</span> <span class="fu">numeric</span>(B)</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(B)) {</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    xb <span class="ot">&lt;-</span> x[<span class="fu">sample</span>(<span class="fu">nrow</span>(x), <span class="at">replace =</span> <span class="cn">TRUE</span>), ]</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    fm <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">glm</span>(mortNextGen <span class="sc">~</span> con, <span class="at">family =</span> <span class="fu">binomial</span>(), <span class="at">data =</span> xb),</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>                   <span class="at">error =</span> <span class="cf">function</span>(e) <span class="fu">return</span>(<span class="cn">NA</span>))</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.na</span>(fm)[<span class="dv">1</span>]) {</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>      boot_vals[i] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>      est <span class="ot">&lt;-</span> <span class="fu">coef</span>(fm)</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>      mort0 <span class="ot">&lt;-</span> <span class="fu">plogis</span>(est[<span class="st">"(Intercept)"</span>])</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>      mort1 <span class="ot">&lt;-</span> <span class="fu">plogis</span>(est[<span class="st">"(Intercept)"</span>] <span class="sc">+</span> est[<span class="st">"con"</span>])</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>      boot_vals[i] <span class="ot">&lt;-</span> mort1 <span class="sc">-</span> mort0</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>  ci <span class="ot">&lt;-</span> <span class="fu">quantile</span>(boot_vals, <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>), <span class="at">na.rm =</span> <span class="cn">TRUE</span>) <span class="co"># allows error propagation</span></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>  point <span class="ot">&lt;-</span> <span class="fu">mean</span>(boot_vals, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">c</span>(<span class="at">mort_change =</span> point, <span class="at">ci_lower =</span> ci[<span class="dv">1</span>], <span class="at">ci_upper =</span> ci[<span class="dv">2</span>]))</span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(<span class="fu">length</span>(tab_ix))</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">clusterExport</span>(cl, <span class="fu">c</span>(<span class="st">"boot_mort_change"</span>, <span class="st">"tab_ix"</span>))</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>boot_results <span class="ot">&lt;-</span> <span class="fu">parLapply</span>(<span class="at">cl =</span> cl, <span class="at">X =</span> tab_ix, <span class="at">fun =</span> <span class="cf">function</span>(x) <span class="fu">boot_mort_change</span>(x, <span class="at">B =</span> <span class="dv">500</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>boot_results_x <span class="ot">&lt;-</span> <span class="fu">do.call</span>(cbind, boot_results) <span class="sc">%&gt;%</span>  <span class="fu">as.data.frame</span>()</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="co"># saveRDS(boot_results_x, "~/cyber_synch/local/summary/boot_results_x.rds")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>boot_results_x <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">paste0</span>(root, <span class="st">"local/summary/boot_results_x.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="visualization" class="level4" data-number="1.2.1.3">
+<h4 data-number="1.2.1.3" class="anchored" data-anchor-id="visualization"><span class="header-section-number">1.2.1.3</span> Visualization</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">13</span>,<span class="dv">4</span>,<span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(boot_results_x)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(boot_results_x[<span class="st">"mort_change"</span>,])</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>ci_lower <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(boot_results_x[<span class="st">"ci_lower"</span>,])</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>ci_upper <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(boot_results_x[<span class="st">"ci_upper"</span>,])</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(<span class="at">y =</span> y, <span class="at">x =</span> x, <span class="at">ylab =</span> <span class="st">"mortChange"</span>, <span class="at">xlab =</span> <span class="st">""</span>, <span class="at">xaxt =</span> <span class="st">"n"</span>, <span class="at">ylim =</span> <span class="fu">range</span>(ci_lower, ci_upper))</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="dv">1</span>, <span class="at">at =</span> x, <span class="at">labels =</span> namesShort, <span class="at">las =</span> <span class="dv">2</span>)</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a><span class="fu">arrows</span>(<span class="at">x0 =</span> x, <span class="at">y0 =</span> ci_lower, </span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">x1 =</span> x, <span class="at">y1 =</span> ci_upper, </span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">angle =</span> <span class="dv">90</span>, <span class="at">code =</span> <span class="dv">3</span>, <span class="at">length =</span> <span class="fl">0.05</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid figure-img" width="1440"></p>
+<figcaption>Mortality change (mortality with 1 conspecific neighbor - mortality without conspecific neighbors) for all individuals. Error bars are Q0.25 and Q0.75 from bootstrapping, while dots are mean values across bootstraps.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Next, we show the effect of the density strength and variance on the mortality change</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>mort_long <span class="ot">&lt;-</span> boot_results_x <span class="sc">%&gt;%</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  tibble<span class="sc">::</span><span class="fu">rownames_to_column</span>(<span class="st">"metric"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span>metric, <span class="at">names_to =</span> <span class="st">"param_combo"</span>, <span class="at">values_to =</span> <span class="st">"value"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> metric, <span class="at">values_from =</span> value)</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>meta_df <span class="ot">&lt;-</span> <span class="fu">lapply</span>(tab_ix, <span class="cf">function</span>(x) {</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">nDD =</span> x<span class="sc">$</span>nDD[<span class="dv">1</span>],</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">pDD =</span> x<span class="sc">$</span>pDD[<span class="dv">1</span>],</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">nDDVar =</span> x<span class="sc">$</span>nDDVar[<span class="dv">1</span>],</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">pDDVar =</span> x<span class="sc">$</span>pDDVar[<span class="dv">1</span>]</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>}) <span class="sc">%&gt;%</span> <span class="fu">bind_rows</span>()</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>mort_long <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(mort_long, meta_df)</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot 1: change in mortality vs NDD/PDD strength</span></span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(mort_long, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(nDD), <span class="at">y =</span> <span class="fu">factor</span>(pDD), <span class="at">fill =</span> mort_change)) <span class="sc">+</span></span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">shape =</span> <span class="dv">21</span>, <span class="at">size =</span> <span class="dv">3</span>, <span class="at">position =</span> <span class="fu">position_jitter</span>(<span class="at">width =</span> <span class="fl">0.3</span>, <span class="at">height =</span> <span class="fl">0.3</span>)) <span class="sc">+</span></span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_c</span>(<span class="at">name =</span> <span class="st">"change in</span><span class="sc">\n</span><span class="st">mortality"</span>) <span class="sc">+</span></span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"NDD Strength"</span>, <span class="at">y =</span> <span class="st">"PDD Strength"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img" width="480"></p>
+<figcaption>A point contains informations of one run with a unique paramter setting. Filtering already occured in the section ‘Data preparation’. The parameter Settings can be read on the axis</figcaption>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot 2: change in mortality vs NDD/PDD variance</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(mort_long, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(nDDVar), <span class="at">y =</span> <span class="fu">factor</span>(pDDVar), <span class="at">fill =</span> mort_change)) <span class="sc">+</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">shape =</span> <span class="dv">21</span>, <span class="at">size =</span> <span class="dv">3</span>, <span class="at">position =</span> <span class="fu">position_jitter</span>(<span class="at">width =</span> <span class="fl">0.3</span>, <span class="at">height =</span> <span class="fl">0.3</span>)) <span class="sc">+</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_viridis_c</span>(<span class="at">name =</span> <span class="st">"change in</span><span class="sc">\n</span><span class="st">mortality"</span>) <span class="sc">+</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"NDD Variance"</span>, <span class="at">y =</span> <span class="st">"PDD Variance"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-24-2.png" class="img-fluid figure-img" width="480"></p>
+<figcaption>A point contains informations of one run with a unique paramter setting. Filtering already occured in the section ‘Data preparation’. The parameter Settings can be read on the axis</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="mortality-change-species-wise-correaltion-between-species-abundance-and-change-in-mortality" class="level3" data-number="1.2.2">
+<h3 data-number="1.2.2" class="anchored" data-anchor-id="mortality-change-species-wise-correaltion-between-species-abundance-and-change-in-mortality"><span class="header-section-number">1.2.2</span> Mortality change species-wise: correaltion between species abundance and change in mortality</h3>
+<p>Literature often finds a correlation between stabilizing strength and the abundance of a species. To test this, we redo the analysis but now species-wise and add abundance and “NperCen”, a correct abundance measure, to the data.</p>
+<section id="data-preparation-1" class="level4" data-number="1.2.2.1">
+<h4 data-number="1.2.2.1" class="anchored" data-anchor-id="data-preparation-1"><span class="header-section-number">1.2.2.1</span> Data preparation</h4>
+<p>Additionally, besides using abundance as metric for the correaltion(abund. , stabilization), we correct for the number of generations, where a species is present. E.g, if specId 1 survives long enough, it will be present in 3 generation <span class="math inline">\(x_{n}, x_{n+1}, x_{n+2}\)</span>. This creates a bias. We correct by dividing the total abundance (throughout the whole time series) by number of generations, the species is present (E.g., <span class="math inline">\(\frac{5041}{3}\)</span>). This new metric is called <em>NbyCen</em>. Finally, we join all information together.</p>
+<p>Also, we filter out very rare species, to increase statistical power.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate number of censii in which species occur</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>NbyCen <span class="ot">&lt;-</span> <span class="fu">lapply</span>(tab_ix, <span class="cf">function</span>(x){</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> x <span class="sc">%&gt;%</span> </span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(specId) <span class="sc">%&gt;%</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(<span class="at">n_census =</span> <span class="fu">n_distinct</span>(census))</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a><span class="co"># add abundances and (abundances / number of censii in which they occur)</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>tab_ixx <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_along</span>(tab_ix), <span class="cf">function</span>(i){</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> tab_ix[[i]] <span class="sc">%&gt;%</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(specId) <span class="sc">%&gt;%</span> </span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">abund =</span> <span class="fu">n</span>()) <span class="sc">%&gt;%</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(NbyCen[[i]], <span class="at">by =</span> <span class="st">"specId"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">NperCen =</span> abund <span class="sc">/</span> n_census) <span class="sc">%&gt;%</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>tab_iS <span class="ot">&lt;-</span> <span class="fu">lapply</span>(tab_ixx, <span class="cf">function</span>(x){</span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> x <span class="sc">%&gt;%</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(abund <span class="sc">&gt;</span> <span class="dv">30</span>)</span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="statistical-analysis-1" class="level4" data-number="1.2.2.2">
+<h4 data-number="1.2.2.2" class="anchored" data-anchor-id="statistical-analysis-1"><span class="header-section-number">1.2.2.2</span> Statistical Analysis</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(<span class="fu">length</span>(tab_iS))</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>mort_changeS <span class="ot">&lt;-</span> <span class="fu">parLapply</span>(cl, tab_iS, <span class="cf">function</span>(x) {</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  i <span class="ot">&lt;-</span> <span class="dv">1</span>  <span class="co"># index</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  len <span class="ot">&lt;-</span> <span class="fu">length</span>(<span class="fu">unique</span>(x<span class="sc">$</span>specId))</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">specId =</span> <span class="fu">rep</span>(<span class="cn">NA</span>, len),</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>                    <span class="at">abund =</span> <span class="fu">rep</span>(<span class="cn">NA</span>, len),</span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>                    <span class="at">NperCen =</span> <span class="fu">rep</span>(<span class="cn">NA</span>, len),</span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>                    <span class="at">mort_change =</span> <span class="fu">rep</span>(<span class="cn">NA</span>, len))</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (sID <span class="cf">in</span> <span class="fu">unique</span>(x<span class="sc">$</span>specId)) {</span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>    fm <span class="ot">&lt;-</span> <span class="fu">glm</span>(<span class="at">formula =</span> <span class="st">"mortNextGen ~ con"</span>,</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">family =</span> <span class="fu">binomial</span>(),</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>              <span class="at">data =</span> x[<span class="fu">which</span>(x<span class="sc">$</span>specId <span class="sc">==</span> sID), ])</span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>    sfm <span class="ot">&lt;-</span> <span class="fu">summary</span>(fm)<span class="sc">$</span>coefficients</span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a>    mort0 <span class="ot">&lt;-</span> <span class="fu">plogis</span>(sfm[<span class="st">"(Intercept)"</span>, <span class="st">"Estimate"</span>])</span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>    mort1 <span class="ot">&lt;-</span> <span class="fu">plogis</span>(sfm[<span class="st">"con"</span>, <span class="st">"Estimate"</span>] <span class="sc">*</span> <span class="dv">1</span> <span class="sc">+</span> sfm[<span class="st">"(Intercept)"</span>, <span class="st">"Estimate"</span>])</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>    res<span class="sc">$</span>mort_change[i] <span class="ot">&lt;-</span> (mort1 <span class="sc">-</span> mort0)</span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a>    res<span class="sc">$</span>abund[i] <span class="ot">&lt;-</span> x<span class="sc">$</span>abund[<span class="fu">which</span>(x<span class="sc">$</span>specId <span class="sc">==</span> sID)][<span class="dv">1</span>]</span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a>    res<span class="sc">$</span>NperCen[i] <span class="ot">&lt;-</span> x<span class="sc">$</span>NperCen[<span class="fu">which</span>(x<span class="sc">$</span>specId <span class="sc">==</span> sID)][<span class="dv">1</span>]</span>
+<span id="cb40-21"><a href="#cb40-21" aria-hidden="true" tabindex="-1"></a>    res<span class="sc">$</span>specId[i] <span class="ot">&lt;-</span> sID</span>
+<span id="cb40-22"><a href="#cb40-22" aria-hidden="true" tabindex="-1"></a>    i <span class="ot">&lt;-</span> i <span class="sc">+</span> <span class="dv">1</span></span>
+<span id="cb40-23"><a href="#cb40-23" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb40-24"><a href="#cb40-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span>
+<span id="cb40-25"><a href="#cb40-25" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb40-26"><a href="#cb40-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-27"><a href="#cb40-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop the cluster</span></span>
+<span id="cb40-28"><a href="#cb40-28" aria-hidden="true" tabindex="-1"></a><span class="fu">stopCluster</span>(cl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co"># add regressionline mc ~ abund</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>mort_changeS <span class="ot">&lt;-</span> <span class="fu">lapply</span>(mort_changeS, <span class="cf">function</span>(x){</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>  fm <span class="ot">&lt;-</span> <span class="fu">lm</span>(mort_change <span class="sc">~</span> <span class="fu">log</span>(abund), <span class="at">data =</span> x)</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>  x<span class="sc">$</span>int <span class="ot">=</span> fm<span class="sc">$</span>coefficients[<span class="dv">1</span>]</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>  x<span class="sc">$</span>slope <span class="ot">=</span> fm<span class="sc">$</span>coefficients[<span class="dv">2</span>]</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(x)</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>mort_changeSx <span class="ot">&lt;-</span> <span class="fu">lapply</span>(mort_changeS, <span class="cf">function</span>(x){</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>  fm <span class="ot">&lt;-</span> <span class="fu">lm</span>(mort_change <span class="sc">~</span> <span class="fu">log</span>(NperCen), <span class="at">data =</span> x)</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>  x<span class="sc">$</span>int <span class="ot">=</span> fm<span class="sc">$</span>coefficients[<span class="dv">1</span>]</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>  x<span class="sc">$</span>slope <span class="ot">=</span> fm<span class="sc">$</span>coefficients[<span class="dv">2</span>]</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(x)</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="visualization-1" class="level4" data-number="1.2.2.3">
+<h4 data-number="1.2.2.3" class="anchored" data-anchor-id="visualization-1"><span class="header-section-number">1.2.2.3</span> Visualization</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>names <span class="ot">&lt;-</span> <span class="fu">names</span>(tab_ix) <span class="sc">%&gt;%</span> stringr<span class="sc">::</span><span class="fu">str_remove</span>(<span class="st">"_fbmr10"</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">7</span>,<span class="dv">7</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">1</span>))</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">sapply</span>(<span class="fu">seq_along</span>(mort_changeS), <span class="cf">function</span>(i){</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> mort_changeS[[i]]</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(<span class="at">x =</span> <span class="fu">log</span>(x<span class="sc">$</span>abund), <span class="at">y =</span> x<span class="sc">$</span>mort_change,</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.1</span>, <span class="fl">0.1</span>), <span class="at">xlab =</span> <span class="st">"abund"</span>, <span class="at">ylab =</span> <span class="st">"mortality</span><span class="sc">\n</span><span class="st">change"</span>,</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">cex =</span> .<span class="dv">3</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">05</span>),</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">main =</span> names[i], <span class="at">cex.main =</span> .<span class="dv">8</span>) </span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"steelblue"</span>)</span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abline</span>(x<span class="sc">$</span>int[<span class="dv">1</span>], x<span class="sc">$</span>slope[<span class="dv">1</span>], <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"orange"</span>)</span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a>}))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid figure-img" width="1440"></p>
+<figcaption>Each point represents one species. Shown is the relation between species abundance and mortality change. The blue line is y = 0, the orange line is a linear regression between mort_change and log(abundance). Notice: for the neutral scenario, there is no relationship. The strongest relationship can be seen in nDD1Var20_pDD1Var5.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>names <span class="ot">&lt;-</span> <span class="fu">names</span>(tab_ix) <span class="sc">%&gt;%</span> stringr<span class="sc">::</span><span class="fu">str_remove</span>(<span class="st">"_fbmr10"</span>)</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">7</span>,<span class="dv">7</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">1</span>))</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">sapply</span>(<span class="fu">seq_along</span>(mort_changeSx), <span class="cf">function</span>(i){</span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> mort_changeSx[[i]]</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">plot</span>(<span class="at">x =</span> <span class="fu">log</span>(x<span class="sc">$</span>NperCen), <span class="at">y =</span> x<span class="sc">$</span>mort_change,</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">ylim =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.1</span>, <span class="fl">0.1</span>), <span class="at">xlab =</span> <span class="st">"abund"</span>, <span class="at">ylab =</span> <span class="st">"mortality</span><span class="sc">\n</span><span class="st">change"</span>,</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">cex =</span> .<span class="dv">3</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,.<span class="dv">05</span>),</span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">main =</span> names[i], <span class="at">cex.main =</span> .<span class="dv">8</span>) </span>
+<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"steelblue"</span>)</span>
+<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abline</span>(x<span class="sc">$</span>int[<span class="dv">1</span>], x<span class="sc">$</span>slope[<span class="dv">1</span>], <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">"orange"</span>)</span>
+<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>}))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid figure-img" width="1440"></p>
+<figcaption>Same plot as previous, but for corrected abundance: abundance is divided by the number of generations the species appears</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="analyzing-species-richness-as-a-measure-of-coexistence" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="analyzing-species-richness-as-a-measure-of-coexistence"><span class="header-section-number">1.3</span> Analyzing Species richness as a measure of coexistence</h2>
+<p>Scientific consensus is that stabilization increases Coexistence. Coexistence can be described by the number of species that coexist within a community.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="co"># if not loaded, load raw runs</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>runs_i <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="fu">paste0</span>(root, <span class="st">"/local/runs/mstr/20250807/runs_i.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">11</span>,<span class="dv">4</span>), <span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">1</span>), <span class="at">oma =</span> <span class="fu">c</span>(<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>))</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>S <span class="ot">&lt;-</span> <span class="fu">getSpecTime</span>(runs_i, <span class="at">ymax =</span> <span class="dv">40</span>, <span class="at">title =</span> <span class="fu">names</span>(runs_i))</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>meanS <span class="ot">&lt;-</span> <span class="fu">sapply</span>(S, <span class="cf">function</span>(x) <span class="fu">mean</span>(x<span class="sc">$</span>spec_rich))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-31-1.png" class="img-fluid figure-img" width="960"></p>
+<figcaption>Species richness through the whole run for different parameter combinations. The ordinate shows the species richness, the abscissa the generations</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mar =</span> <span class="fu">c</span>(<span class="dv">15</span>,<span class="dv">6</span>,<span class="dv">1</span>,<span class="dv">3</span>))</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(meanS, <span class="at">xaxt =</span> <span class="st">"n"</span>, <span class="at">xlab =</span> <span class="st">""</span>, <span class="at">ylab =</span> <span class="st">"species richness"</span>)</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a><span class="fu">axis</span>(<span class="dv">1</span>, <span class="at">at =</span> x, <span class="at">labels =</span> <span class="fu">names</span>(runs_i), <span class="at">las =</span> <span class="dv">2</span>)</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a><span class="fu">segments</span>(<span class="at">x0 =</span> x, <span class="at">y0 =</span> <span class="dv">0</span>, <span class="at">x1 =</span> x, <span class="at">y1 =</span> meanS, <span class="at">lty =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="expKrnl-McCoef_files/figure-html/unnamed-chunk-32-1.png" class="img-fluid figure-img" width="960"></p>
+<figcaption>mean species richness through the whole runs for different parameter settings. Notice that nDD increases species richness</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
