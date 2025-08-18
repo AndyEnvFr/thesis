@@ -1,0 +1,6 @@
+here i want to do a big run with many parameter settings ! It has a whole weekend time to run.
+
+50*50
+strenght 0,.5,1
+var 20, 5, 0.01
+cut 1,3

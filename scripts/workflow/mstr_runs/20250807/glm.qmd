@@ -296,7 +296,7 @@ lapply(tab, function(x){
 ```{r}
 tabS2 <- lapply(tab, function(x){
   res <- x %>%
-    filter(abund > 100,
+    filter(abund > 20,
            )
   return(res)
 })
@@ -304,36 +304,30 @@ tabS2 <- lapply(tab, function(x){
 
 ```{r}
 
-cl <- makeCluster(length(tabS2))
-
-mort_changeS2 <- parLapply(cl, tabS2, function(x) {
-  i <- 1  # index
-  len <- length(unique(x$specId))
-  res <- data.frame(specId = rep(NA, len),
-                    abund = rep(NA, len),
-                    NperCen = rep(NA, len),
-                    mort_change = rep(NA, len),
-                    ndd = rep(NA, len),
-                    nddVar = rep(NA, len),
-                    pdd = rep(NA, len),
-                    pddVar = rep(NA, len)
-                    )
-
-  for (sID in unique(x$specId)) {
-    fm <- summary(glm(formula = "mortNextGen ~ con",
-              family = binomial(),
-              data = x[which(x$specId == sID), ]))
-    sfm <- fm$coefficients
-    mort0 <- plogis(sfm["(Intercept)", "Estimate"])
-    mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
-    res$mort_change[i] <- (mort1 - mort0)
-    res$abund[i] <- x$abund[which(x$specId == sID)][1]
-    res$specId[i] <- sID
-    res$NperCen[i] <- x$NperCen[which(x$specId == sID)][1]
-    i <- i + 1
-  }
-  return(res)
-})
+    cl <- makeCluster(length(tabS2))
+    
+    mort_changeS2 <- parLapply(cl, tabS2, function(x) {
+      i <- 1  # index
+      len <- length(unique(x$specId))
+      res <- data.frame(specId = rep(NA, len),
+                        abund = rep(NA, len),
+                        mort_change = rep(NA, len)
+                        )
+    
+      for (sID in unique(x$specId)) {
+        fm <- summary(glm(formula = "mortNextGen ~ con",
+                  family = binomial(),
+                  data = x[which(x$specId == sID), ]))
+        sfm <- fm$coefficients
+        mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+        mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+        res$mort_change[i] <- (mort1 - mort0)
+        res$abund[i] <- x$abund[which(x$specId == sID)][1]
+        res$specId[i] <- sID
+        i <- i + 1
+      }
+      return(res)
+    })
 
 # Stop the cluster
 stopCluster(cl)
@@ -565,10 +559,6 @@ for(group_name in names(mc_groups)) {
 }
 ```
 
-
-
-
-
 # Analysis with meta for: account for std. err. in regression
 
 ```{r}
@@ -606,7 +596,6 @@ mcS_err <- parLapply(cl, tabS2, function(x) {
     res[[i]] <- list(
       specId = sID,
       abund = dat$abund[1],
-      NperCen = dat$NperCen[1],
       mort_change = mort1 - mort0,
       coef = coef(mod)[c(1,2)],
       vcov = vc

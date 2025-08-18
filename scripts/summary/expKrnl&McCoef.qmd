@@ -427,7 +427,7 @@ abline( h = 1, lty = 2, col = "grey", lwd = 2)
 
 Notice that if both Lambda's (for nDD and pDD) are the same, the effects is neutralized.
 
-## Quantification of stabilazation: Mortality change for + 1 conspecific individual{#sec-mortality-change}
+## Quantification of stabilazation: Mortality change for + 1 conspecific individual {#sec-mortality-change}
 
 According to Hülsmann et al. 2024 I quantify the effect of stab CDD by - fitting a binomial model - calculate probability of mortality without conspecific neighbors (= mort0) - calculate probability of mortality with *one* conspecific neighbor (= mort1) - calcualte change in probability (mortChange = mort1 - mort0)
 
@@ -436,6 +436,7 @@ This approach has one problem. For a greater distance kernel, the total DD effec
 This approach is done twice. First, the mort_change through all individuals is measured. Second, the species-wise mort_change is measured and checked, if it correlates with the species abundance.
 
 ### Mortality change through all individuals
+
 #### Data preparation
 
 *Fitness base mortality ratio = 10*.
@@ -475,6 +476,7 @@ tab_i <- parLapply(cl = cl, X = runs_i, fun = function(x) getMatToTab(x, detaile
 ```
 
 We only keep important parameters in the naming
+
 ```{r}
 tab_i <- readRDS(paste0(root, "local/runs/mstr/20250807/tab_i.rds"))
 ```
@@ -502,7 +504,9 @@ names(tab_ix) <- namesShort
 ```
 
 #### Statistical analysis
+
 We use a binomial glm and calculate the change in mortality for (one conspecific neighbor) - (no conspecific neighbors). As also described in @ref(sec-mortality-change). To calculate uncertainties, we use a non-parametric boot strap approach, because we want to aknowledge error propagation of each term.
+
 ```{r}
 #| eval: false
 
@@ -551,8 +555,8 @@ boot_results_x <- do.call(cbind, boot_results) %>%  as.data.frame()
 boot_results_x <- readRDS(paste0(root, "local/summary/boot_results_x.rds"))
 ```
 
-
 #### Visualization
+
 ```{r}
 #| fig-width: 15
 #| fig-height: 5
@@ -574,7 +578,9 @@ arrows(x0 = x, y0 = ci_lower,
 
 
 ```
+
 Next, we show the effect of the density strength and variance on the mortality change
+
 ```{r}
 #| fig-width: 5
 #| fig-height: 5
@@ -612,12 +618,15 @@ ggplot(mort_long, aes(x = factor(nDDVar), y = factor(pDDVar), fill = mort_change
 ```
 
 ### Mortality change species-wise: correaltion between species abundance and change in mortality
+
 Literature often finds a correlation between stabilizing strength and the abundance of a species. To test this, we redo the analysis but now species-wise and add abundance and "NperCen", a correct abundance measure, to the data.
 
 #### Data preparation
+
 Additionally, besides using abundance as metric for the correaltion(abund. , stabilization), we correct for the number of generations, where a species is present. E.g, if specId 1 survives long enough, it will be present in 3 generation $x_{n}, x_{n+1}, x_{n+2}$. This creates a bias. We correct by dividing the total abundance (throughout the whole time series) by number of generations, the species is present (E.g., $\frac{5041}{3}$). This new metric is called *NbyCen*. Finally, we join all information together.
 
 Also, we filter out very rare species, to increase statistical power.
+
 ```{r}
 # calculate number of censii in which species occur
 NbyCen <- lapply(tab_ix, function(x){
@@ -646,6 +655,7 @@ tab_iS <- lapply(tab_ixx, function(x){
 ```
 
 #### Statistical Analysis
+
 ```{r}
 
 cl <- makeCluster(length(tab_iS))
@@ -757,7 +767,6 @@ S <- getSpecTime(runs_i, ymax = 40, title = names(runs_i))
 meanS <- sapply(S, function(x) mean(x$spec_rich))
 ```
 
-
 ```{r}
 #| fig-width: 10
 #| fig-height: 5
@@ -770,7 +779,3 @@ axis(1, at = x, labels = names(runs_i), las = 2)
 segments(x0 = x, y0 = 0, x1 = x, y1 = meanS, lty = 2)
 
 ```
-
-
-
-

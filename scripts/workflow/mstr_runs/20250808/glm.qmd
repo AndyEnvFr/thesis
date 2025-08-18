@@ -1,0 +1,366 @@
+---
+title: "PhyloSim Changes"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tidyverse)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+We only keep important (varying) parameters in the naming. Fixed ones are exckuded.
+```{r}
+# tab <- readRDS(paste0(root, "local/runs/mstr/20250808/tab.rds"))
+```
+
+```{r}
+namesShort <- names(tab) %>%
+  stringr::str_remove("_disp1_sr2_fbmr3000_faoM") %>% 
+  stringr::str_replace_all("0.5", ".5") %>% 
+  stringr::str_replace_all("0.01", ".01") %>% 
+  stringr::str_replace_all("Var", "-V") %>% 
+  stringr::str_replace_all("Cut", "-C") %>% 
+  stringr::str_replace_all("ndd", "_N") %>% 
+  stringr::str_replace_all("pdd", "P")
+
+names(runs)
+```
+
+Now, we delete every second generation. Remember, we had to calculate the death in the consequent generation. After doing so, the generation x + 1 is no longer needed and is discarded.
+
+```{r}
+# keep only first timespot in census
+tabX <- lapply(tab, function(x){
+  res <- x %>%
+  filter(census %% 2 == 0,
+         census > 150000) # focus only on last censii
+  return(res)
+})
+
+names(tabX) <- namesShort
+```
+
+#### Statistical analysis
+
+We use a binomial glm and calculate the change in mortality for (one conspecific neighbor) - (no conspecific neighbors). As also described in @ref(sec-mortality-change). To calculate uncertainties, we use a non-parametric boot strap approach, because we want to aknowledge error propagation of each term.
+
+The BS is extremely important, because some highly influential points can give a wrong relationship between the variables (e.g., abundance and mortChange)
+```{r}
+#| eval: false
+
+boot_mort_change <- function(x, B = 1000) {
+  boot_vals <- numeric(B)
+  
+  for (i in seq_len(B)) {
+    xb <- x[sample(nrow(x), replace = TRUE), ]
+    fm <- tryCatch(glm(mortNextGen ~ con, family = binomial(), data = xb),
+                   error = function(e) return(NA))
+    if (is.na(fm)[1]) {
+      boot_vals[i] <- NA
+    } else {
+      est <- coef(fm)
+      mort0 <- plogis(est["(Intercept)"])
+      mort1 <- plogis(est["(Intercept)"] + est["con"])
+      boot_vals[i] <- mort1 - mort0
+    }
+  }
+  
+  ci <- quantile(boot_vals, c(0.025, 0.975), na.rm = TRUE) # allows error propagation
+  point <- mean(boot_vals, na.rm = TRUE)
+  
+  return(c(mort_change = point, ci_lower = ci[1], ci_upper = ci[2]))
+}
+
+```
+
+```{r}
+#| eval: false
+
+# cross platform 
+cl <- makeCluster(46)
+clusterExport(cl, c("boot_mort_change", "tabX"))
+BS <- parLapply(cl = cl, X = tabX, fun = function(x) boot_mort_change(x, B = 100))
+```
+
+
+
+```{r}
+#| eval: false
+
+BSx <- do.call(cbind, BS) %>%  as.data.frame()
+
+saveRDS(BSx, paste0(root, "/local/runs/mstr/20250808/BS.rds"))
+```
+
+```{r}
+BSx <- readRDS(paste0(root, "/local/runs/mstr/20250808/BS.rds"))
+```
+
+#### Visualization
+```{r}
+#| fig-width: 50
+#| fig-height: 5
+#| fig-cap: "Mortality change (mortality with 1 conspecific neighbor - mortality without conspecific neighbors) for all individuals. Error bars are Q0.25 and Q0.75 from bootstrapping, while dots are mean values across bootstraps."
+
+par(mar = c(16,4,1,1))
+
+x <- 1:ncol(BSx)
+y <- as.numeric(BSx["mort_change",])
+ci_lower <- as.numeric(BSx["ci_lower",])
+ci_upper <- as.numeric(BSx["ci_upper",])
+
+plot(y = y, x = x, ylab = "mortChange", xlab = "", xaxt = "n", ylim = range(ci_lower, ci_upper))
+axis(1, at = x, labels = namesShort, las = 2)
+
+arrows(x0 = x, y0 = ci_lower, 
+       x1 = x, y1 = ci_upper, 
+       angle = 90, code = 3, length = 0.05)
+
+segments(x0 = x, y0 = -.5, x1 = x, y1 = y, lty = 2)
+
+abline(h = 0, lty = 2, lwd = .3)
+
+
+
+```
+There is a bias in previous plots and statistics: The greater the dispersal kernel (= densityCut or DC), the more diluted is the effect per one additional neighbor, because the effect is spread among multiple nieghbors.
+Therefore, we can only assess the influence of each parameter to mortChange in runs where DC == 1:
+
+```{r}
+#| fig-width: 15
+#| fig-height: 5
+#| fig-cap: "Mortality change (mortality with 1 conspecific neighbor - mortality without conspecific neighbors) for all individuals. Error bars are Q0.25 and Q0.75 from bootstrapping, while dots are mean values across bootstraps. Only DC == 1"
+
+idx <- names(BSx) %>% stringr::str_which(negate = T, "C3")
+BSxx <- BSx[,idx]
+par(mar = c(16,4,1,1))
+
+x <- 1:ncol(BSxx)
+y <- as.numeric(BSxx["mort_change",])
+ci_lower <- as.numeric(BSxx["ci_lower",])
+ci_upper <- as.numeric(BSxx["ci_upper",])
+
+plot(y = y, x = x, ylab = "mortChange", xlab = "", xaxt = "n", ylim = range(ci_lower, ci_upper))
+axis(1, at = x, labels = namesShort[idx], las = 2)
+
+arrows(x0 = x, y0 = ci_lower, 
+       x1 = x, y1 = ci_upper, 
+       angle = 90, code = 3, length = 0.05)
+
+segments(x0 = x, y0 = -.5, x1 = x, y1 = y, lty = 2)
+
+abline(h = 0, lty = 2, lwd = .3)
+
+```
+
+Next, we show the effect of the density strength and variance on the mortality change
+
+```{r}
+#| fig-width: 5
+#| fig-height: 5
+#| fig-cap: ["A point contains informations of one run with a unique paramter setting. Filtering already occured in the section 'Data preparation'. The parameter Settings can be read on the axis","A point contains informations of one run with a unique paramter setting. Filtering already occured in the section 'Data preparation'. The parameter Settings can be read on the axis"]
+
+mort_long <- BSxx[,-(1:3)] %>% # filter out duplicate neutral scenarios
+  tibble::rownames_to_column("metric") %>%
+  pivot_longer(cols = -metric, names_to = "param_combo", values_to = "value") %>%
+  pivot_wider(names_from = metric, values_from = value)
+
+meta_df <- lapply(tabX[idx], function(x) {
+  data.frame(
+    nDD = x$nDD[1],
+    pDD = x$pDD[1],
+    nDDVar = x$nDDVar[1],
+    pDDVar = x$pDDVar[1]
+  )
+}) %>% bind_rows()
+
+mort_long <- bind_cols(mort_long, meta_df[-(1:3),])
+
+# Plot 1: change in mortality vs NDD/PDD strength
+ggplot(mort_long, aes(x = factor(nDD), y = factor(pDD), fill = mort_change)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "change in\nmortality") +
+  theme_minimal() +
+  labs(x = "NDD Strength", y = "PDD Strength")
+
+# Plot 2: change in mortality vs NDD/PDD variance
+ggplot(mort_long, aes(x = factor(nDDVar), y = factor(pDDVar), fill = mort_change)) +
+  geom_point(shape = 21, size = 3, position = position_jitter(width = 0.3, height = 0.3)) +
+  scale_fill_viridis_c(name = "change in\nmortality") +
+  theme_minimal() +
+  labs(x = "NDD Variance", y = "PDD Variance")
+```
+
+### Mortality change species-wise: correaltion between species abundance and change in mortality
+
+Literature often finds a correlation between stabilizing strength and the abundance of a species. To test this, we redo the analysis but now species-wise and add abundance and "NperCen", a correct abundance measure, to the data.
+
+#### Data preparation
+
+Additionally, besides using abundance as metric for the correaltion(abund. , stabilization), we correct for the number of generations, where a species is present. E.g, if specId 1 survives long enough, it will be present in 3 generation $x_{n}, x_{n+1}, x_{n+2}$. This creates a bias. We correct by dividing the total abundance (throughout the whole time series) by number of generations, the species is present (E.g., $\frac{5041}{3}$). This new metric is called *NbyCen*. Finally, we join all information together.
+
+Also, we filter out very rare species, to increase statistical power.
+```{r}
+tabXidx <- tabX[idx]
+```
+
+```{r}
+# calculate number of censii in which species occur
+NbyCen <- lapply(tabXidx, function(x){
+  res <- x %>% 
+    group_by(specId) %>%
+    summarise(n_census = n_distinct(census))
+  return(res)
+})
+
+# add abundances and (abundances / number of censii in which they occur)
+tabXX <- lapply(seq_along(tabXidx), function(i){
+  res <- tabXidx[[i]] %>%
+    group_by(specId) %>% 
+    mutate(abund = n()) %>%
+    left_join(NbyCen[[i]], by = "specId") %>%
+    mutate(NperCen = abund / n_census) %>%
+    ungroup()
+  return(res)
+})
+
+tabS <- lapply(tabXX, function(x){
+  res <- x %>%
+    filter(abund > 30)
+  return(res)
+})
+```
+
+#### Statistical Analysis
+```{r}
+
+cl <- makeCluster(46)
+
+mort_changeS <- parLapply(cl, tabS, function(x) {
+  i <- 1  # index
+  len <- length(unique(x$specId))
+  res <- data.frame(specId = rep(NA, len),
+                    abund = rep(NA, len),
+                    NperCen = rep(NA, len),
+                    mort_change = rep(NA, len))
+
+  for (sID in unique(x$specId)) {
+    fm <- glm(formula = "mortNextGen ~ con",
+              family = binomial(),
+              data = x[which(x$specId == sID), ])
+    sfm <- summary(fm)$coefficients
+    mort0 <- plogis(sfm["(Intercept)", "Estimate"])
+    mort1 <- plogis(sfm["con", "Estimate"] * 1 + sfm["(Intercept)", "Estimate"])
+    res$mort_change[i] <- (mort1 - mort0)
+    res$abund[i] <- x$abund[which(x$specId == sID)][1]
+    res$NperCen[i] <- x$NperCen[which(x$specId == sID)][1]
+    res$specId[i] <- sID
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+```{r}
+# add regressionline mc ~ abund
+mort_changeS <- lapply(mort_changeS, function(x){
+  fm <- lm(mort_change ~ log(abund), data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+
+mort_changeSx <- lapply(mort_changeS, function(x){
+  fm <- lm(mort_change ~ log(NperCen), data = x)
+  x$int = fm$coefficients[1]
+  x$slope = fm$coefficients[2]
+  return(x)
+})
+```
+
+#### Visualization
+
+```{r}
+#| fig-width: 15
+#| fig-height: 15
+#| fig-cap: "Each point represents one species. Shown is the relation between species abundance and mortality change. The blue line is y = 0, the orange line is a linear regression between mort_change and log(abundance). Notice: for the neutral scenario, there is no relationship. The strongest relationship can be seen in nDD1Var20_pDD1Var5."
+
+
+names <- names(tabXidx) %>% stringr::str_remove("_fbmr10")
+
+par(mfrow = c(7,7), mar = c(1,3,3,1))
+invisible(sapply(seq_along(mort_changeS), function(i){
+  x <- mort_changeS[[i]]
+  plot(x = log(x$abund), y = x$mort_change,
+       ylim = c(-0.1, 0.1), xlab = "abund", ylab = "mortality\nchange",
+       cex = .3, col = rgb(0,0,0,.05),
+       main = names[i], cex.main = .8) 
+  abline(h = 0, col = "steelblue")
+  abline(x$int[1], x$slope[1], lty = 2, col = "orange")
+}))
+```
+
+```{r}
+#| fig-width: 15
+#| fig-height: 15
+#| fig-cap: "Same plot as previous, but for corrected abundance: abundance is divided by the number of generations the species appears"
+
+
+# names <- names(tabXidx) %>% stringr::str_remove("_fbmr10")
+# 
+# par(mfrow = c(7,7), mar = c(1,3,3,1))
+# invisible(sapply(seq_along(mort_changeSx), function(i){
+#   x <- mort_changeSx[[i]]
+#   plot(x = log(x$NperCen), y = x$mort_change,
+#        ylim = c(-0.1, 0.1), xlab = "abund", ylab = "mortality\nchange",
+#        cex = .3, col = rgb(0,0,0,.05),
+#        main = names[i], cex.main = .8) 
+#   abline(h = 0, col = "steelblue")
+#   abline(x$int[1], x$slope[1], lty = 2, col = "orange")
+# }))
+```
+
+## Analyzing Species richness as a measure of coexistence
+
+Scientific consensus is that stabilization increases Coexistence. Coexistence can be described by the number of species that coexist within a community.
+
+```{r}
+# if not loaded, load raw runs
+runs_i <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_ii.rds"))
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 15
+#| fig-cap: "Species richness through the whole run for different parameter combinations. The ordinate shows the species richness, the abscissa the generations"
+
+par(mfrow = c(11,4), mar = c(1,3,3,1), oma = c(5,5,5,5))
+S <- getSpecTime(runs_i, ymax = 40, title = names(runs_i))
+
+meanS <- sapply(S, function(x) mean(x$spec_rich))
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+#| fig-cap: "mean species richness through the whole runs for different parameter settings. Notice that nDD increases species richness"
+
+par(mar = c(15,6,1,3))
+plot(meanS, xaxt = "n", xlab = "", ylab = "species richness")
+axis(1, at = x, labels = names(runs_i), las = 2)
+
+segments(x0 = x, y0 = 0, x1 = x, y1 = meanS, lty = 2)
+
+```

@@ -1,7 +1,7 @@
 death = 0
 landscape = 2500
 event = 0
-mortality_strength = 10
+mortality_strength = 10000
 base_fitness = 1
 
 print("calculating death loop")
@@ -27,7 +27,7 @@ cat("\nnDD event: ", event)
 death = 0
 landscape = 2500
 event = 0
-mortality_strength = 10
+mortality_strength = 10000
 base_fitness = 1
 # pdd scenario
 while (death < landscape) {
