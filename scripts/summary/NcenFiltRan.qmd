@@ -1,0 +1,690 @@
+---
+title: "PhyloSim Changes"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tidyverse)
+library(lattice)
+library(ggplot2)
+library(metafor)
+library(MASS)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+**Here, I reduced the base mortality and the fitness independent mortality. This increases the effect of DD on mort change**
+
+**Also, I dont do a species wise model for the whole generation, but I do a model for group_by(species,census). I.e., if a species exists in two censii, i do two models and check correaltion between MC and abundance for two different abundances**
+
+```{r}
+tab_iii <- readRDS(paste0(root, "local/runs/mstr/20250807/tab_iii.rds"))
+tabRan <- c(tab_iii, tab_iii[1], tab_iii[1], tab_iii[1])
+
+namesShort <- c(names(tab_iii), "ranCon", "ranMort", "ranConMort") %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_replace("pdd", "P") %>% 
+  stringr::str_replace("ndd", "N") %>% 
+  stringr::str_replace_all("Var", "-L")
+
+names(tabRan) <- namesShort
+```
+```{r}
+tabRan$ranCon$con <- sample(x = 0:4, size = nrow(tabRan$ranCon), replace = TRUE)
+tabRan$ranMort$mortNextGen <- sample(c(FALSE, TRUE), size = nrow(tabRan$ranMort), replace = TRUE)
+tabRan$ranConMort$mortNextGen <- sample(c(FALSE, TRUE), size = nrow(tabRan$ranConMort), replace = TRUE)
+tabRan$ranConMort$con <- sample(x = 0:4, size = nrow(tabRan$ranConMort), replace = TRUE)
+```
+
+
+Now, we delete every second generation. Remember, we had to calculate the death in the consequent generation. After doing so, the generation x + 1 is no longer needed and is discarded.
+
+### Metafor analysis: correcting for uncertainty
+
+```{r}
+#| eval: false
+
+tabRanX <- lapply(tabRan, function(x){
+  res <- x %>%
+  filter(census %% 2 == 0,
+         census > 50000) # this must be checked against the SR over time plots: when is eq. reached? The more data the better, because it narrows the ci in the final plot
+  return(res)
+})
+
+```
+
+```{r}
+#| eval: false
+
+# add abundances and (abundances / number of censii in which they occur)
+tabRanXX <- lapply(seq_along(tabRanX), function(i){
+  res <- tabRanX[[i]] %>%
+    rename(abundCen = abund) %>% 
+    group_by(specId) %>% 
+    mutate(abundTot = n()) %>%
+    ungroup()
+  return(res)
+})
+
+tabRanS <- lapply(tabRanXX, function(x){
+  res <- x %>%
+    filter(abundCen > 100) %>% # 30
+    mutate(specIdCen = paste0(specId, "_", census)) # loop through this variable for species wise glm. For each combination of specId and Cen a sperate model is done.
+  return(res)
+})
+```
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(tabRanS))
+
+mcS_err <- parLapply(cl, tabRanS, function(x) {
+  specIDs <- unique(x$specIdCen)
+  res <- vector("list", length(specIDs))
+  
+  i <- 1
+  for (sID in specIDs) {
+    dat <- x[x$specIdCen == sID, ]
+    mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
+    sfm <- summary(mod)$coefficients
+    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    
+    res[[i]] <- list(
+      specId = sID,
+      abundTot = dat$abundTot[1],
+      abundCen = dat$abundCen[1],
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      vcov = vc
+    )
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+## compute variance of the marginal effect through a "posterior" simulation
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(mcS_err))
+mcS_err_sim <- parLapply(cl, mcS_err, function(x){
+  lapply(x, function(y){
+    sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
+    mort0 <- plogis(sim[, 1])
+    mort1 <- plogis(sim[, 1] + sim[, 2])
+    mort_diff <- mort1 - mort0
+    
+    return(data.frame(
+      abundTot = y$abundTot,
+      abundCen = y$abundCen,
+      specId = y$specId,
+      mean = mean(mort_diff),
+      se = sd(mort_diff),
+      ci_low = quantile(mort_diff, 0.025),
+      ci_high = quantile(mort_diff, 0.975)
+    ))
+  })
+})
+# Stop the cluster
+stopCluster(cl)
+```
+
+## unlist inner lists and add log abund
+
+```{r}
+#| eval: false
+
+m4 <- lapply(mcS_err_sim, function(group) {
+  do.call(rbind, group)
+})
+
+m4 <- lapply(m4, function(group) {
+  row.names(group) <- NULL
+  group <- group %>% 
+    mutate(log_Ncen = log(abundCen),
+           log_Ntot = log(abundTot))
+  return(group)
+})
+```
+
+## fitting model
+
+```{r}
+#| eval: false
+
+dat_meta <- lapply(m4, function(x) {
+  escalc(measure = "GEN", yi = mean, sei = se, slab = specId, data = x)
+})
+```
+
+```{r}
+#| eval: false
+
+# Detect available cores and create a cluster
+cl <- makeCluster(length(dat_meta))
+
+# Export needed objects and packages to the workers
+clusterExport(cl, varlist = c("dat_meta"), envir = environment())
+
+# Run in parallel
+metamodTot <- parLapply(cl, dat_meta, function(x) {
+  metafor::rma(
+    yi = yi,
+    vi = vi,
+   mods = ~ log_Ntot,
+    # mods = ~ log_NCen,
+    method = "REML",
+    data = x
+  )
+})
+
+# Stop cluster
+stopCluster(cl)
+
+names(metamodTot) <- namesShort
+```
+
+```{r}
+# saveRDS(metamodTot, paste0(root, "local/runs/mstr/20250807/metamodiiiTot250.rds"))
+# saveRDS(dat_meta, paste0(root, "local/runs/mstr/20250807/dat_metaiiiSpecIdCen250.rds"))
+# metamod <- readRDS(paste0(root, "local/runs/mstr/20250807/metamodiii.rds"))
+# dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaiii.rds"))
+```
+
+## predictions
+
+### log_NTot
+
+```{r}
+
+pred <- lapply(dat_meta, function(x){
+  expand_grid(log_Ntot = seq(min(x$log_Ntot, na.rm = TRUE),
+                          max(x$log_Ntot, na.rm = TRUE),
+                          length.out = 50))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_Ntot)
+  return(x)
+})
+# Bind predictions to dataframe
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamodTot[[i]]
+  
+  return(cbind(x, predict(object = y, newmods = x$log_Ntot)))
+})
+
+names(pred) <- namesShort
+```
+
+```{r}
+
+# Function to extract parameters from names
+extract_params <- function(name) {
+  # Handle special cases for ranCon and ranMort
+  if (name %in% c("ranCon", "ranMort", "ranConMort")) {
+    return(data.frame(P = NA, PL = NA, N = NA, NL = NA))
+  }
+  
+  # Extract P, N, and L values from names like "P0.5-L20_N0.5-L5"
+  p_part <- sub("_.*", "", name)  # Get part before underscore
+  n_part <- sub(".*_", "", name)  # Get part after underscore
+  
+  # Extract P and PL values
+  p_val <- as.numeric(sub("-.*", "", sub("P", "", p_part)))
+  pl_val <- as.numeric(sub(".*-L", "", p_part))
+  
+  # Extract N and NL values  
+  n_val <- as.numeric(sub("-.*", "", sub("N", "", n_part)))
+  nl_val <- as.numeric(sub(".*-L", "", n_part))
+  
+  return(data.frame(P = p_val, PL = pl_val, N = n_val, NL = nl_val))
+}
+
+# Convert pred list to dataframe with parameters
+pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
+  df <- pred[[i]]
+  params <- extract_params(names(pred)[i])
+  df$scenario <- names(pred)[i]
+  df$P <- params$P
+  df$PL <- params$PL
+  df$N <- params$N
+  df$NL <- params$NL
+  return(df)
+}))
+
+# Assume predict() returns fitted values and confidence intervals
+# Adjust column names based on your actual metafor predict output
+colnames(pred_df)[colnames(pred_df) == "pred"] <- "fitted"
+if("ci.lb" %in% colnames(pred_df)) {
+  pred_df$ci_lower <- pred_df$ci.lb
+  pred_df$ci_upper <- pred_df$ci.ub
+} else {
+  # If no CI columns, create dummy ones
+  pred_df$ci_lower <- pred_df$fitted - 0.1
+  pred_df$ci_upper <- pred_df$fitted + 0.1
+}
+
+# Create the null reference (P0, N0)
+null_data <- pred_df[pred_df$P == 0 & pred_df$N == 0, ]
+
+# Function to create plots with null reference
+create_plot_with_null <- function(data, title) {
+  ggplot() +
+    # Add null reference line
+    geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+                alpha = 0.2, fill = "black") +
+    geom_line(data = null_data, aes(x = abund, y = fitted), 
+              color = "black", linetype = "dashed", size = 1) +
+    # Add treatment lines
+    geom_ribbon(data = data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                fill = factor(paste0("L", PL))), alpha = 0.3) +
+    geom_line(data = data, aes(x = abund, y = fitted, color = factor(paste0("L", PL))), 
+              size = 1) +
+    scale_x_log10() +
+    labs(title = title, x = "Abundance Tot", y = "Mortality Change",
+         color = "P Lambda", fill = "P Lambda") +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+}
+
+# 1. Panel with N0 and P0.5 (multiple L values for P)
+p1_data <- pred_df[pred_df$N == 0 & pred_df$P == 0.5, ]
+p1 <- create_plot_with_null(p1_data, "N0, P0.5 - Varying P Lambda")
+
+# 2. Panel with N0 and P1 (multiple L values for P)
+p2_data <- pred_df[pred_df$N == 0 & pred_df$P == 1, ]
+p2 <- create_plot_with_null(p2_data, "N0, P1 - Varying P Lambda")
+
+# 3. Panel with P0 and N0.5 (multiple L values for N)
+p3_data <- pred_df[pred_df$P == 0 & pred_df$N == 0.5, ]
+p3 <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1) +
+  geom_ribbon(data = p3_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = factor(paste0("L", NL))), alpha = 0.3) +
+  geom_line(data = p3_data, aes(x = abund, y = fitted, color = factor(paste0("L", NL))), 
+            size = 1) +
+  scale_x_log10() +
+  labs(title = "P0, N0.5 - Varying N Lambda", x = "Abundance Tot", y = "Mortality change",
+       color = "N Lambda", fill = "N Lambda") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 4. Panel with P0 and N1 (multiple L values for N)
+p4_data <- pred_df[pred_df$P == 0 & pred_df$N == 1, ]
+p4 <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1) +
+  geom_ribbon(data = p4_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = factor(paste0("L", NL))), alpha = 0.3) +
+  geom_line(data = p4_data, aes(x = abund, y = fitted, color = factor(paste0("L", NL))), 
+            size = 1) +
+  scale_x_log10() +
+  labs(title = "P0, N1 - Varying N Lambda", x = "Abundance Tot", y = "Mortality change",
+       color = "N Lambda", fill = "N Lambda") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 5. Panel with N0.5 and P0.5 (4 lines: null + fixed P0.5 with varying NL)
+p5_data <- pred_df[pred_df$N == 0.5 & pred_df$P == 0.5, ]
+p5 <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1.2) +
+  geom_ribbon(data = p5_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = paste0("PL", PL, "_NL", NL)), alpha = 0.3) +
+  geom_line(data = p5_data, aes(x = abund, y = fitted, 
+                               color = paste0("PL", PL, "_NL", NL)), size = 1) +
+  scale_x_log10() +
+  labs(title = "N0.5, P0.5 - Varying N and P Lambda", 
+       x = "Abundance Tot", y = "Mortality change",
+       color = "Treatment", fill = "Treatment") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 6. Panel with N1 and P1 (4 lines: null + fixed P1 with varying NL)
+p6_data <- pred_df[pred_df$N == 1 & pred_df$P == 1, ]
+p6 <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1.2) +
+  geom_ribbon(data = p6_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = paste0("PL", PL, "_NL", NL)), alpha = 0.3) +
+  geom_line(data = p6_data, aes(x = abund, y = fitted, 
+                               color = paste0("PL", PL, "_NL", NL)), size = 1) +
+  scale_x_log10() +
+  labs(title = "N1, P1 - Varying N and P Lambda", 
+       x = "Abundance Tot", y = "Mortality change",
+       color = "Treatment", fill = "Treatment") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 7. Panel with null and the two new scenarios (ranCon and ranMort)
+p7_data <- pred_df[pred_df$scenario %in% c("ranCon", "ranConMort", "ranMort"), ]
+p7 <- ggplot() +
+  # Add null reference line
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1.2) +
+  # Add new scenario lines
+  geom_ribbon(data = p7_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = scenario), alpha = 0.3) +
+  geom_line(data = p7_data, aes(x = abund, y = fitted, color = scenario), size = 1) +
+  scale_x_log10() +
+  labs(title = "Random Control and Random Mortality Scenarios", 
+       x = "Abundance Tot", y = "Mortality change",
+       color = "Scenario", fill = "Scenario") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 1) Global ranges
+x_range <- range(pred_df$abund[pred_df$abund > 0 & is.finite(pred_df$abund)], na.rm = TRUE)
+y_range <- range(c(pred_df$ci_lower, pred_df$ci_upper), na.rm = TRUE)
+
+common_scales <- list(
+  scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)),
+  coord_cartesian(ylim = y_range)  # keeps data, just clips view
+)
+
+# 2) Apply to all plots
+plots <- list(p1, p2, p3, p4, p5, p6, p7)
+plots <- lapply(plots, function(p) p + common_scales)
+p1 <- plots[[1]]; p2 <- plots[[2]]; p3 <- plots[[3]]
+p4 <- plots[[4]]; p5 <- plots[[5]]; p6 <- plots[[6]]; p7 <- plots[[7]]
+
+print(p1)
+print(p2)
+print(p3)
+print(p4)
+print(p5)
+print(p6)
+print(p7)
+```
+
+### log_NperCen
+
+```{r}
+#| eval: false
+
+# Detect available cores and create a cluster
+cl <- makeCluster(length(dat_meta))
+
+# Export needed objects and packages to the workers
+clusterExport(cl, varlist = c("dat_meta"), envir = environment())
+
+# Run in parallel
+metamodCen <- parLapply(cl, dat_meta, function(x) {
+  metafor::rma(
+    yi = yi,
+    vi = vi,
+   # mods = ~ log_Ntot,
+    mods = ~ log_Ncen,
+    method = "REML",
+    data = x
+  )
+})
+
+# Stop cluster
+stopCluster(cl)
+
+names(metamodCen) <- namesShort
+```
+
+```{r}
+# saveRDS(metamodCen, paste0(root, "local/runs/mstr/20250807/metamodiiiCen250.rds"))
+# metamod <- readRDS(paste0(root, "local/runs/mstr/20250807/metamodiii.rds"))
+# dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaiii.rds"))
+```
+
+## predictions
+
+```{r}
+
+pred <- lapply(dat_meta, function(x){
+  expand_grid(log_Ncen = seq(min(x$log_Ncen, na.rm = TRUE),
+                          max(x$log_Ncen, na.rm = TRUE),
+                          length.out = 50))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_Ncen)
+  return(x)
+})
+# Bind predictions to dataframe
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamodCen[[i]]
+  
+  return(cbind(x, predict(object = y, newmods = x$log_Ncen)))
+})
+
+names(pred) <- namesShort
+```
+
+```{r}
+
+# Function to extract parameters from names
+extract_params <- function(name) {
+  # Handle special cases for ranCon and ranMort
+  if (name %in% c("ranCon", "ranMort", "ranConMort")) {
+    return(data.frame(P = NA, PL = NA, N = NA, NL = NA))
+  }
+  
+  # Extract P, N, and L values from names like "P0.5-L20_N0.5-L5"
+  p_part <- sub("_.*", "", name)  # Get part before underscore
+  n_part <- sub(".*_", "", name)  # Get part after underscore
+  
+  # Extract P and PL values
+  p_val <- as.numeric(sub("-.*", "", sub("P", "", p_part)))
+  pl_val <- as.numeric(sub(".*-L", "", p_part))
+  
+  # Extract N and NL values  
+  n_val <- as.numeric(sub("-.*", "", sub("N", "", n_part)))
+  nl_val <- as.numeric(sub(".*-L", "", n_part))
+  
+  return(data.frame(P = p_val, PL = pl_val, N = n_val, NL = nl_val))
+}
+
+# Convert pred list to dataframe with parameters
+pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
+  df <- pred[[i]]
+  params <- extract_params(names(pred)[i])
+  df$scenario <- names(pred)[i]
+  df$P <- params$P
+  df$PL <- params$PL
+  df$N <- params$N
+  df$NL <- params$NL
+  return(df)
+}))
+
+# Assume predict() returns fitted values and confidence intervals
+# Adjust column names based on your actual metafor predict output
+colnames(pred_df)[colnames(pred_df) == "pred"] <- "fitted"
+if("ci.lb" %in% colnames(pred_df)) {
+  pred_df$ci_lower <- pred_df$ci.lb
+  pred_df$ci_upper <- pred_df$ci.ub
+} else {
+  # If no CI columns, create dummy ones
+  pred_df$ci_lower <- pred_df$fitted - 0.1
+  pred_df$ci_upper <- pred_df$fitted + 0.1
+}
+
+# Create the null reference (P0, N0)
+null_data <- pred_df[pred_df$P == 0 & pred_df$N == 0, ]
+
+# Function to create plots with null reference
+create_plot_with_null <- function(data, title) {
+  ggplot() +
+    # Add null reference line
+    geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+                alpha = 0.2, fill = "black") +
+    geom_line(data = null_data, aes(x = abund, y = fitted), 
+              color = "black", linetype = "dashed", size = 1) +
+    # Add treatment lines
+    geom_ribbon(data = data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                fill = factor(paste0("L", PL))), alpha = 0.3) +
+    geom_line(data = data, aes(x = abund, y = fitted, color = factor(paste0("L", PL))), 
+              size = 1) +
+    scale_x_log10() +
+    labs(title = title, x = "Abundance\nper Census", y = "Mortality Change",
+         color = "P Lambda", fill = "P Lambda") +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+}
+
+# 1. Panel with N0 and P0.5 (multiple L values for P)
+p1_data <- pred_df[pred_df$N == 0 & pred_df$P == 0.5, ]
+p1 <- create_plot_with_null(p1_data, "N0, P0.5 - Varying P Lambda")
+
+# 2. Panel with N0 and P1 (multiple L values for P)
+p2_data <- pred_df[pred_df$N == 0 & pred_df$P == 1, ]
+p2 <- create_plot_with_null(p2_data, "N0, P1 - Varying P Lambda")
+
+# 3. Panel with P0 and N0.5 (multiple L values for N)
+p3_data <- pred_df[pred_df$P == 0 & pred_df$N == 0.5, ]
+p3 <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1) +
+  geom_ribbon(data = p3_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = factor(paste0("L", NL))), alpha = 0.3) +
+  geom_line(data = p3_data, aes(x = abund, y = fitted, color = factor(paste0("L", NL))), 
+            size = 1) +
+  scale_x_log10() +
+  labs(title = "P0, N0.5 - Varying N Lambda", x = "Abundance\nper Census", y = "Mortality change",
+       color = "N Lambda", fill = "N Lambda") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 4. Panel with P0 and N1 (multiple L values for N)
+p4_data <- pred_df[pred_df$P == 0 & pred_df$N == 1, ]
+p4 <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1) +
+  geom_ribbon(data = p4_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = factor(paste0("L", NL))), alpha = 0.3) +
+  geom_line(data = p4_data, aes(x = abund, y = fitted, color = factor(paste0("L", NL))), 
+            size = 1) +
+  scale_x_log10() +
+  labs(title = "P0, N1 - Varying N Lambda", x = "Abundance\nper Census", y = "Mortality change",
+       color = "N Lambda", fill = "N Lambda") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 5. Panel with N0.5 and P0.5 (4 lines: null + fixed P0.5 with varying NL)
+p5_data <- pred_df[pred_df$N == 0.5 & pred_df$P == 0.5, ]
+p5 <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1.2) +
+  geom_ribbon(data = p5_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = paste0("PL", PL, "_NL", NL)), alpha = 0.3) +
+  geom_line(data = p5_data, aes(x = abund, y = fitted, 
+                               color = paste0("PL", PL, "_NL", NL)), size = 1) +
+  scale_x_log10() +
+  labs(title = "N0.5, P0.5 - Varying N and P Lambda", 
+       x = "Abundance\nper Census", y = "Mortality change",
+       color = "Treatment", fill = "Treatment") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 6. Panel with N1 and P1 (4 lines: null + fixed P1 with varying NL)
+p6_data <- pred_df[pred_df$N == 1 & pred_df$P == 1, ]
+p6 <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1.2) +
+  geom_ribbon(data = p6_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = paste0("PL", PL, "_NL", NL)), alpha = 0.3) +
+  geom_line(data = p6_data, aes(x = abund, y = fitted, 
+                               color = paste0("PL", PL, "_NL", NL)), size = 1) +
+  scale_x_log10() +
+  labs(title = "N1, P1 - Varying N and P Lambda", 
+       x = "Abundance\nper Census", y = "Mortality change",
+       color = "Treatment", fill = "Treatment") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 7. Panel with null and the two new scenarios (ranCon and ranMort)
+p7_data <- pred_df[pred_df$scenario %in% c("ranCon", "ranMort", "ranConMort"), ]
+p7 <- ggplot() +
+  # Add null reference line
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.2, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", linetype = "dashed", size = 1.2) +
+  # Add new scenario lines
+  geom_ribbon(data = p7_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                 fill = scenario), alpha = 0.3) +
+  geom_line(data = p7_data, aes(x = abund, y = fitted, color = scenario), size = 1) +
+  scale_x_log10() +
+  labs(title = "Random Control and Random Mortality Scenarios", 
+       x = "Abundance\nper Census", y = "Mortality change",
+       color = "Scenario", fill = "Scenario") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+# 1) Global ranges
+x_range <- range(pred_df$abund[pred_df$abund > 0 & is.finite(pred_df$abund)], na.rm = TRUE)
+y_range <- range(c(pred_df$ci_lower, pred_df$ci_upper), na.rm = TRUE)
+
+common_scales <- list(
+  scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)),
+  coord_cartesian(ylim = y_range)  # keeps data, just clips view
+)
+
+# 2) Apply to all plots
+plots <- list(p1, p2, p3, p4, p5, p6, p7)
+plots <- lapply(plots, function(p) p + common_scales)
+p1 <- plots[[1]]; p2 <- plots[[2]]; p3 <- plots[[3]]
+p4 <- plots[[4]]; p5 <- plots[[5]]; p6 <- plots[[6]]; p7 <- plots[[7]]
+
+print(p1)
+print(p2)
+print(p3)
+print(p4)
+print(p5)
+print(p6)
+print(p7)
+```
+
+## save PDF
+
+```{r}
+plots <- list(p1, p2, p3, p4, p5, p6)
+
+pdf(paste0(root, "local/figures/mstr/20250807/metafor/corr_abundCen250.pdf"), width = 8, height = 6, onefile = TRUE, useDingbats = FALSE)
+lapply(plots, print)   # each print() → new page
+dev.off()
+```

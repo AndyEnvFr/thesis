@@ -1,0 +1,363 @@
+---
+title: "PhyloSim Changes"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tidyverse)
+library(lattice)
+library(ggplot2)
+library(metafor)
+library(MASS)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+**Here, I check neutral cases. Why do I see a correlation in the neutral case ?**
+**I want to do the same as in Hülsmann et al 2024: randomization of tree status (alive or dead sample(0:1, 10, replace = T)) and randomzation of conspecific densities from no to all conspecific neighbors sample (0:4, 10, replace = T)**
+
+# Quantification of stabilazation: Mortality change for + 1 conspecific individual {#sec-mortality-change}
+
+According to Hülsmann et al. 2024 I quantify the effect of stab CDD by - fitting a binomial model - calculate probability of mortality without conspecific neighbors (= mort0) - calculate probability of mortality with *one* conspecific neighbor (= mort1) - calcualte change in probability (mortChange = mort1 - mort0)
+
+## Data preparation
+
+Note on *fitness base mortality ratio* (fbmr): it skips fitness dependent death every fbmr'th step. E.g., fbmr = 10 would cause always death, independent of fitness. In this batch, it is set to 10. In the next, to 3000. We'll see if fbmr changes the mortChange coefficient dramatically. But, first things first.
+
+```{r}
+#| eval: false
+
+# load in runs with exp kernel
+runs_iv <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_iv.rds"))
+```
+
+Next, we
+
+-   calculate the numbers of conspecific neighbors
+-   asess if an individuls dies in the consequent generation. Therefore, we ran the simulations with sort(c(seq(x,y), seq(x,y)+1)). Again, we assess death after each period in time trough the immediately next generation (e.g, focal generation 1000 -\> individuals dead at 1001 ?)
+
+```{r}
+#| eval: false
+
+# get conspecific neighbors and proper naming
+runs_iv <- getConNeigh(runs_iv)
+```
+
+Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.
+
+```{r}
+#| eval: false
+
+# convert matrices to tabular data. This is done parallel, as it takes longer
+cl <- makeCluster(length(runs_iv))
+clusterExport(cl, c("getMatToTab", "runs_iv"))
+tab_iv <- parLapply(cl = cl, X = runs_iv, fun = function(x) getMatToTab(x, detailedParams = TRUE))
+
+# saveRDS(tab_iv, paste0(root, "local/runs/mstr/20250807/tab_iv.rds"))
+```
+
+We only keep important/varying parameters in the naming. Fixed params are excluded.
+
+```{r}
+tab_iv <- readRDS(paste0(root, "local/runs/mstr/20250807/tab_iv.rds"))
+```
+
+```{r}
+namesShort <- names(tab_iv) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_replace("pdd", "P") %>% 
+  stringr::str_replace("ndd", "N") %>% 
+  stringr::str_replace_all("Var", "-L")
+```
+
+Now, we delete every second generation. Remember, we had to calculate the death in the consequent generation. After doing so, the generation x + 1 is no longer needed and is discarded.
+
+
+
+
+### Metafor analysis: correcting for uncertainty
+
+```{r}
+#| eval: false
+
+# keep only first timespot in census
+tab_ivx <- lapply(tab_iv, function(x){
+  res <- x %>%
+  filter(census %% 2 == 0,
+         census > 50000) # this must be checked against the SR over time plots: when is eq. reached? The more data the better, because it narrows the ci in the final plot
+  return(res)
+})
+
+names(tab_ivx) <- namesShort
+```
+
+```{r}
+#| eval: false
+
+# calculate number of censii in which species occur
+NbyCen <- lapply(tab_ivx, function(x){
+  res <- x %>% 
+    group_by(specId) %>%
+    summarise(n_census = n_distinct(census))
+  return(res)
+})
+
+# add abundances and (abundances / number of censii in which they occur)
+tab_ivxx <- lapply(seq_along(tab_ivx), function(i){
+  res <- tab_ivx[[i]] %>%
+    dplyr::rename(abundCen = abund) %>% 
+    group_by(specId) %>% 
+    mutate(abundTot = n()) %>%
+    left_join(NbyCen[[i]], by = "specId") %>%
+    mutate(NperCen = abundTot / n_census) %>%
+    ungroup()
+  return(res)
+})
+
+tab_ivS <- lapply(tab_ivxx, function(x){
+  res <- x %>%
+    filter(abundCen > 30) # need species with enough variation in con for the model to estimate an effect
+  return(res)
+})
+```
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(tab_ivS))
+
+mcS_err <- parLapply(cl, tab_ivS, function(x) {
+  specIDs <- unique(x$specId)
+  res <- vector("list", length(specIDs))
+  
+  i <- 1
+  for (sID in specIDs) {
+    dat <- x[x$specId == sID, ]
+    mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
+    sfm <- summary(mod)$coefficients
+    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    
+    res[[i]] <- list(
+      specId = sID,
+      abundCen = dat$abundCen[1],
+      abundTot = dat$abundTot[1],
+      NperCen = dat$NperCen[1],
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      vcov = vc
+    )
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+## compute variance of the marginal effect through a "posterior" simulation
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(mcS_err))
+mcS_err_sim <- parLapply(cl, mcS_err, function(x){
+  lapply(x, function(y){
+    sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
+    mort0 <- plogis(sim[, 1])
+    mort1 <- plogis(sim[, 1] + sim[, 2])
+    mort_diff <- mort1 - mort0
+    
+    return(data.frame(
+      abundCen = y$abundCen,
+      abundTot = y$abundTot,
+      NperCen = y$NperCen,
+      specId = y$specId,
+      mean = mean(mort_diff),
+      se = sd(mort_diff),
+      ci_low = quantile(mort_diff, 0.025),
+      ci_high = quantile(mort_diff, 0.975)
+    ))
+  })
+})
+# Stop the cluster
+stopCluster(cl)
+```
+
+## unlist inner lists and add log abund
+
+```{r}
+#| eval: false
+
+m4 <- lapply(mcS_err_sim, function(group) {
+  do.call(rbind, group)
+})
+
+m4 <- lapply(m4, function(group) {
+  row.names(group) <- NULL
+  group <- group %>% 
+    mutate(log_Ntot = log(abundTot),
+           log_Ncen = log(abundCen),
+           log_NperCen = log(NperCen))
+  return(group)
+})
+```
+
+## fitting model
+
+```{r}
+#| eval: false
+
+dat_meta <- lapply(m4, function(x) {
+  escalc(measure = "GEN", yi = mean, sei = se, slab = specId, data = x)
+})
+```
+
+```{r}
+#| eval: false
+
+# Detect available cores and create a cluster
+cl <- makeCluster(length(dat_meta))
+
+# Export needed objects and packages to the workers
+clusterExport(cl, varlist = c("dat_meta"), envir = environment())
+
+# Run in parallel
+metamod <- parLapply(cl, dat_meta, function(x) {
+  metafor::rma(
+    yi = yi,
+    vi = vi,
+    mods = ~ log_Ntot,
+    # mods = ~ log_Ncen,
+    # mods = ~ log_NperCen,
+    method = "REML",
+    data = x
+  )
+})
+
+# Stop cluster
+stopCluster(cl)
+
+names(metamod) <- namesShort
+```
+
+## predictions
+
+### log_N
+
+```{r}
+
+pred <- lapply(dat_meta, function(x){
+  expand_grid(log_Ntot = seq(min(x$log_Ntot, na.rm = TRUE),
+                          max(x$log_Ntot, na.rm = TRUE),
+                          length.out = 50))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_Ntot)
+  return(x)
+})
+# Bind predictions to dataframe
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamod[[i]]
+  
+  return(cbind(x, predict(object = y, newmods = x$log_Ntot)))
+})
+
+names(pred) <- namesShort
+```
+
+```{r}
+
+# Function to extract parameters from names
+extract_params <- function(name) {
+  # Extract P, N, and L values from names like "P0.5-L20_N0.5-L5"
+  p_part <- sub("_.*", "", name)  # Get part before underscore
+  n_part <- sub(".*_", "", name)  # Get part after underscore
+  
+  # Extract P and PL values
+  p_val <- as.numeric(sub("-.*", "", sub("P", "", p_part)))
+  pl_val <- as.numeric(sub(".*-L", "", p_part))
+  
+  # Extract N and NL values  
+  n_val <- as.numeric(sub("-.*", "", sub("N", "", n_part)))
+  nl_val <- as.numeric(sub(".*-L", "", n_part))
+  
+  return(data.frame(P = p_val, PL = pl_val, N = n_val, NL = nl_val))
+}
+
+# Convert pred list to dataframe with parameters
+pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
+  df <- pred[[i]]
+  params <- extract_params(names(pred)[i])
+  df$scenario <- names(pred)[i]
+  df$P <- params$P
+  df$PL <- params$PL
+  df$N <- params$N
+  df$NL <- params$NL
+  return(df)
+}))
+
+# Assume predict() returns fitted values and confidence intervals
+# Adjust column names based on your actual metafor predict output
+colnames(pred_df)[colnames(pred_df) == "pred"] <- "fitted"
+if("ci.lb" %in% colnames(pred_df)) {
+  pred_df$ci_lower <- pred_df$ci.lb
+  pred_df$ci_upper <- pred_df$ci.ub
+} else {
+  # If no CI columns, create dummy ones
+  pred_df$ci_lower <- pred_df$fitted - 0.1
+  pred_df$ci_upper <- pred_df$fitted + 0.1
+}
+
+# Create the null reference (P0, N0)
+null_data1 <- pred_df[pred_df$P == 0 & pred_df$N == 0 & pred_df$NL == 20, ]
+null_data2 <- pred_df[pred_df$P == 0 & pred_df$N == 0 & pred_df$NL == 1, ]
+
+# Function to create plots with null reference
+create_plot_with_null <- function(data, title) {
+  ggplot() +
+    # Add null reference line
+    geom_ribbon(data = null_data1, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+                alpha = 0.2, fill = "black") +
+    geom_line(data = null_data1, aes(x = abund, y = fitted), 
+              color = "black", linetype = "dashed", size = 1) +
+    # Add treatment lines
+    geom_ribbon(data = null_data2, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                fill = factor(paste0("L", PL))), alpha = 0.3) +
+    geom_line(data = null_data2, aes(x = abund, y = fitted, color = factor(paste0("L", PL))), 
+              size = 1) +
+    scale_x_log10() +
+    labs(title = title, x = "Abundance", y = "Mortality Change",
+         color = "P Lambda", fill = "P Lambda") +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+}
+
+# 1. Panel with N0 and P0.5 (multiple L values for P)
+p1_data <- pred_df[pred_df$N == 0 & pred_df$P == 0.5, ]
+p1 <- create_plot_with_null(p1_data, "N0, P0.5 - Varying P Lambda")
+
+print(p1)
+``` 
+both neutral cases look the same
+
+```{r}
+
+image(runs_iv$pdd0Var1Cut1_ndd0Var20Cut1_disp1_sr2_fbmr3000_faoM$Output$`262501`$specMat)
+image(runs_iv$pdd0Var1Cut1_ndd0Var1Cut1_disp1_sr2_fbmr3000_faoM$Output$`262501`$specMat)
+```
+

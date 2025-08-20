@@ -1,0 +1,24 @@
+expKrnl&McCoef.qmd
+    here I firstly use the expoenential kernel and calculate the mortality change coefficient
+    
+expKrnl&McCoefFbmr3000.qmd
+    I increased the fbmr, this increases the estaimtes of MC in both directions, because less deaths are frequency independent
+
+fexpKrnl&McCoef_reducedBaseMort.qmd"
+    Additionally to the increased fbmr, i decreased the mortality per generation. This further increases MC in both directions, because a higher share of deaths is driven by fitness, instead of cells dying repeatedly
+
+"ExcludeNegativeEqFr.qmd" 
+    here, i apply a greater filter, because yenni 2017 excludes ephemeral species for correction
+    
+"NeutralOnly.qmd"
+    I want to test, whether the correlation (metaregression) is always negative even in neutral scenarios and if I have some errors
+    therefore, i redo the analysis from scratch
+    Also, I randomize the con and mortNextGen params. This should give a slope 0 line, like Hülsmann et al.
+  
+"CensusWiseN"
+    Here, I dont do a species wise model for the whole generation, but I do a model for group_by(species,census)
+    I.e., if a species exists in two censii, i do two models and check correaltion between MC and abundance for two different abundances
+    
+"NcenFiltRan"
+    keep the 250 filter and group_by(specId, census) %>% glm %>% lm(mc ~ abund per cen)
+    randomize con and mortNextGen
