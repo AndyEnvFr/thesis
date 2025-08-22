@@ -39,13 +39,13 @@ namesShort <- c(names(tab_iii), "ranCon", "ranMort", "ranConMort") %>%
 
 names(tabRan) <- namesShort
 ```
+
 ```{r}
 tabRan$ranCon$con <- sample(x = 0:4, size = nrow(tabRan$ranCon), replace = TRUE)
 tabRan$ranMort$mortNextGen <- sample(c(FALSE, TRUE), size = nrow(tabRan$ranMort), replace = TRUE)
 tabRan$ranConMort$mortNextGen <- sample(c(FALSE, TRUE), size = nrow(tabRan$ranConMort), replace = TRUE)
 tabRan$ranConMort$con <- sample(x = 0:4, size = nrow(tabRan$ranConMort), replace = TRUE)
 ```
-
 
 Now, we delete every second generation. Remember, we had to calculate the death in the consequent generation. After doing so, the generation x + 1 is no longer needed and is discarded.
 
