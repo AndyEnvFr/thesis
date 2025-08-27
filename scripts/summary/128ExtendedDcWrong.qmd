@@ -1,0 +1,458 @@
+---
+title: "PhyloSim Changes"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tidyverse)
+library(lattice)
+library(ggplot2)
+library(metafor)
+library(MASS)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+**Here, I reduced the base mortality and the fitness independent mortality. This increases the effect of DD on mort change**
+
+# Quantification of stabilazation: Mortality change for + 1 conspecific individual {#sec-mortality-change}
+
+According to Hülsmann et al. 2024 I quantify the effect of stab CDD by - fitting a binomial model - calculate probability of mortality without conspecific neighbors (= mort0) - calculate probability of mortality with *one* conspecific neighbor (= mort1) - calcualte change in probability (mortChange = mort1 - mort0)
+
+## Data preparation
+
+Note on *fitness base mortality ratio* (fbmr): it skips fitness dependent death every fbmr'th step. E.g., fbmr = 10 would cause always death, independent of fitness. In this batch, it is set to 10. In the next, to 3000. We'll see if fbmr changes the mortChange coefficient dramatically. But, first things first.
+
+```{r}
+#| eval: false
+
+# load in runs with exp kernel
+runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_vii.rds"))
+```
+
+Next, we
+
+-   calculate the numbers of conspecific neighbors
+-   asess if an individuls dies in the consequent generation. Therefore, we ran the simulations with sort(c(seq(x,y), seq(x,y)+1)). Again, we assess death after each period in time trough the immediately next generation (e.g, focal generation 1000 -\> individuals dead at 1001 ?)
+
+```{r}
+#| eval: false
+
+# get conspecific neighbors and proper naming
+runsRaw  <- getConNeigh(runsRaw)
+```
+
+```{r}
+# make the runs more slim
+runs_vii <- lapply(runsRaw, function(x){
+  x$Output <- x$Output[101:300]
+  return(x)
+})
+```
+
+
+Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.
+
+```{r}
+#| eval: false
+
+# convert matrices to tabular data. This is done parallel, as it takes longer
+cl <- makeCluster(length(runs_vii))
+clusterExport(cl, c("getMatToTab", "runs_vii"))
+tab_vii <- parLapply(cl = cl, X = runs_vii, fun = function(x) getMatToTab(x, detailedParams = TRUE))
+
+saveRDS(tab_vii, paste0(root, "local/runs/mstr/20250807/tab_vii.rds"))
+```
+
+We only keep important/varying parameters in the naming. Fixed params are excluded.
+
+```{r}
+tab_vii <- readRDS(paste0(root, "local/runs/mstr/20250807/tab_vii.rds"))
+```
+
+```{r}
+namesShort <- names(tab_vii) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_replace("pdd", "P") %>% 
+  stringr::str_replace("ndd", "N") %>% 
+  stringr::str_replace_all("Var", "-L")
+```
+
+Now, we delete every second generation. Remember, we had to calculate the death in the consequent generation. After doing so, the generation x + 1 is no longer needed and is discarded.
+
+```{r}
+# keep only first timespot in census
+tab_viiS <- lapply(tab_vii, function(x){
+  res <- x %>%
+  dplyr::filter(census %% 2 == 0,
+          abund > 100) %>%
+    mutate(specIdCen = paste0(specId, census)) %>% 
+    dplyr::select(-fbmr, -sr, -fao, -disp, -indId)
+  return(res)
+})
+
+names(tab_viiS) <- namesShort
+```
+
+### Metafor analysis: correcting for uncertainty
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(tab_viiS))
+
+mcS_err <- parLapply(cl, tab_viiS, function(x) {
+  specIDs <- unique(x$specIdCen)
+  res <- vector("list", length(specIDs))
+  
+  i <- 1
+  for (sID in specIDs) {
+    dat <- x[x$specIdCen == sID, ]
+    mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
+    sfm <- summary(mod)$coefficients
+    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    
+    res[[i]] <- list(
+      specId = sID,
+      abund = dat$abund[1],
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      vcov = vc
+    )
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+## compute variance of the marginal effect through a "posterior" simulation
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(mcS_err))
+mcS_err_sim <- parLapply(cl, mcS_err, function(x){
+  lapply(x, function(y){
+    sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
+    mort0 <- plogis(sim[, 1])
+    mort1 <- plogis(sim[, 1] + sim[, 2])
+    mort_diff <- mort1 - mort0
+    
+    return(data.frame(
+      abund = y$abund,
+      specId = y$specId,
+      mean = mean(mort_diff),
+      se = sd(mort_diff),
+      ci_low = quantile(mort_diff, 0.025),
+      ci_high = quantile(mort_diff, 0.975)
+    ))
+  })
+})
+# Stop the cluster
+stopCluster(cl)
+```
+
+## unlist inner lists and add log abund
+
+```{r}
+#| eval: false
+
+m4 <- lapply(mcS_err_sim, function(group) {
+  do.call(rbind, group)
+})
+
+m4 <- lapply(m4, function(group) {
+  row.names(group) <- NULL
+  group <- group %>% 
+    mutate(log_N = log(abund))
+  return(group)
+})
+```
+
+## fitting model
+
+```{r}
+#| eval: false
+
+dat_meta <- lapply(m4, function(x) {
+  escalc(measure = "GEN", yi = mean, sei = se, slab = specId, data = x)
+})
+```
+
+```{r}
+#| eval: false
+
+# # Detect available cores and create a cluster
+# cl <- makeCluster(length(dat_meta))
+# 
+# # Export needed objects and packages to the workers
+# clusterExport(cl, varlist = c("dat_meta"), envir = environment())
+# 
+# # Run in parallel
+# metamod <- parLapply(cl, dat_meta, function(x) {
+#   metafor::rma(
+#     yi = yi,
+#     vi = vi,
+#     mods = ~ log_N,
+#     method = "REML",
+#     data = x
+#   )
+# })
+# 
+# # Stop cluster
+# stopCluster(cl)
+# 
+# names(metamod) <- namesShort
+```
+
+```{r}
+cl <- makeCluster(length(dat_meta))
+clusterExport(cl, varlist = c("dat_meta"), envir = environment())
+
+metamod <- parLapply(cl, dat_meta, function(x) {
+  tryCatch({
+    metafor::rma(
+      yi = yi,
+      vi = vi,
+      mods = ~ log_N,
+      method = "REML",
+      data = x
+    )
+  }, error = function(e) {
+    return(NULL)  # Return NULL for failed models
+  })
+})
+
+stopCluster(cl)
+
+# Remove NULL elements and keep names aligned
+failed_indices <- sapply(metamod, is.null)
+metamod <- metamod[!failed_indices]
+names(metamod) <- namesShort[!failed_indices]
+
+# Report which models failed
+if(any(failed_indices)) {
+  cat("Failed models:", paste(namesShort[failed_indices], collapse = ", "), "\n")
+}
+```
+
+The model for one scenario failed:
+P0.5-L5Cut3_N1-L5 
+```{r}
+# saveRDS(metamod, paste0(root, "local/runs/mstr/20250807/metamodvii.rds"))
+
+# deleting one scenario
+dat_meta <- dat_meta[-which(names(dat_meta) == "P0.5-L5Cut3_N1-L5")]
+
+# saveRDS(dat_meta, paste0(root, "local/runs/mstr/20250807/dat_metavii.rds"))
+# metamod <- readRDS(paste0(root, "local/runs/mstr/20250807/metamodiii.rds"))
+# dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaiii.rds"))
+```
+
+
+## predictions
+
+### log_N
+
+```{r}
+
+pred <- lapply(dat_meta, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 1000))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_N)
+  return(x)
+})
+# Bind predictions to dataframe
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamod[[i]]
+  
+  return(cbind(x, predict(object = y, newmods = x$log_N)))
+})
+
+names(pred) <- namesShort[-which(namesShort == "P0.5-L5Cut3_N1-L5")]
+```
+
+```{r}
+# Function to extract parameters from names (ignoring Cut3)
+extract_params <- function(name) {
+  # Remove Cut3 from the name first
+  name_clean <- gsub("Cut3_", "_", name)
+  
+  # Extract P, N, and L values from names like "P0.5-L20_N0-L20"
+  p_part <- sub("_.*", "", name_clean)  # Get part before underscore
+  n_part <- sub(".*_", "", name_clean)  # Get part after underscore
+  
+  # Extract P and PL values
+  p_val <- as.numeric(sub("-.*", "", sub("P", "", p_part)))
+  pl_val <- as.numeric(sub(".*-L", "", p_part))
+  
+  # Extract N and NL values  
+  n_val <- as.numeric(sub("-.*", "", sub("N", "", n_part)))
+  nl_val <- as.numeric(sub(".*-L", "", n_part))
+  
+  return(data.frame(P = p_val, PL = pl_val, N = n_val, NL = nl_val))
+}
+
+# Convert pred list to dataframe with parameters
+pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
+  df <- pred[[i]]
+  params <- extract_params(names(pred)[i])
+  df$scenario <- names(pred)[i]
+  df$P <- params$P
+  df$PL <- params$PL
+  df$N <- params$N
+  df$NL <- params$NL
+  return(df)
+}))
+
+# Assume predict() returns fitted values and confidence intervals
+# Adjust column names based on your actual metafor predict output
+colnames(pred_df)[colnames(pred_df) == "pred"] <- "fitted"
+if("ci.lb" %in% colnames(pred_df)) {
+  pred_df$ci_lower <- pred_df$ci.lb
+  pred_df$ci_upper <- pred_df$ci.ub
+} else {
+  # If no CI columns, create dummy ones
+  pred_df$ci_lower <- pred_df$fitted - 0.1
+  pred_df$ci_upper <- pred_df$fitted + 0.1
+}
+
+# Create the null reference (P0, N0)
+null_data <- pred_df[pred_df$P == 0 & pred_df$N == 0, ]
+
+# Create individual plots for each scenario combination
+
+# Get all unique P and N combinations
+p_values <- sort(unique(pred_df$P))
+n_values <- sort(unique(pred_df$N))
+
+plots_list <- list()
+plot_counter <- 1
+
+# Loop through each P value
+for (p_val in p_values) {
+  # Loop through each N value  
+  for (n_val in n_values) {
+    
+    # Skip null scenario as separate plot
+    if (p_val == 0 & n_val == 0) next
+    
+    # Get data for this specific P,N combination
+    plot_data <- pred_df[pred_df$P == p_val & pred_df$N == n_val, ]
+    
+    # Skip if no data
+    if (nrow(plot_data) == 0) next
+    
+    # Create color/fill variable based on lambda values
+    if (p_val == 0) {
+      # Only N varies, color by NL
+      plot_data$group_var <- paste0("NL", plot_data$NL)
+      legend_title <- "N Lambda"
+    } else if (n_val == 0) {
+      # Only P varies, color by PL  
+      plot_data$group_var <- paste0("PL", plot_data$PL)
+      legend_title <- "P Lambda"
+    } else {
+      # Both P and N vary, color by combination
+      plot_data$group_var <- paste0("PL", plot_data$PL, "_NL", plot_data$NL)
+      legend_title <- "PL_NL"
+    }
+    
+    # Create plot
+    p <- ggplot() +
+      # Add null reference
+      geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+                  alpha = 0.2, fill = "gray50") +
+      geom_line(data = null_data, aes(x = abund, y = fitted), 
+                color = "black", linetype = "dashed", size = 1.2, alpha = 0.8) +
+      # Add treatment lines
+      geom_ribbon(data = plot_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                       fill = group_var), alpha = 0.3) +
+      geom_line(data = plot_data, aes(x = abund, y = fitted, color = group_var), 
+                size = 1.2) +
+      scale_x_log10() +
+      labs(title = paste0("P = ", p_val, ", N = ", n_val), 
+           x = "Abundance per Census", y = "Mortality Change",
+           color = legend_title, fill = legend_title) +
+      theme_minimal() +
+      theme(legend.position = "bottom",
+            plot.title = element_text(size = 14, hjust = 0.5))
+    
+    # Store plot
+    plots_list[[plot_counter]] <- p
+    names(plots_list)[plot_counter] <- paste0("P", p_val, "_N", n_val)
+    plot_counter <- plot_counter + 1
+  }
+}
+
+# Create separate null plot
+null_plot <- ggplot() +
+  geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
+              alpha = 0.3, fill = "black") +
+  geom_line(data = null_data, aes(x = abund, y = fitted), 
+            color = "black", size = 1.5) +
+  scale_x_log10() +
+  labs(title = "Null Scenario: P = 0, N = 0", 
+       x = "Abundance per Census", y = "Mortality Change") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 14, hjust = 0.5))
+
+# Add null plot to list
+plots_list[["null"]] <- null_plot
+
+# Apply consistent scales to all plots
+x_range <- range(pred_df$abund[pred_df$abund > 0 & is.finite(pred_df$abund)], na.rm = TRUE)
+y_range <- range(c(pred_df$ci_lower, pred_df$ci_upper), na.rm = TRUE)
+
+common_scales <- list(
+  scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)),
+  coord_cartesian(ylim = y_range)
+)
+
+# Apply scales to all plots
+plots_list <- lapply(plots_list, function(p) p + common_scales)
+
+# Print all plots
+cat("Total number of plots:", length(plots_list), "\n")
+cat("Plot names:", names(plots_list), "\n\n")
+
+# Display all plots
+for (i in seq_along(plots_list)) {
+  cat("Displaying plot:", names(plots_list)[i], "\n")
+  print(plots_list[[i]])
+}
+```
+
+## save PDF
+
+```{r}
+pdf(paste0(root, "local/figures/mstr/20250807/metafor/corr_128DcViceVersa.pdf"), width = 8, height = 6, onefile = TRUE, useDingbats = FALSE)
+lapply(plots_list, print)   # each print() → new page
+dev.off()
+```
+
+```{r}
+image(runs_vi$pdd0Var20Cut1_ndd0Var20Cut1_disp1_sr2_fbmr3000_faoM$Output$`112501`$specMat, col = rainbow(100))
+image(runs_vi$pdd0Var20Cut1_ndd1Var20Cut1_disp1_sr2_fbmr3000_faoM$Output$`112501`$specMat, col = rainbow(100))
+image(runs_vi$pdd1Var20Cut1_ndd0Var20Cut1_disp1_sr2_fbmr3000_faoM$Output$`112501`$specMat, col = rainbow(100))
+```

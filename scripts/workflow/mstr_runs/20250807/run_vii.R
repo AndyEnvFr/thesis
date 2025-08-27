@@ -8,8 +8,8 @@ root <- "~/cyber_synch/" # work from uni bayreuth server
 
 ### define params and run model
 # Define parameter values
-ndd_options <- c(0, 1) # c(0, 0.5, 1)
-pdd_options <- c(0, 1) # c(0, 0.5, 1)
+ndd_options <- c(0, 0.5, 1) # c(0, 0.5, 1)
+pdd_options <- c(0, 0.5, 1) # c(0, 0.5, 1)
 nddVar_options <- c(20, 5, 1) # c(0.3, 0.005)
 pddVar_options <- c(20, 5, 1) # c(0.3, 0.005)
 environment_options <- c(0)
@@ -23,8 +23,11 @@ param_index <- 1
 for (ndd in ndd_options) {
   for (pdd in pdd_options) {
     
-    for (nddVar in nddVar_options) {
-      for (pddVar in pddVar_options) {
+    nddVar_to_test <- if (ndd == 0) c(nddVar_options[1]) else nddVar_options
+    pddVar_to_test <- if (pdd == 0) c(pddVar_options[1]) else pddVar_options
+    
+    for (nddVar in nddVar_to_test) {
+      for (pddVar in pddVar_to_test) {
         
         # Skip combinations where ndd and pdd have same strength and variance
         # (they cancel each other out mathematically)
@@ -39,7 +42,7 @@ for (ndd in ndd_options) {
               x = 128,
               y = 128,
               negativeDensity = ndd, 
-              nDensityCut = 1, 
+              nDensityCut = 3, 
               nDDNicheWidth = nddVar,
               positiveDensity = pdd, 
               pDensityCut = 1,
@@ -72,7 +75,7 @@ for (ndd in ndd_options) {
 }
 
 runz <- runSimulationBatch(params, parallel = 33, backup_path = paste0(root, "/local/runs/mstr/backups/"))
-saveRDS(runz, paste0(root, "/local/runs/mstr/20250807/runs_vi.rds"))
+saveRDS(runz, paste0(root, "/local/runs/mstr/20250807/runs_vii.rds"))
 
 
 

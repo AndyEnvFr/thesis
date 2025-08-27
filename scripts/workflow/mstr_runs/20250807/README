@@ -4,6 +4,8 @@ run_i: strenght(0, .5, 1); var(20, 5, 1); 50*50; 260k generations
 run_ii: same but with 1/3 base mortality hard coded
 run_v: i want to check if fbmr = 1 with dd results in the same results as wihout dd at all
 run_vi: i want to check if the metafor model becomes more stable, if landscape size is bigger.
+run_vii: 128*128, more strenght options and with asymmetric distance kernel.
+run_viii: I fucked up run_vii, because DC for nDD was 1 and pDD 3. Instead should be vice versa.
 
 
 TODO
