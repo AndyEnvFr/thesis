@@ -17,32 +17,20 @@ library(lattice)
 library(ggplot2)
 library(metafor)
 library(MASS)
-library(viridis)
 # root <- "~/Uni/Master/MA/" # work from local machine
 root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
 
-**Here, I reduced the base mortality and the fitness independent mortality. This increases the effect of DD on mort change**
-
-# Quantification of stabilazation: Mortality change for + 1 conspecific individual {#sec-mortality-change}
-
-According to Hülsmann et al. 2024 I quantify the effect of stab CDD by - fitting a binomial model - calculate probability of mortality without conspecific neighbors (= mort0) - calculate probability of mortality with *one* conspecific neighbor (= mort1) - calcualte change in probability (mortChange = mort1 - mort0)
+**Here, I plot the effects of N, NL, nDC while all P properties are fixed**
 
 ## Data preparation
-
-Note on *fitness base mortality ratio* (fbmr): it skips fitness dependent death every fbmr'th step. E.g., fbmr = 10 would cause always death, independent of fitness. In this batch, it is set to 10. In the next, to 3000. We'll see if fbmr changes the mortChange coefficient dramatically. But, first things first.
 
 ```{r}
 #| eval: false
 
 # load in runs with exp kernel
-runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_ix.rds"))
+runsRaw  <- readRDS(paste0(root, "/local/runs/plot_sr-params/mat/fix-NL-N-nDC.rds"))
 ```
-
-Next, we
-
--   calculate the numbers of conspecific neighbors
--   asess if an individuls dies in the consequent generation. Therefore, we ran the simulations with sort(c(seq(x,y), seq(x,y)+1)). Again, we assess death after each period in time trough the immediately next generation (e.g, focal generation 1000 -\> individuals dead at 1001 ?)
 
 ```{r}
 #| eval: false
@@ -53,10 +41,78 @@ runsRaw  <- getConNeigh(runsRaw)
 
 ```{r}
 # make the runs more slim
-runs_ix <- lapply(runsRaw, function(x){
-  x$Output <- x$Output[101:300]
-  return(x)
+# runs_ix <- lapply(runsRaw, function(x){
+#   x$Output <- x$Output[101:300]
+#   return(x)
+# })
+```
+
+```{r}
+namesShort <- names(runsRaw) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_replace("Cut", "-C") %>% 
+  stringr::str_remove("Cut1") %>% 
+  stringr::str_replace("pdd", "P") %>% 
+  stringr::str_replace("ndd", "N") %>% 
+  stringr::str_replace_all("Var", "-L")
+```
+
+```{r}
+names(runsRaw) <- namesShort
+```
+
+```{r}
+S <- getSpecTime(runsRaw)
+```
+
+```{r}
+Sp <- sapply(S, function(x){
+  return(mean(x$spec_rich[99:200]))
 })
+Sp <- data.frame(meanSR = Sp, params = namesShort) 
+
+Sp2 <- Sp %>%
+  extract(params,
+          into = c("P","PL","C"),
+          regex = "P([0-9.]+)-L([0-9.]+)-C([0-9]+)",
+          remove = FALSE)
+
+base0 <- Sp2 %>% filter(P == 0, PL == 20)
+
+# all NL values present in data
+all_PL <- sort(unique(Sp2$PL))
+
+# replicate for each NL
+base0_expanded <- base0[rep(seq_len(nrow(base0)), length(all_PL)), ]
+base0_expanded$PL <- rep(all_PL, each = nrow(base0))
+
+# bind back
+Sp2<- bind_rows(Sp2, base0_expanded)
+```
+
+```{r}
+# ensure numeric
+plotPDD <- ggplot(Sp2, aes(x = P, y = meanSR, color = factor(PL), group = PL)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  facet_wrap(~ C, ncol = 3, scales = "fixed",
+             labeller = labeller(C = function(x) paste("pDD kernel =", x))) +
+  labs(x = "pDD strength",
+       y = "mean species richness",
+       color = "pDD\nspecificity") +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "right",
+    strip.text = element_text(size = 13, face = "bold"),
+    panel.spacing = unit(1.5, "lines")   
+  )
+
+```
+
+```{r}
+pdf(paste0(root, "local/figures/mstr/20250807/metafor/pddEffect.pdf"), width = 8, height = 6, onefile = TRUE, useDingbats = FALSE)
+print(plotPDD)
+dev.off()
 ```
 
 Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.
@@ -65,17 +121,15 @@ Next, we convert the matrix data into tabular data. With the argument detailedPa
 #| eval: false
 
 # convert matrices to tabular data. This is done parallel, as it takes longer
-cl <- makeCluster(length(runs_ix))
-clusterExport(cl, c("getMatToTab", "runs_ix"))
-tab_ix <- parLapply(cl = cl, X = runs_ix, fun = function(x) getMatToTab(x, detailedParams = TRUE))
+cl <- makeCluster(length(runsRaw))
+clusterExport(cl, c("getMatToTab", "runsRaw"))
+tab <- parLapply(cl = cl, X = runsRaw, fun = function(x) getMatToTab(x, detailedParams = TRUE))
 
-saveRDS(tab_ix, paste0(root, "local/runs/mstr/20250807/tab_ix.rds"))
+saveRDS(tab, paste0(root, "local/runs/mstr/20250807/tab_fix-NL-N-nDC.rds"))
 ```
 
-We only keep important/varying parameters in the naming. Fixed params are excluded.
-
 ```{r}
-tab_ix <- readRDS(paste0(root, "local/runs/mstr/20250807/tab_ix.rds"))
+tab <- readRDS(paste0(root, "local/runs/mstr/20250807/tab_fix-PL-P-pDC.rds"))
 ```
 
 ```{r}
@@ -256,12 +310,12 @@ if(any(failed_indices)) {
 
 # deleting one scenario
 
-# saveRDS(dat_meta, paste0(root, "local/runs/mstr/20250807/dat_metaix.rds"))
-# saveRDS(metamod, paste0(root, "local/runs/mstr/20250807/metamodix.rds"))
+saveRDS(dat_meta, paste0(root, "local/runs/mstr/20250807/dat_metaix.rds"))
+saveRDS(metamod, paste0(root, "local/runs/mstr/20250807/metamodix.rds"))
 
 
-metamod <- readRDS(paste0(root, "local/runs/mstr/20250807/metamodix.rds"))
-dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaix.rds"))
+# metamod <- readRDS(paste0(root, "local/runs/mstr/20250807/metamodiii.rds"))
+# dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaiii.rds"))
 ```
 
 ## predictions
@@ -273,7 +327,7 @@ dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaix.rds"))
 pred <- lapply(dat_meta, function(x){
   expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
                           max(x$log_N, na.rm = TRUE),
-                          length.out = 100))
+                          length.out = 1000))
 })
 pred <- lapply(pred, function(x){
   x$abund <- exp(x$log_N)
@@ -329,11 +383,7 @@ colnames(pred_df)[colnames(pred_df) == "pred"] <- "fitted"
 if("ci.lb" %in% colnames(pred_df)) {
   pred_df$ci_lower <- pred_df$ci.lb
   pred_df$ci_upper <- pred_df$ci.ub
-} else {
-  # If no CI columns, create dummy ones
-  pred_df$ci_lower <- pred_df$fitted - 0.1
-  pred_df$ci_upper <- pred_df$fitted + 0.1
-}
+} 
 
 # Create the null reference (P0, N0)
 null_data <- pred_df[pred_df$P == 0 & pred_df$N == 0, ]
@@ -376,20 +426,39 @@ for (p_val in p_values) {
       legend_title <- "PL_NL"
     }
     
-    # Create plot
-    p <- ggplot() +
-      # Add null reference
+    # Count number of unique groups (lines) that will be plotted
+    n_groups <- length(unique(plot_data$group_var))
+    show_errors <- n_groups <= 4  # Show errors only if 4 or fewer lines
+    
+    # Create base plot
+    p <- ggplot()
+    
+    # Add null reference (always with errors for reference)
+    p <- p +
       geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
                   alpha = 0.2, fill = "gray50") +
       geom_line(data = null_data, aes(x = abund, y = fitted), 
-                color = "black", linetype = "dashed", size = 1.2, alpha = 0.8) +
-      # Add treatment lines
-      geom_ribbon(data = plot_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
-                                       fill = group_var), alpha = 0.3) +
-      geom_line(data = plot_data, aes(x = abund, y = fitted, color = group_var), 
-                size = 1.2) +
+                color = "black", linetype = "dashed", size = 1.2, alpha = 0.8)
+    
+    # Add treatment lines conditionally with/without errors
+    if (show_errors) {
+      # Include error ribbons when 4 or fewer lines
+      p <- p +
+        geom_ribbon(data = plot_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper, 
+                                         fill = group_var), alpha = 0.3) +
+        geom_line(data = plot_data, aes(x = abund, y = fitted, color = group_var), 
+                  size = 1.2)
+    } else {
+      # Only lines when more than 4 groups (no error ribbons)
+      p <- p +
+        geom_line(data = plot_data, aes(x = abund, y = fitted, color = group_var), 
+                  size = 1.2)
+    }
+    
+    # Add labels and theme
+    p <- p +
       scale_x_log10() +
-      labs(title = paste0("P = ", p_val, ", N = ", n_val), 
+      labs(title = paste0("P = ", p_val, ", N = ", n_val, " (", n_groups, " scenarios)"), 
            x = "Abundance per Census", y = "Mortality Change",
            color = legend_title, fill = legend_title) +
       theme_minimal() +
@@ -403,7 +472,7 @@ for (p_val in p_values) {
   }
 }
 
-# Create separate null plot
+# Create separate null plot (always with errors)
 null_plot <- ggplot() +
   geom_ribbon(data = null_data, aes(x = abund, ymin = ci_lower, ymax = ci_upper), 
               alpha = 0.3, fill = "black") +
@@ -430,9 +499,41 @@ common_scales <- list(
 # Apply scales to all plots
 plots_list <- lapply(plots_list, function(p) p + common_scales)
 
-# Print all plots
+# Print summary information
 cat("Total number of plots:", length(plots_list), "\n")
-cat("Plot names:", names(plots_list), "\n\n")
+cat("Plot names:", names(plots_list), "\n")
+
+# Count plots with/without error ribbons
+plots_with_errors <- 0
+plots_without_errors <- 0
+
+for (i in seq_along(plots_list)) {
+  if (names(plots_list)[i] != "null") {
+    # Extract P and N values from plot name to get the data
+    plot_name <- names(plots_list)[i]
+    p_val <- as.numeric(sub("P([0-9.]+)_N.*", "\\1", plot_name))
+    n_val <- as.numeric(sub(".*_N([0-9.]+)", "\\1", plot_name))
+    
+    plot_data <- pred_df[pred_df$P == p_val & pred_df$N == n_val, ]
+    if (p_val == 0) {
+      group_var <- paste0("NL", plot_data$NL)
+    } else if (n_val == 0) {
+      group_var <- paste0("PL", plot_data$PL)
+    } else {
+      group_var <- paste0("PL", plot_data$PL, "_NL", plot_data$NL)
+    }
+    n_groups <- length(unique(group_var))
+    
+    if (n_groups <= 4) {
+      plots_with_errors <- plots_with_errors + 1
+    } else {
+      plots_without_errors <- plots_without_errors + 1
+    }
+  }
+}
+
+cat("Plots with error ribbons (≤4 lines):", plots_with_errors, "\n")
+cat("Plots without error ribbons (>4 lines):", plots_without_errors, "\n\n")
 
 # Display all plots
 for (i in seq_along(plots_list)) {
@@ -452,33 +553,10 @@ dev.off()
 # compare correlation (slope) with max species abundance and SR
 
 ```{r}
-# load data
 
 datmeta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaix.rds"))
 metamod <- readRDS(paste0(root, "local/runs/mstr/20250807/metamodix.rds"))
 runs <- readRDS(paste0(root, "local/runs/mstr/20250807/runs_ix.rds"))
-```
-
-```{r}
-# generate predictions for CV
-pred <- lapply(datmeta, function(x){
-  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
-                          max(x$log_N, na.rm = TRUE),
-                          length.out = 1000))
-})
-pred <- lapply(pred, function(x){
-  x$abund <- exp(x$log_N)
-  return(x)
-})
-# Bind predictions to dataframe
-pred <- lapply(seq_along(pred), function(i){
-  x <- pred[[i]]
-  y <- metamod[[i]]
-  
-  return(cbind(x, predict(object = y, newmods = x$log_N)))
-})
-
-names(pred) <- names(datmeta)
 ```
 
 ```{r}
@@ -509,16 +587,6 @@ slope <- sapply(metamod, function(x){
 res <- as.data.frame(slope)
 rownames(res) <- names(metamod)
 
-# get intercept
-int <- sapply(metamod, function(x){
-  ret <- coef(x)[1]
-  return(int = ret)
-})
-int <- data.frame(
-  param = names(datmeta),
-  int    = int
-)
-
 # get abundance
 abund <- sapply(datmeta, function(x){
   return(quantile(x = x$abund, probs = .90))
@@ -527,16 +595,6 @@ abund <- data.frame(
   param = names(datmeta),
   abund    = abund
 )
-
-# get CV of each scenario
-cv <- sapply(pred, function(x){
-  c(meanMC = mean(x$pred), sdMC = sd(x$pred), rangeMC = diff(range(x$pred)))
-}) %>%
-  t() %>%
-  as.data.frame() %>%
-  mutate(cvMC = sdMC / meanMC) %>%
-  rownames_to_column("param")
-
 
 # get sr and rename
 srRaw <- getSpecTime(runs, plot = FALSE)
@@ -559,12 +617,7 @@ res <- res %>%
   left_join(
     abund, by = "param"
   ) %>% 
-  left_join(
-    int, by = "param"
-  ) %>% 
-  mutate(medianSR = as.integer(medianSR),
-         abund = as.integer(abund)) %>% 
-  left_join(cv, by = "param")
+  mutate( medianSR = as.integer(medianSR))
 ```
 
 ```{r}
@@ -574,17 +627,9 @@ res <- res %>%
 # model
 fm1 <- lm(formula = meanSR ~ slope, data = res)
 fm2 <- glm(formula = abund ~ slope, data = res, family = "poisson")
-fm3 <- lm(data = res, meanSR ~ cvMC)
-fm4 <- lm(data = res, meanSR ~ log(meanMC))
-fm5 <- lm(data = res, meanSR ~ meanMC)
-
 newdat <- data.frame(slope = seq(min(res$slope), max(res$slope), length = 100))
-newdatiii <- data.frame(cvMC = seq(min(res$cvMC), max(res$cvMC), length = 100))
-newdativ <- data.frame(meanMC = seq(min(res$meanMC), max(res$meanMC), length = 100))
 predi <- predict(fm1, newdata = newdat, se.fit = TRUE)
 predii <- predict(fm2, newdata = newdat, se.fit = TRUE, type = "response")
-prediii <- predict(fm3, newdata = newdatiii, se.fit = TRUE, type = "response")
-prediv <- predict(fm4, newdata = newdativ, se.fit = TRUE, type = "response")
 
 # plot
 plot(x = res$slope, y = res$meanSR, ylim = c(40,90), pch = 16, col = "blue",
@@ -604,146 +649,18 @@ text(x = -0.001, y = 90, "*** P < 0.001", cex = 1)
 # also tried poisson, looks the same, dharma looks OK
 
 plot(x = res$slope, y = res$abund, pch = 16, col = 1,
-     xlab = "mortality change ~ abundance: slope", ylab = "abundance")
+     xlab = "mortality change ~ abundance: slope", ylab = "mean species richness")
 lines(x = newdat$slope, y = predii$fit, lwd = 2 , col = 1)
 lines(x = newdat$slope, y = predii$fit - 2 * predi$se.fit, lwd = 1, lty = 2, col = 1)
 lines(x = newdat$slope, y = predii$fit + 2 * predi$se.fit, lwd = 1, lty = 2, col = "grey")
-legend("topleft", legend = c("fitted glm pois", "CI"), pch = c(NA,NA), lty = c(1,2), col = c(1,1), bty = "n")
+legend("topleft", legend = c("mean SR", "fitted glm pois", "CI"), pch = c(16,NA,NA), lty = c(NA, 1,2), col = c(1,1,1), bty = "n")
 text(x = -0.0015, y = 3300, "*** P < 0.001", cex = 1)
 
-#-----------------cv plot
+#-----------------
 
-# plot
-
-cols <- viridis(length(res$slope))[rank(res$slope)]
-
-plot(x = res$cvMC, y = res$meanSR, ylim = c(40,90), pch = 16,
-     col = cols, xlab = "CV Mortality Change", ylab = "mean species richness")
-arrows(x0 = res$cvMC, y0 = res$meanSR - res$sdSR,
-       x1 = res$cvMC, y1 = res$meanSR + res$sdSR,
-       angle = 90, code = 3, length = 0.05, col = cols)
-lines(x = newdatiii$cvMC, y = prediii$fit, lwd = 2 , col = 1)
-lines(x = newdatiii$cvMC, y = prediii$fit - 2 * prediii$se.fit, lwd = 1, lty = 2, col = 1)
-lines(x = newdatiii$cvMC, y = prediii$fit + 2 * prediii$se.fit, lwd = 1, lty = 2, col = 1)
-
-legend("topright", title = "slope", 
-       fill = viridis(5), 
-       legend = signif(seq(min(res$slope), max(res$slope), length.out = 5), 2),
-       bty = "n")
-
-
-# ----------------
-
-plot(x = res$sdMC, y = res$slope, pch = 16, xlab = "SD Mortality Change", ylab = "slope")
-plot(x = res$rangeMC, y = res$meanSR, pch = 16, xlab = "range Mortality Change", ylab = "mean species richness")
-
-
-# map slope values to viridis colors
-cols <- viridis(length(res$slope))[rank(res$slope)]
-
-# scatterplot with slope as color dimension
-plot(x = res$sdMC, y = res$meanSR, 
-     pch = 16, col = cols,
-     xlab = "SD Mortality Change", 
-     ylab = "mean species richness")
-
-# add legend for slope color scale
-legend("bottomright", title = "slope",
-       fill = viridis(5),
-       legend = signif(seq(min(res$slope), max(res$slope), length.out = 5), 2),
-       bty = "n")
-
-# ----------------
-
-plot(x = res$meanMC, y = res$meanSR, 
-     pch = 16, col = cols,
-     xlab = "mean Mortality Change", 
-     ylab = "mean species richness")
-lines(x = newdativ$meanMC, y = prediv$fit, lwd = 2 , col = 1)
-lines(x = newdativ$meanMC, y = prediv$fit - 2 * prediv$se.fit, lwd = 1, lty = 2, col = 1)
-lines(x = newdativ$meanMC, y = prediv$fit + 2 * prediv$se.fit, lwd = 1, lty = 2, col = 1)
-
-# add legend for slope color scale
-legend("bottomright", title = "slope",
-       fill = viridis(5),
-       legend = signif(seq(min(res$slope), max(res$slope), length.out = 5), 2),
-       bty = "n")
-legend("topleft",
-       legend = c("fitted lm\nlog(meanMC)", "CI"),
-       lty = c(1,2),
-       bty = "n")
-
-
-# ----------------
-plot(x = res$int, y = res$meanSR, 
-     pch = 16, col = cols,
-     xlab = "int (mort for abund = 0)", 
-     ylab = "mean species richness")
-legend("bottomright", title = "slope",
-       fill = viridis(5),
-       legend = signif(seq(min(res$slope), max(res$slope), length.out = 5), 2),
-       bty = "n")
-
-
-# ----------------
-plot(x = res$int, y = res$slope, 
-     pch = 16,
-     xlab = "int (mort for abund = 0)", 
-     ylab = "slope")
 ```
-
-# advanced plots
 
 ```{r}
-extract_params <- function(nm) {
-  # split into P-part and N-part
-  parts <- strsplit(nm, "_")[[1]]
-  
-  # P part (e.g. "P0.5-L5")
-  p_val  <- sub("P([0-9.]+)-L.*", "\\1", parts[1])
-  pl_val <- sub(".*-L([0-9.]+)",  "\\1", parts[1])
-  
-  # N part (e.g. "N0-L20")
-  n_val  <- sub("N([0-9.]+)-L.*", "\\1", parts[2])
-  nl_val <- sub(".*-L([0-9.]+)",  "\\1", parts[2])
-  
-  data.frame(
-    param = nm,
-    P  = as.numeric(p_val),
-    PL = as.numeric(pl_val),
-    N  = as.numeric(n_val),
-    NL = as.numeric(nl_val)
-  )
-}
-
-param_df <- do.call(rbind, lapply(res$param, extract_params))
-
-res <- res %>% left_join(
-  param_df, by = "param"
-)
+summary(fm1)
 ```
 
-These plots are a mess !
-
-I need to do new, simpler runs, with fixed PL. changing 4 dimensions is too much, what most confusing so that L is irrelevant for N/P = 0
-
-```{r}
-ggplot(res, aes(x = P, y = meanSR, colour = factor(PL), group = PL)) +
-  geom_point() +
-  geom_line() +
-  facet_wrap(~ N, scales = "free_x") +
-  labs(x = "P", y = "mean species richness", colour = "PL") +
-  theme_minimal()
-ggplot(res, aes(x = N, y = meanSR,
-                colour = factor(NL),
-                shape  = factor(PL),
-                group  = interaction(NL, PL))) +
-  geom_point(size = 3) +
-  geom_line() +
-  facet_wrap(~ P, scales = "free_x") +
-  labs(x = "N",
-       y = "mean species richness",
-       colour = "NL",
-       shape  = "PL") +
-  theme_minimal()
-```

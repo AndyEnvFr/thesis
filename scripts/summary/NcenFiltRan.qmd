@@ -206,8 +206,8 @@ names(metamodTot) <- namesShort
 ```{r}
 # saveRDS(metamodTot, paste0(root, "local/runs/mstr/20250807/metamodiiiTot250.rds"))
 # saveRDS(dat_meta, paste0(root, "local/runs/mstr/20250807/dat_metaiiiSpecIdCen250.rds"))
-# metamod <- readRDS(paste0(root, "local/runs/mstr/20250807/metamodiii.rds"))
-# dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaiii.rds"))
+metamod <- readRDS(paste0(root, "local/runs/mstr/20250807/metamodiiiTot250.rds"))
+dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250807/dat_metaiiiSpecIdCen250.rds"))
 ```
 
 ## predictions
@@ -228,7 +228,7 @@ pred <- lapply(pred, function(x){
 # Bind predictions to dataframe
 pred <- lapply(seq_along(pred), function(i){
   x <- pred[[i]]
-  y <- metamodTot[[i]]
+  y <- metamod[[i]]
   
   return(cbind(x, predict(object = y, newmods = x$log_Ntot)))
 })

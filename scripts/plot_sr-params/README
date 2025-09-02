@@ -1,0 +1,5 @@
+These runs are primarily for showing how the model behaves. Like Figures in May et al.
+
+fix-PL-P-pDC
+    here i change N, NL, and nDC
+fix-NL-N-nDC

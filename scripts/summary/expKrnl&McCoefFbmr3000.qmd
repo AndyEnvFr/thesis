@@ -16,10 +16,10 @@ library(tidyverse)
 # root <- "~/Uni/Master/MA/" # work from local machine
 root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
+
 ### Mortality change through all individuals: fbmr = 3000
 
-This script is a copy of "expKrnl&McCoef" with the only difference that fbmr is 3000 instead of 10.
-Because, I want to see what effect fbmr has on the whole analysis.
+This script is a copy of "expKrnl&McCoef" with the only difference that fbmr is 3000 instead of 10. Because, I want to see what effect fbmr has on the whole analysis.
 
 #### Data preparation
 
@@ -99,7 +99,8 @@ boot_mort_change <- function(x, B = 1000) {
   
   for (i in seq_len(B)) {
     xb <- x[sample(nrow(x), replace = TRUE), ]
-    fm <- tryCatch(glm(mortNextGen ~ con, family = binomial(), data = xb),
+    # fm <- tryCatch(glm(mortNextGen ~ con + abund, family = binomial(), data = xb),
+    fm <- tryCatch(glm(mortNextGen ~ con , family = binomial(), data = xb),
                    error = function(e) return(NA))
     if (is.na(fm)[1]) {
       boot_vals[i] <- NA
@@ -130,13 +131,15 @@ boot_results_ii <- parLapply(cl = cl, X = tab_iix, fun = function(x) boot_mort_c
 ```{r}
 #| eval: false
 
-boot_results_iix <- do.call(cbind, boot_results) %>%  as.data.frame()
+# boot_results_iix <- do.call(cbind, boot_results_ii) %>%  as.data.frame()
 
-saveRDS(boot_results_iix, "~/cyber_synch/local/summary/boot_results_xii.rds")
+# saveRDS(boot_results_iix, "~/cyber_synch/local/summary/boot_results_ii_+abund.rds")
+# saveRDS(boot_results_iix, "~/cyber_synch/local/summary/boot_results_ii.rds")
 ```
 
 ```{r}
-boot_results_iix <- readRDS(paste0(root, "local/summary/boot_results_xii.rds"))
+boot_results_std <- readRDS(paste0(root, "local/summary/boot_results_xii.rds"))
+boot_results_abundMod <- readRDS(paste0(root, "local/summary/boot_results_ii_+abund.rds"))
 ```
 
 #### Visualization
@@ -148,10 +151,31 @@ boot_results_iix <- readRDS(paste0(root, "local/summary/boot_results_xii.rds"))
 
 par(mar = c(16,4,1,1))
 
-x <- 1:ncol(boot_results_iix)
-y <- as.numeric(boot_results_iix["mort_change",])
-ci_lower <- as.numeric(boot_results_iix["ci_lower",])
-ci_upper <- as.numeric(boot_results_iix["ci_upper",])
+x <- 1:ncol(boot_results_std)
+y <- as.numeric(boot_results_std["mort_change",])
+ci_lower <- as.numeric(boot_results_std["ci_lower",])
+ci_upper <- as.numeric(boot_results_std["ci_upper",])
+
+plot(y = y, x = x, ylab = "mortChange", xlab = "", xaxt = "n", ylim = range(ci_lower, ci_upper))
+axis(1, at = x, labels = namesShort, las = 2)
+
+arrows(x0 = x, y0 = ci_lower, 
+       x1 = x, y1 = ci_upper, 
+       angle = 90, code = 3, length = 0.05)
+
+
+```
+```{r}
+#| fig-width: 15
+#| fig-height: 5
+#| fig-cap: "Mortality change (mortality with 1 conspecific neighbor - mortality without conspecific neighbors) for all individuals. Error bars are Q0.25 and Q0.75 from bootstrapping, while dots are mean values across bootstraps."
+
+par(mar = c(16,4,1,1))
+
+x <- 1:ncol(boot_results_abundMod)
+y <- as.numeric(boot_results_abundMod["mort_change",])
+ci_lower <- as.numeric(boot_results_abundMod["ci_lower",])
+ci_upper <- as.numeric(boot_results_abundMod["ci_upper",])
 
 plot(y = y, x = x, ylab = "mortChange", xlab = "", xaxt = "n", ylim = range(ci_lower, ci_upper))
 axis(1, at = x, labels = namesShort, las = 2)
