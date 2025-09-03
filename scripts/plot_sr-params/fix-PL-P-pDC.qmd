@@ -75,28 +75,49 @@ S <- getSpecTime(runsRaw, plot = FALSE)
 
 
 ```{r}
+# Extract mean and sd of species richness
 Sp <- sapply(S, function(x){
-  return(mean(x$spec_rich[99:200]))
-})
-Sp <- data.frame(meanSR = Sp, params = namesShort) 
+  vals <- x$spec_rich[99:200]
+  c(mean = mean(vals), sd = sd(vals))
+}) %>% t() %>% as.data.frame()
+colnames(Sp) <- c("meanSR", "sdSR")
+Sp$params <- namesShort 
 
+# Parse parameters correctly (nDD: N, NL, C)
 Sp2 <- Sp %>%
   extract(params,
           into = c("N","NL","C"),
           regex = "N([0-9.]+)-L([0-9.]+)-C([0-9]+)",
-          remove = FALSE)
+          remove = FALSE) %>%
+  mutate(N  = as.numeric(N),
+         NL = as.numeric(NL),
+         C  = as.numeric(C))
 
+# Get the N=0 baseline (only exists for NL=20)
 base0 <- Sp2 %>% filter(N == 0, NL == 20)
 
-# all NL values present in data
+# All NL values present in the data
 all_NL <- sort(unique(Sp2$NL))
 
-# replicate for each NL
-base0_expanded <- base0[rep(seq_len(nrow(base0)), length(all_NL)), ]
-base0_expanded$NL <- rep(all_NL, each = nrow(base0))
+# For each C value, replicate the N=0 point across all NL values
+base0_expanded <- do.call(rbind, lapply(unique(base0$C), function(c_val) {
+  base_c <- base0[base0$C == c_val, ]
+  expanded <- base_c[rep(1, length(all_NL)), ]
+  expanded$NL <- all_NL
+  expanded$params <- paste0("N0-L", all_NL, "-C", c_val, "_N1-L5-C1")
+  return(expanded)
+}))
 
-# bind back
-Sp2<- bind_rows(Sp2, base0_expanded)
+# Remove the original N=0, NL=20 entries to avoid duplicates
+Sp2_filtered <- Sp2 %>% filter(!(N == 0 & NL == 20))
+
+# Bind expanded baseline back, neutralize sdSR for replicated rows
+Sp2_final <- bind_rows(Sp2_filtered, base0_expanded) %>% 
+  mutate(sdSR = case_when(
+    N == 0 & NL != 20 ~ NA_real_,
+    TRUE ~ sdSR
+  ))
+
 ```
 
 
@@ -104,31 +125,38 @@ Sp2<- bind_rows(Sp2, base0_expanded)
 #| fig-width: 10
 #| fig-height: 3.5
 
-# ensure numeric
-plotNDD <- ggplot(Sp2, aes(x = N, y = meanSR, color = factor(NL), group = NL)) +
-  geom_line(size = 1.2) +
-  geom_point(size = 2) +
+# Plot
+plotNDD <- ggplot(Sp2_final, aes(x = N, y = meanSR, color = factor(NL), group = NL)) +
+  geom_line(size = .8) +
+  geom_point(size = 2, position = position_dodge(width = 0.1)) +
+  geom_errorbar(
+    aes(ymin = meanSR - sdSR, ymax = meanSR + sdSR),
+    width = 0.05,
+    alpha = 1,
+    position = position_dodge(width = 0.1)
+  ) +
   facet_wrap(~ C, ncol = 3, scales = "fixed",
              labeller = labeller(C = function(x) paste("nDD kernel =", x))) +
   labs(x = "nDD strength",
        y = "mean species richness",
        color = "nDD\nspecificity") +
-  theme_minimal(base_size = 16) +
-theme(
-  legend.position = "right",
-  strip.text = element_text(size = 15),
-  panel.spacing = unit(1, "lines"),
-  axis.title.x = element_text(margin = margin(t = 15)),  # move x-label down
-  axis.title.y = element_text(margin = margin(r = 15))   # move y-label left
-)
+  theme_classic(base_size = 16) +
+  theme(
+    strip.background = element_blank(),
+    legend.position = "right",
+    strip.text = element_text(size = 15),
+    panel.spacing = unit(1, "lines"),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15))
+  )
 
 print(plotNDD)
 ```
 
 ```{r}
-# pdf(paste0(root, "local/figures/plot_sr-params/nddEffect.pdf"), width = 10, height = 3.5, onefile = TRUE, useDingbats = FALSE)
-# print(plotNDD)
-# dev.off()
+pdf(paste0(root, "local/figures/plot_sr-params/nddEffect.pdf"), width = 10, height = 3.5, onefile = TRUE, useDingbats = FALSE)
+print(plotNDD)
+dev.off()
 ```
 
 Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.
@@ -149,11 +177,11 @@ cl <- makeCluster(length(runsFilt))
 clusterExport(cl, c("getMatToTab", "runsFilt"))
 tab <- parLapply(cl = cl, X = runsFilt, fun = function(x) getMatToTab(x, detailedParams = TRUE))
 
-# saveRDS(tab, paste0(root, "local/runs/plot_sr-params/tab/fix-PL-P-pDC.rds"))
+# saveRDS(tab, paste0(root, "local/runs/plot_sr-params/tab/fix-P-PL-nDC.rds"))
 ```
 
 ```{r}
-tab <- readRDS(paste0(root, "local/runs/plot_sr-params/tab/fix-PL-P-pDC.rds"))
+tab <- readRDS(paste0(root, "local/runs/plot_sr-params/tab/fix-P-PL-nDC.rds"))
 ```
 
 ```{r}
