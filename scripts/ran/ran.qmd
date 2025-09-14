@@ -762,3 +762,109 @@ rac(runs = runs$ndd1var5cut1_pdd1var20cut3, which.result = seq(180,200,2), xmax 
 rac(runs = runs$ndd1var5cut1_pdd0.6var0.1cut1, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
 rac(runs = runs$ndd1var5cut1_pdd0.4var0.1cut3, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
 ```
+
+## mutlidemsional plots
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(gridExtra)
+
+# Assuming your data is in a dataframe called 'res'
+# If not, load it first with: res <- read.csv("your_file.csv") or similar
+
+# 1. Plot with meanSR vs slope, colored by int
+plot1 <- ggplot(res, aes(x = slope, y = meanSR, color = int)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_viridis_c(name = "Intercept") +
+  labs(title = "Mean SR vs Slope (colored by intercept)",
+       x = "Slope",
+       y = "Mean SR") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# 2. Plot with meanSR vs slope, colored by cvMC
+plot2 <- ggplot(res, aes(x = slope, y = meanSR, color = cvMC)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_viridis_c(name = "CV") +
+  labs(title = "Mean SR vs Slope (colored by CV)",
+       x = "Slope",
+       y = "Mean SR") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Extract parameters from the param column
+# Parse the parameter string to extract P, L, C, N values
+parse_params <- function(param_string) {
+  # Extract P value and its L,C
+  p_part <- str_extract(param_string, "P[0-9.]+\\-L[0-9.]+\\-C[0-9]+")
+  n_part <- str_extract(param_string, "N[0-9.]+\\-L[0-9.]+\\-C[0-9]+")
+  
+  # Extract individual values
+  P <- as.numeric(str_extract(str_extract(p_part, "P[0-9.]+"), "[0-9.]+"))
+  PL <- as.numeric(str_extract(str_extract(p_part, "L[0-9.]+"), "[0-9.]+"))
+  PC <- as.numeric(str_extract(str_extract(p_part, "C[0-9]+"), "[0-9]+"))
+  
+  N <- as.numeric(str_extract(str_extract(n_part, "N[0-9.]+"), "[0-9.]+"))
+  NL <- as.numeric(str_extract(str_extract(n_part, "L[0-9.]+"), "[0-9.]+"))
+  NC <- as.numeric(str_extract(str_extract(n_part, "C[0-9]+"), "[0-9]+"))
+  
+  return(data.frame(P = P, PL = PL, PC = PC, N = N, NL = NL, NC = NC))
+}
+
+# Apply the parsing function
+parsed_params <- do.call(rbind, lapply(res$param, parse_params))
+res_extended <- cbind(res, parsed_params)
+
+# 3. Plot P vs N, colored by meanSR
+plot3 <- ggplot(res_extended, aes(x = P, y = N, color = meanSR)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_viridis_c(name = "Mean SR") +
+  labs(title = "P vs N (colored by Mean SR)",
+       x = "P parameter",
+       y = "N parameter") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# 4. Plot PL vs NL, colored by meanSR
+plot4 <- ggplot(res_extended, aes(x = PL, y = NL, color = meanSR)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_viridis_c(name = "Mean SR") +
+  labs(title = "PL vs NL (colored by Mean SR)",
+       x = "PL parameter",
+       y = "NL parameter") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# 5. Plot PC vs NC, colored by meanSR
+plot5 <- ggplot(res_extended, aes(x = PC, y = NC, color = meanSR)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_viridis_c(name = "Mean SR") +
+  labs(title = "PC vs NC (colored by Mean SR)",
+       x = "PC parameter",
+       y = "NC parameter") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Display plots
+print(plot1)
+print(plot2)
+print(plot3)
+print(plot4)
+print(plot5)
+
+# If you want to save all plots in one figure
+combined_plot <- grid.arrange(
+  plot3, plot4, plot5,
+  ncol = 2, nrow = 2,
+  top = "Parameter Relationships"
+)
+
+# Save plots if needed
+# ggsave(paste0(root, "local/figures/ran/meanSR_slope_int.pdf"), plot1, width = 10, height = 6, dpi = 300)
+# ggsave(paste0(root, "local/figures/ran/meanSR_slope_CV.pdf"), plot2, width = 10, height = 6, dpi = 300)
+# ggsave(paste0(root, "local/figures/ran/meanSR_params.pdf"), combined_plot, width = 15, height = 10, dpi = 300)
+```
+
