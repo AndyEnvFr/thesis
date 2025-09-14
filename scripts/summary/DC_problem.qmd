@@ -1,0 +1,1124 @@
+---
+title: "PhyloSim Changes"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tidyverse)
+library(lattice)
+library(ggplot2)
+library(metafor)
+library(MASS)
+library(viridis)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+**Here, I show the problem of GLM if DC are different for pDD and nDD**
+
+Runs are not comparable, if they have different DC!
+
+## Data preparation
+
+```{r}
+#| eval: false
+
+# load in runs with exp kernel
+runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_DC_problem.rds"))
+```
+
+Here comes two possible different methods:
+    for RNULL getConNeigh sets radius as the maximum DC for nDD or pDD: e.g., if nDC = 1, pDC = 1, only von Neumann neighborhood. If nDC = 3, pDC = 1, it gets 28 circular neighbors.
+```{r}
+#| eval: false
+
+# get conspecific neighbors and proper naming
+runsRNULL  <- getConNeigh(runsRaw, radius = NULL)
+```
+
+```{r}
+#| eval: false
+
+namesShort <- names(runsRNULL) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_replace("Cut", "-C") %>% 
+  stringr::str_replace("Cut", "-C") %>% 
+  stringr::str_replace("pdd", "P") %>% 
+  stringr::str_replace("ndd", "N") %>% 
+  stringr::str_replace_all("Var", "-L")
+```
+
+```{r}
+#| eval: false
+
+names(runsRNULL) <- namesShort
+```
+
+```{r}
+#| eval: false
+
+# convert matrices to tabular data. This is done parallel, as it takes longer
+cl <- makeCluster(length(runsRaw))
+clusterExport(cl, c("getMatToTab", "runsRNULL"))
+tab0 <- parLapply(cl = cl, X = runsRNULL, fun = function(x) getMatToTab(x, detailedParams = TRUE))
+# saveRDS(tab0, paste0(root, "local/runs/mstr/20250807/tab0_DC_problem.rds"))
+```
+
+```{r}
+tab0 <- readRDS(paste0(root, "local/runs/mstr/20250807/tab0_DC_problem.rds"))
+```
+
+```{r}
+#|output: false
+
+
+# keep only first timespot in census
+
+cores <- length(tab0)
+cl <- makeCluster(cores)
+
+clusterEvalQ(cl, {
+  library(dplyr)
+})
+
+tab0S <- parLapply(cl, tab0, function(x) {
+  x %>%
+    filter(abund > 100) %>%
+    mutate(specIdCen = paste0(specId, census)) %>%
+    select(-indId)
+})
+
+stopCluster(cl)
+```
+
+# total model (not species wise)
+
+```{r}
+
+cl <- makeCluster(length(tab0S))
+
+clusterExport(cl, c("tab0S"))
+
+mcS_err0 <- parLapply(cl, tab0S, function(x) {
+    
+    mod <- glm(mortNextGen ~ con, data = x, family = binomial())
+    sfm <- summary(mod)$coefficients
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    
+    res <- data.frame(
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)]
+    )
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+```{r}
+
+cl <- makeCluster(length(tab0S))
+
+clusterExport(cl, c("tab0S"))
+
+mcS_err0_corrected <- parLapply(cl, tab0S, function(x) {
+    
+    if (x$nDC[1] != 1 | x$pDC[1] != 1) {
+      kernel <- max(x$nDC[1], x$pDC[1])
+      corFac <- nrow(PhyloSim::getCircularOffsets(kernel)) / 4
+    } else {corFac <- 1}
+    
+    mod <- glm(mortNextGen ~ con, data = x, family = binomial())
+    sfm <- summary(mod)$coefficients
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2] * corFac)
+    
+    res <- data.frame(
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)]
+    )
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+
+```{r}
+sapply(mcS_err0_corrected, function(x){
+  return(round(x$mort_change[1],8))
+})
+```
+```{r}
+sapply(mcS_err0, function(x){
+  return(round(x$mort_change[1],8))
+})
+```
+
+While for the C3C3 run the corFac could compensate for the effects of different neihgborhoods, for the C3C1 run this was not possible, because the corFac corrects for both, nDD and pDD and they have different kernels here. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# code below probably not needed
+
+### Metafor analysis: correcting for uncertainty
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(tab0S))
+
+mcS_err0 <- parLapply(cl, tab0S, function(x) {
+  specIDs <- unique(x$specIdCen)
+  res <- vector("list", length(specIDs))
+
+  i <- 1
+  for (sID in specIDs) {
+    dat <- x[x$specIdCen == sID, ]
+    mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
+    sfm <- summary(mod)$coefficients
+    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+
+    res[[i]] <- list(
+      specId = sID,
+      abund = dat$abund[1],
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      vcov = vc
+    )
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(tab3S))
+
+mcS_err3 <- parLapply(cl, tab3S, function(x) {
+  specIDs <- unique(x$specIdCen)
+  res <- vector("list", length(specIDs))
+
+  i <- 1
+  for (sID in specIDs) {
+    dat <- x[x$specIdCen == sID, ]
+    mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
+    sfm <- summary(mod)$coefficients
+    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+
+    res[[i]] <- list(
+      specId = sID,
+      abund = dat$abund[1],
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      vcov = vc
+    )
+    i <- i + 1
+  }
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+## compute variance of the marginal effect through a "posterior" simulation
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(mcS_err0))
+mcS_err_sim0 <- parLapply(cl, mcS_err0, function(x){
+  lapply(x, function(y){
+    sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
+    mort0 <- plogis(sim[, 1])
+    mort1 <- plogis(sim[, 1] + sim[, 2])
+    mort_diff <- mort1 - mort0
+
+    return(data.frame(
+      abund = y$abund,
+      specId = y$specId,
+      mean = mean(mort_diff),
+      se = sd(mort_diff),
+      ci_low = quantile(mort_diff, 0.025),
+      ci_high = quantile(mort_diff, 0.975)
+    ))
+  })
+})
+# Stop the cluster
+stopCluster(cl)
+```
+
+```{r}
+#| eval: false
+
+cl <- makeCluster(length(mcS_err3))
+mcS_err_sim3 <- parLapply(cl, mcS_err3, function(x){
+  lapply(x, function(y){
+    sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
+    mort0 <- plogis(sim[, 1])
+    mort1 <- plogis(sim[, 1] + sim[, 2])
+    mort_diff <- mort1 - mort0
+
+    return(data.frame(
+      abund = y$abund,
+      specId = y$specId,
+      mean = mean(mort_diff),
+      se = sd(mort_diff),
+      ci_low = quantile(mort_diff, 0.025),
+      ci_high = quantile(mort_diff, 0.975)
+    ))
+  })
+})
+# Stop the cluster
+stopCluster(cl)
+```
+
+## unlist inner lists and add log abund
+
+```{r}
+#| eval: false
+
+m40 <- lapply(mcS_err_sim0, function(group) {
+  do.call(rbind, group)
+})
+
+m40 <- lapply(m40, function(group) {
+  row.names(group) <- NULL
+  group <- group %>%
+    mutate(log_N = log(abund))
+  return(group)
+})
+m43 <- lapply(mcS_err_sim3, function(group) {
+  do.call(rbind, group)
+})
+
+m43 <- lapply(m43, function(group) {
+  row.names(group) <- NULL
+  group <- group %>%
+    mutate(log_N = log(abund))
+  return(group)
+})
+```
+
+## fitting model
+
+```{r}
+#| eval: false
+
+dat_meta0 <- lapply(m40, function(x) {
+  escalc(measure = "GEN", yi = mean, sei = se, slab = specId, data = x)
+})
+
+dat_meta3 <- lapply(m43, function(x) {
+  escalc(measure = "GEN", yi = mean, sei = se, slab = specId, data = x)
+})
+```
+
+```{r}
+#| eval: false
+
+# # Detect available cores and create a cluster
+# cl <- makeCluster(length(dat_meta))
+#
+# # Export needed objects and packages to the workers
+# clusterExport(cl, varlist = c("dat_meta"), envir = environment())
+#
+# # Run in parallel
+# metamod <- parLapply(cl, dat_meta, function(x) {
+#   metafor::rma(
+#     yi = yi,
+#     vi = vi,
+#     mods = ~ log_N,
+#     method = "REML",
+#     data = x
+#   )
+# })
+#
+# # Stop cluster
+# stopCluster(cl)
+#
+# names(metamod) <- namesShort
+```
+
+```{r}
+cl <- makeCluster(length(dat_meta0))
+clusterExport(cl, varlist = c("dat_meta0"), envir = environment())
+
+metamod0 <- parLapply(cl, dat_meta0, function(x) {
+  tryCatch({
+    metafor::rma(
+      yi = yi,
+      vi = vi,
+      mods = ~ log_N,
+      method = "REML",
+      data = x
+    )
+  }, error = function(e) {
+    return(NULL)  # Return NULL for failed models
+  })
+})
+
+stopCluster(cl)
+
+# Remove NULL elements and keep names aligned
+failed_indices <- sapply(metamod0, is.null)
+namesShort <- names(metamod0)
+metamod0 <- metamod0[!failed_indices]
+names(metamod0) <- namesShort[!failed_indices]
+
+# Report which models failed
+if(any(failed_indices)) {
+  cat("Failed models:", paste(namesShort[failed_indices], collapse = ", "), "\n")
+}
+```
+
+```{r}
+cl <- makeCluster(length(dat_meta3))
+clusterExport(cl, varlist = c("dat_meta3"), envir = environment())
+
+metamod3 <- parLapply(cl, dat_meta3, function(x) {
+  tryCatch({
+    metafor::rma(
+      yi = yi,
+      vi = vi,
+      mods = ~ log_N,
+      method = "REML",
+      data = x
+    )
+  }, error = function(e) {
+    return(NULL)  # Return NULL for failed models
+  })
+})
+
+stopCluster(cl)
+
+# Remove NULL elements and keep names aligned
+failed_indices <- sapply(metamod3, is.null)
+namesShort <- names(metamod3)
+metamod3 <- metamod3[!failed_indices]
+names(metamod3) <- namesShort[!failed_indices]
+
+# Report which models failed
+if(any(failed_indices)) {
+  cat("Failed models:", paste(namesShort[failed_indices], collapse = ", "), "\n")
+}
+```
+
+```{r}
+
+# deleting one scenario
+
+# saveRDS(dat_meta0, paste0(root, "local/runs/mstr/20250807/CD_problem_datmeta0.rds"))
+# saveRDS(dat_meta3, paste0(root, "local/runs/mstr/20250807/CD_problem_datmeta3.rds"))
+# saveRDS(metamod0, paste0(root, "local/runs/mstr/20250807/CD_problem_metamod0.rds"))
+# saveRDS(metamod3, paste0(root, "local/runs/mstr/20250807/CD_problem_metamod3.rds"))
+
+
+D0<- readRDS(dat_meta0, paste0(root, "local/runs/mstr/20250807/CD_problem_datmeta0.rds"))
+D3<- readRDS(dat_meta3, paste0(root, "local/runs/mstr/20250807/CD_problem_datmeta3.rds"))
+M0<- readRDS(metamod0, paste0(root, "local/runs/mstr/20250807/CD_problem_metamod0.rds"))
+M3<- readRDS(metamod3, paste0(root, "local/runs/mstr/20250807/CD_problem_metamod3.rds"))
+```
+
+## predictions
+
+### log_N
+
+```{r}
+## --- build predictions (as you had) ---
+pred <- lapply(dat_meta0, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 1000))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_N)
+  x
+})
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamod0[[i]]
+  cbind(x, predict(object = y, newmods = x$log_N))
+})
+names(pred) <- namesShort   # <- your vector like the one you listed
+
+## --- FIXED helper: parse P, PL, C from scenario name ---
+extract_params <- function(nm) {
+  # expect "P0.2-L20-C1_N1-L5-C1"
+  # Split on underscore and take first part
+  lhs <- sub("_.*", "", nm)                 # "P0.2-L20-C1"
+
+  # Extract P, PL (L value), and C from first part
+  P  <- as.numeric(sub("P([0-9.]+)-.*", "\\1", lhs))
+  PL <- as.numeric(sub(".*-L([0-9.]+)-.*", "\\1", lhs))
+  C  <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", lhs))
+
+  data.frame(P = P, PL = PL, C = C)
+}
+
+## --- bind list to df with parsed params ---
+pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
+  df <- pred[[i]]
+  pars <- extract_params(names(pred)[i])
+  df$scenario <- names(pred)[i]
+  df$P  <- pars$P
+  df$PL <- pars$PL
+  df$C  <- pars$C
+  df
+}))
+
+## --- normalize predict() columns ---
+if ("pred" %in% names(pred_df))   names(pred_df)[names(pred_df)=="pred"]   <- "fitted"
+if ("fit"  %in% names(pred_df))   names(pred_df)[names(pred_df)=="fit"]    <- "fitted"
+if ("ci.lb" %in% names(pred_df))  pred_df$ci_lower <- pred_df$ci.lb
+if ("ci.ub" %in% names(pred_df))  pred_df$ci_upper <- pred_df$ci.ub
+
+## --- null model (overlay on every plot) ---
+null_nameC1 <- "P0-L20-C1_N1-L5-C1"
+if (null_nameC1 %in% pred_df$scenario) {
+  null_dataC1 <- pred_df[pred_df$scenario == null_nameC1, ]
+} else {
+  null_dataC1 <- NULL
+}
+
+null_nameC3 <- "P0-L20-C3_N1-L5-C1"
+if (null_nameC3 %in% pred_df$scenario) {
+  null_dataC3 <- pred_df[pred_df$scenario == null_nameC3, ]
+} else {
+  null_dataC3 <- NULL
+}
+
+null_nameC5 <- "P0-L20-C5_N1-L5-C1"
+if (null_nameC5 %in% pred_df$scenario) {
+  null_dataC5 <- pred_df[pred_df$scenario == null_nameC5, ]
+} else {
+  null_dataC5 <- NULL
+}
+
+## --- build separate plots per (PL, C), lines = P levels ---
+library(ggplot2)
+
+# common axes
+x_range <- range(pred_df$abund[pred_df$abund > 0 & is.finite(pred_df$abund)], na.rm = TRUE)
+y_range <- range(c(pred_df$ci_lower, pred_df$ci_upper), na.rm = TRUE)
+
+# order P nicely for legend
+pred_df$P_fac <- factor(pred_df$P, levels = sort(unique(pred_df$P)))
+
+combos <- unique(pred_df[c("PL","C")])
+combos <- combos[order(combos$PL, combos$C), ]
+
+plots_list <- vector("list", nrow(combos))
+names(plots_list) <- paste0("PL", combos$PL, "_C", combos$C)
+
+for (i in seq_len(nrow(combos))) {
+  pl_i <- combos$PL[i]
+  c_i  <- combos$C[i]
+  dat  <- subset(pred_df, PL == pl_i & C == c_i)
+  if (nrow(dat) == 0) next
+
+  p <- ggplot()
+
+  # add null only if C == 1
+  if (c_i == 1 & !is.null(null_dataC1)) {
+    p <- p +
+      geom_ribbon(data = null_dataC1,
+                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
+                  alpha = 0.15, fill = "grey50") +
+      geom_line(data = null_dataC1,
+                aes(x = abund, y = fitted),
+                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
+  }
+  # add null only if C == 3
+  if (c_i == 3 & !is.null(null_dataC3)) {
+    p <- p +
+      geom_ribbon(data = null_dataC3,
+                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
+                  alpha = 0.15, fill = "grey50") +
+      geom_line(data = null_dataC3,
+                aes(x = abund, y = fitted),
+                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
+  }
+  # add null only if C == 5
+  if (c_i == 5 & !is.null(null_dataC5)) {
+    p <- p +
+      geom_ribbon(data = null_dataC5,
+                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
+                  alpha = 0.15, fill = "grey50") +
+      geom_line(data = null_dataC5,
+                aes(x = abund, y = fitted),
+                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
+  }
+
+  # treatment lines
+  p <- p +
+    geom_line(data = dat, aes(x = abund, y = fitted, color = P_fac), size = 1.2) +
+    scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
+    labs(title = paste0("PL = ", pl_i, ", C = ", c_i,
+                        "   (P-lines: ", length(unique(dat$P)), ")"),
+         x = "Abundance per Census",
+         y = "Mortality Change",
+         color = "P") +
+    theme_minimal(base_size = 12) +
+    theme(legend.position = "bottom",
+          plot.title = element_text(size = 14, hjust = 0.5))
+
+  # set y-range depending on C
+  if (c_i == 1) {
+    p <- p + coord_cartesian(ylim = c(-0.005, 0.01))
+  } else if (c_i == 3) {
+    p <- p + coord_cartesian(ylim = c(-0.0025, 0.0045))
+  } else if (c_i == 5) {
+    p <- p + coord_cartesian(ylim = c(-0.0005, 0.0012))
+  }
+
+  plots_list[[i]] <- p
+}
+
+# Print all plots
+lapply(plots_list, print)
+```
+
+```{r}
+## --- build predictions (as you had) ---
+pred <- lapply(dat_meta3, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 1000))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_N)
+  x
+})
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamod3[[i]]
+  cbind(x, predict(object = y, newmods = x$log_N))
+})
+names(pred) <- namesShort   # <- your vector like the one you listed
+
+## --- FIXED helper: parse P, PL, C from scenario name ---
+extract_params <- function(nm) {
+  # expect "P0.2-L20-C1_N1-L5-C1"
+  # Split on underscore and take first part
+  lhs <- sub("_.*", "", nm)                 # "P0.2-L20-C1"
+
+  # Extract P, PL (L value), and C from first part
+  P  <- as.numeric(sub("P([0-9.]+)-.*", "\\1", lhs))
+  PL <- as.numeric(sub(".*-L([0-9.]+)-.*", "\\1", lhs))
+  C  <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", lhs))
+
+  data.frame(P = P, PL = PL, C = C)
+}
+
+## --- bind list to df with parsed params ---
+pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
+  df <- pred[[i]]
+  pars <- extract_params(names(pred)[i])
+  df$scenario <- names(pred)[i]
+  df$P  <- pars$P
+  df$PL <- pars$PL
+  df$C  <- pars$C
+  df
+}))
+
+## --- normalize predict() columns ---
+if ("pred" %in% names(pred_df))   names(pred_df)[names(pred_df)=="pred"]   <- "fitted"
+if ("fit"  %in% names(pred_df))   names(pred_df)[names(pred_df)=="fit"]    <- "fitted"
+if ("ci.lb" %in% names(pred_df))  pred_df$ci_lower <- pred_df$ci.lb
+if ("ci.ub" %in% names(pred_df))  pred_df$ci_upper <- pred_df$ci.ub
+
+## --- null model (overlay on every plot) ---
+null_nameC1 <- "P0-L20-C1_N1-L5-C1"
+if (null_nameC1 %in% pred_df$scenario) {
+  null_dataC1 <- pred_df[pred_df$scenario == null_nameC1, ]
+} else {
+  null_dataC1 <- NULL
+}
+
+null_nameC3 <- "P0-L20-C3_N1-L5-C1"
+if (null_nameC3 %in% pred_df$scenario) {
+  null_dataC3 <- pred_df[pred_df$scenario == null_nameC3, ]
+} else {
+  null_dataC3 <- NULL
+}
+
+null_nameC5 <- "P0-L20-C5_N1-L5-C1"
+if (null_nameC5 %in% pred_df$scenario) {
+  null_dataC5 <- pred_df[pred_df$scenario == null_nameC5, ]
+} else {
+  null_dataC5 <- NULL
+}
+
+## --- build separate plots per (PL, C), lines = P levels ---
+library(ggplot2)
+
+# common axes
+x_range <- range(pred_df$abund[pred_df$abund > 0 & is.finite(pred_df$abund)], na.rm = TRUE)
+y_range <- range(c(pred_df$ci_lower, pred_df$ci_upper), na.rm = TRUE)
+
+# order P nicely for legend
+pred_df$P_fac <- factor(pred_df$P, levels = sort(unique(pred_df$P)))
+
+combos <- unique(pred_df[c("PL","C")])
+combos <- combos[order(combos$PL, combos$C), ]
+
+plots_list <- vector("list", nrow(combos))
+names(plots_list) <- paste0("PL", combos$PL, "_C", combos$C)
+
+for (i in seq_len(nrow(combos))) {
+  pl_i <- combos$PL[i]
+  c_i  <- combos$C[i]
+  dat  <- subset(pred_df, PL == pl_i & C == c_i)
+  if (nrow(dat) == 0) next
+
+  p <- ggplot()
+
+  # add null only if C == 1
+  if (c_i == 1 & !is.null(null_dataC1)) {
+    p <- p +
+      geom_ribbon(data = null_dataC1,
+                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
+                  alpha = 0.15, fill = "grey50") +
+      geom_line(data = null_dataC1,
+                aes(x = abund, y = fitted),
+                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
+  }
+  # add null only if C == 3
+  if (c_i == 3 & !is.null(null_dataC3)) {
+    p <- p +
+      geom_ribbon(data = null_dataC3,
+                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
+                  alpha = 0.15, fill = "grey50") +
+      geom_line(data = null_dataC3,
+                aes(x = abund, y = fitted),
+                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
+  }
+  # add null only if C == 5
+  if (c_i == 5 & !is.null(null_dataC5)) {
+    p <- p +
+      geom_ribbon(data = null_dataC5,
+                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
+                  alpha = 0.15, fill = "grey50") +
+      geom_line(data = null_dataC5,
+                aes(x = abund, y = fitted),
+                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
+  }
+
+  # treatment lines
+  p <- p +
+    geom_line(data = dat, aes(x = abund, y = fitted, color = P_fac), size = 1.2) +
+    scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
+    labs(title = paste0("PL = ", pl_i, ", C = ", c_i,
+                        "   (P-lines: ", length(unique(dat$P)), ")"),
+         x = "Abundance per Census",
+         y = "Mortality Change",
+         color = "P") +
+    theme_minimal(base_size = 12) +
+    theme(legend.position = "bottom",
+          plot.title = element_text(size = 14, hjust = 0.5))
+
+  # set y-range depending on C
+  if (c_i == 1) {
+    p <- p + coord_cartesian(ylim = c(-0.005, 0.01))
+  } else if (c_i == 3) {
+    p <- p + coord_cartesian(ylim = c(-0.0025, 0.0045))
+  } else if (c_i == 5) {
+    p <- p + coord_cartesian(ylim = c(-0.0005, 0.0012))
+  }
+
+  plots_list[[i]] <- p
+}
+
+# Print all plots
+lapply(plots_list, print)
+```
+
+## save PDF
+
+```{r}
+# pdf(paste0(root, "local/figures/plot_sr-params/pddSlope.pdf"), width = 5, height = 5, onefile = TRUE, useDingbats = FALSE)
+lapply(plots_list, print)   # each print() → new page
+dev.off()
+```
+
+# compare correlation (slope) with max species abundance and SR
+
+```{r}
+datmeta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_datmeta.rds"))
+metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_metamod.rds"))
+runs <- readRDS(paste0(root, "local/runs/plot_sr-params/mat/fix-N-NL-nDC.rds"))
+```
+
+```{r}
+# get slopes
+slope <- sapply(metamod, function(x){
+  ret <- coef(x)[2]
+  return(ret)
+})
+res <- as.data.frame(slope)
+rownames(res) <- names(metamod)
+
+# get intercept
+int <- sapply(metamod, function(x){
+  ret <- coef(x)[1]
+  return(int = ret)
+})
+int <- data.frame(
+  param = names(metamod),
+  int = int
+)
+
+# get abundance: use max to exclude extremely high values
+abund <- sapply(datmeta, function(x){
+  return(max(x = x$abund))
+})
+abund <- data.frame(
+  param = names(datmeta),
+  abund = abund
+)
+
+# get CV of each scenario
+cv <- sapply(pred, function(x){
+  c(meanMC = mean(x$pred), sdMC = sd(x$pred), rangeMC = diff(range(x$pred)))
+}) %>%
+  t() %>%
+  as.data.frame() %>%
+  mutate(cvMC = sdMC / meanMC) %>%
+  rownames_to_column("param")
+
+# get sr and rename
+srRaw <- getSpecTime(runs, plot = FALSE)
+sr <- sapply(srRaw, function(x) {
+  vals <- x$spec_rich[99:200]
+  c(meanSR = mean(vals), sdSR = sd(vals), medianSR = median(vals))
+}) %>% t() %>% as.data.frame()
+rownames(sr) <- names(metamod)
+
+# combine all results
+res <- res %>%
+  rownames_to_column("param") %>%
+  left_join(
+    sr %>%
+      rownames_to_column("param"),
+    by = "param"
+  ) %>%
+  left_join(
+    abund, by = "param"
+  ) %>%
+  left_join(
+    int, by = "param"
+  ) %>%
+  mutate(medianSR = as.integer(medianSR),
+         abund = as.integer(abund)) %>%
+  left_join(cv, by = "param")
+
+# filter by scenarios
+resC1 <- res %>%
+  dplyr::filter(grepl("P.*-C1_", param))
+resC3 <- res %>%
+  dplyr::filter(grepl("P.*-C3_", param))
+resC5 <- res %>%
+  dplyr::filter(grepl("P.*-C5_", param))
+```
+
+```{r}
+#| fig-width: 8
+#| fig-height: 5
+
+## helper function: fit lm + glm, plot both panels
+plot_scen <- function(dat, tag, ylim_sr = c(40,90), ylim_abund = NULL) {
+  # models
+  fm1 <- lm(meanSR ~ slope, data = dat)
+  fm2 <- glm(abund ~ slope, data = dat, family = "poisson")
+  newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
+  predi  <- predict(fm1, newdata = newdat, se.fit = TRUE)
+  predii <- predict(fm2, newdata = newdat, se.fit = TRUE, type = "response")
+
+  ## SR plot
+  plot(x = dat$slope, y = dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue",
+       xlab = "mortality change ~ abundance: slope", ylab = "mean species richness",
+       main = paste0("Scenario ", tag))
+  points(x = dat$slope, y = dat$medianSR, pch = 16, col = "red")
+  arrows(x0 = dat$slope, y0 = dat$meanSR - dat$sdSR,
+         x1 = dat$slope, y1 = dat$meanSR + dat$sdSR,
+         angle = 90, code = 3, length = 0.05)
+  lines(newdat$slope, predi$fit, lwd = 2 , col = 1)
+  lines(newdat$slope, predi$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
+  lines(newdat$slope, predi$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
+  legend("topright", legend = c("mean SR", "median SR", "fitted lm", "CI"),
+         pch = c(16,16,NA,NA), lty = c(NA,NA,1,2), col = c(4,2,1,1), bty = "n")
+
+  ## Abundance plot
+  plot(x = dat$slope, y = dat$abund, pch = 16, col = 1,
+       xlab = "mortality change ~ abundance: slope", ylab = "max abundance",
+       main = paste0("Scenario ", tag),
+       ylim = ylim_abund)
+  lines(newdat$slope, predii$fit, lwd = 2, col = 1)
+  lines(newdat$slope, predii$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
+  lines(newdat$slope, predii$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = "grey")
+  legend("topleft", legend = c("abund", "fitted glm pois", "CI"),
+         pch = c(16,NA,NA), lty = c(NA,1,2), col = c(1,1,1), bty = "n")
+
+}
+
+## plot all
+par(mfrow = c(2,2))  # adjust layout as you like
+
+plot_scen(resC1, "C1", ylim_sr = c(40,100), ylim_abund = c(0,15000))
+plot_scen(resC3, "C3", ylim_sr = c(40,100), ylim_abund = c(0,15000))
+plot_scen(resC5, "C5", ylim_sr = c(40,100), ylim_abund = c(0,15000))
+
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 6.5
+
+## ---- helper functions ----
+pred_glm_pois <- function(mod, newdata, k = 2) {
+  lp <- predict(mod, newdata = newdata, se.fit = TRUE, type = "link")
+  fit <- exp(lp$fit)
+  lo  <- exp(lp$fit - k*lp$se.fit)
+  hi  <- exp(lp$fit + k*lp$se.fit)
+  list(fit = fit, lo = lo, hi = hi)
+}
+
+# Helper function to format p-values
+format_pvalue <- function(p) {
+  if (p < 0.001) {
+    return("p < 0.001")
+  } else if (p < 0.01) {
+    return(sprintf("p = %.3f", p))
+  } else {
+    return(sprintf("p = %.2f", p))
+  }
+}
+
+# Unified function for species richness vs slope plot
+plot_sr_slope <- function(dat, tag, ylim_sr = c(40,100)) {
+  fm1 <- lm(meanSR ~ slope, data = dat)
+  newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
+  predi <- predict(fm1, newdata = newdat, se.fit = TRUE)
+
+  # Extract p-value
+  p_val <- summary(fm1)$coefficients[2, 4]  # p-value for slope coefficient
+  p_text <- format_pvalue(p_val)
+
+  plot(dat$slope, dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue",
+       xlab = "mortality change ~ abundance: slope", ylab = "mean species richness",
+       main = paste0("Species Richness - Scenario ", tag))
+  points(dat$slope, dat$medianSR, pch = 16, col = "red")
+  arrows(dat$slope, dat$meanSR - dat$sdSR, dat$slope, dat$meanSR + dat$sdSR,
+         angle = 90, code = 3, length = 0.05)
+  lines(newdat$slope, predi$fit, lwd = 2, col = 1)
+  lines(newdat$slope, predi$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
+  lines(newdat$slope, predi$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
+  legend("topright", legend = c("mean SR", "median SR", "fitted lm", "CI"),
+         pch = c(16,16,NA,NA), lty = c(NA,NA,1,2), col = c(4,2,1,1), bty = "n")
+
+  # Add p-value text
+  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]),
+       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]),
+       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
+}
+
+# Unified function for abundance vs slope plot
+plot_abund_slope <- function(dat, tag, ylim_abund = NULL) {
+  fm2 <- glm(abund ~ slope, data = dat, family = poisson())
+  newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
+  pg <- pred_glm_pois(fm2, newdat, k = 2)
+
+  # Extract p-value
+  p_val <- summary(fm2)$coefficients[2, 4]  # p-value for slope coefficient
+  p_text <- format_pvalue(p_val)
+
+  plot(dat$slope, dat$abund, pch = 16, col = 1,
+       xlab = "mortality change ~ abundance: slope", ylab = "max abundance",
+       main = paste0("Abundance - Scenario ", tag), ylim = ylim_abund)
+  lines(newdat$slope, pg$fit, lwd = 2, col = 1)
+  lines(newdat$slope, pg$lo, lwd = 1, lty = 2, col = 1)
+  lines(newdat$slope, pg$hi, lwd = 1, lty = 2, col = "grey")
+  legend("topleft", legend = c("abund", "fitted glm pois", "CI"),
+         pch = c(16,NA,NA), lty = c(NA,1,2), col = c(1,1,1), bty = "n")
+
+  # Add p-value text
+  text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]),
+       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]),
+       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
+}
+
+# Unified function for species richness vs CV mortality change
+plot_sr_cvmc <- function(dat, tag, ylim_sr = c(40,90)) {
+  fm3 <- lm(meanSR ~ cvMC, data = dat)
+  newdat <- data.frame(cvMC = seq(min(dat$cvMC), max(dat$cvMC), length = 100))
+  pred <- predict(fm3, newdata = newdat, se.fit = TRUE)
+
+  # Extract p-value
+  p_val <- summary(fm3)$coefficients[2, 4]  # p-value for cvMC coefficient
+  p_text <- format_pvalue(p_val)
+
+  cols <- viridis(length(dat$slope))[rank(dat$slope)]
+  plot(dat$cvMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
+       xlab = "CV Mortality Change", ylab = "mean species richness",
+       main = paste0("SR vs CV MC - Scenario ", tag))
+  arrows(dat$cvMC, dat$meanSR - dat$sdSR, dat$cvMC, dat$meanSR + dat$sdSR,
+         angle = 90, code = 3, length = 0.05, col = cols)
+  lines(newdat$cvMC, pred$fit, lwd = 2, col = 1)
+  lines(newdat$cvMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
+  lines(newdat$cvMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
+  legend("topright", title = "slope",
+         fill = viridis(5),
+         legend = signif(seq(min(dat$slope), max(dat$slope), length.out = 5), 2),
+         bty = "n")
+
+  # Add p-value text
+  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]),
+       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]),
+       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
+}
+
+# Unified function for species richness vs mean mortality change
+plot_sr_meanmc <- function(dat, tag, ylim_sr = c(40,90)) {
+  fm4 <- lm(meanSR ~ log(meanMC), data = dat)
+  newdat <- data.frame(meanMC = seq(min(dat$meanMC), max(dat$meanMC), length = 100))
+  pred <- predict(fm4, newdata = newdat, se.fit = TRUE)
+
+  # Extract p-value
+  p_val <- summary(fm4)$coefficients[2, 4]  # p-value for log(meanMC) coefficient
+  p_text <- format_pvalue(p_val)
+
+  cols <- viridis(length(dat$slope))[rank(dat$slope)]
+  plot(dat$meanMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
+       xlab = "mean Mortality Change", ylab = "mean species richness",
+       main = paste0("SR vs Mean MC - Scenario ", tag))
+  lines(newdat$meanMC, pred$fit, lwd = 2, col = 1)
+  lines(newdat$meanMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
+  lines(newdat$meanMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
+  legend("bottomright", title = "slope",
+         fill = viridis(5),
+         legend = signif(seq(min(dat$slope), max(dat$slope), length.out = 5), 2),
+         bty = "n")
+  legend("topleft", legend = c("fitted lm log(meanMC)", "CI"),
+         lty = c(1,2), bty = "n")
+
+  # Add p-value text
+  text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]),
+       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]),
+       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
+}
+
+
+# Master plotting function for all scenario plots (6 plot types per scenario)
+plot_all_scenarios <- function(scenario_list, scenario_names,
+                              ylim_sr = c(40,100), ylim_abund = c(0,15000)) {
+  n_scenarios <- length(scenario_list)
+
+  # For each scenario, create all 6 plot types
+  for(i in 1:n_scenarios) {
+    # Set up 2x3 grid for each scenario
+    par(mfrow = c(2, 3), mar = c(4,4,3,2))
+
+    cat("Plotting scenario", scenario_names[i], "\n")
+
+    # Main analysis plots
+    plot_sr_slope(scenario_list[[i]], scenario_names[i], ylim_sr)
+    plot_abund_slope(scenario_list[[i]], scenario_names[i], ylim_abund)
+    plot_sr_cvmc(scenario_list[[i]], scenario_names[i], ylim_sr)
+    plot_sr_meanmc(scenario_list[[i]], scenario_names[i], ylim_sr)
+
+    # Additional diagnostic plots with models and p-values
+    cols <- viridis(length(scenario_list[[i]]$slope))[rank(scenario_list[[i]]$slope)]
+
+    # Diagnostic 1: SD MC vs slope (with linear model and p-value)
+    fm_diag1 <- lm(slope ~ sdMC, data = scenario_list[[i]])
+    p_val1 <- summary(fm_diag1)$coefficients[2, 4]
+    p_text1 <- format_pvalue(p_val1)
+
+    plot(scenario_list[[i]]$sdMC, scenario_list[[i]]$slope, pch = 16,
+         xlab = "SD Mortality Change", ylab = "slope",
+         main = paste0("SD MC vs Slope - Scenario ", scenario_names[i]))
+    abline(fm_diag1, col = "black", lwd = 2)
+    text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]),
+         y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]),
+         labels = p_text1, pos = 4, cex = 0.9, col = "darkred")
+
+    # Diagnostic 2: SD MC vs meanSR (colored by slope, with linear model and p-value)
+    fm_diag2 <- lm(meanSR ~ sdMC, data = scenario_list[[i]])
+    p_val2 <- summary(fm_diag2)$coefficients[2, 4]
+    p_text2 <- format_pvalue(p_val2)
+
+    plot(scenario_list[[i]]$sdMC, scenario_list[[i]]$meanSR, pch = 16, col = cols,
+         xlab = "SD Mortality Change", ylab = "mean species richness",
+         main = paste0("SD MC vs SR - Scenario ", scenario_names[i]), ylim = c(45,85))
+    abline(fm_diag2, col = "black", lwd = 2)
+    legend("bottomright", title = "slope", fill = viridis(5),
+           legend = signif(seq(min(scenario_list[[i]]$slope), max(scenario_list[[i]]$slope), length.out = 5), 2), bty = "n")
+    text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]),
+         y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]),
+         labels = p_text2, pos = 4, cex = 0.9, col = "darkred")
+  }
+}
+
+## ---- apply to scenarios C1-C5 ----
+# Assuming you have data objects: resC1, resC2, resC3, resC4, resC5
+scenario_data <- list(resC1, resC3, resC5)
+scenario_labels <- c("C1", "C3", "C5")
+
+
+# pdf(paste0(root, "local/figures/plot_sr-params/pddSupplPlots.pdf"), width = 10, height = 6.5, onefile = TRUE, useDingbats = FALSE)
+    # Generate all plots for all scenarios with p-values
+    plot_all_scenarios(scenario_data, scenario_labels,
+                       ylim_sr = c(40,100), ylim_abund = c(0,15000))
+# dev.off()
+
+```
+
+## rac
+
+```{r}
+rac(runs = runs$ndd1var5cut1_pdd1var20cut5, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
+rac(runs = runs$ndd1var5cut1_pdd1var20cut3, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
+rac(runs = runs$ndd1var5cut1_pdd0.6var0.1cut1, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
+rac(runs = runs$ndd1var5cut1_pdd0.4var0.1cut3, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
+```
