@@ -1,0 +1,146 @@
+---
+title: "PhyloSim Changes"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tidyverse)
+library(lattice)
+library(ggplot2)
+library(metafor)
+library(MASS)
+library(viridis)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+Here, I try a new approach: i deetect the max range of neighbors in the batch for each runs.
+Eventually, a nDC and pDC = 1 runs will be compared with 28 nieghbors, if in the same batch max DC = 3.
+
+
+## Data preparation
+
+```{r}
+#| eval: false
+
+# load in runs with exp kernel
+runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_DC_problem.rds"))
+```
+
+Here comes two possible different methods: for RNULL getConNeigh sets radius as the maximum DC for nDD or pDD: e.g., if nDC = 1, pDC = 1, only von Neumann neighborhood. If nDC = 3, pDC = 1, it gets 28 circular neighbors.
+
+```{r}
+#| eval: false
+
+# get conspecific neighbors and proper naming
+runsRNULL  <- getConNeigh(runsRaw, radius = 3)            # NOTICE THIS CHANGE !!! for all runs 28 nieghbors are detected.
+```
+
+```{r}
+#| eval: false
+
+namesShort <- names(runsRNULL) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_replace("Cut", "-C") %>% 
+  stringr::str_replace("Cut", "-C") %>% 
+  stringr::str_replace("pdd", "P") %>% 
+  stringr::str_replace("ndd", "N") %>% 
+  stringr::str_replace_all("Var", "-L")
+```
+
+```{r}
+#| eval: false
+
+names(runsRNULL) <- namesShort
+```
+
+```{r}
+#| eval: false
+
+# convert matrices to tabular data. This is done parallel, as it takes longer
+cl <- makeCluster(length(runsRaw))
+clusterExport(cl, c("getMatToTab", "runsRNULL"))
+tab0 <- parLapply(cl = cl, X = runsRNULL, fun = function(x) getMatToTab(x, detailedParams = TRUE))
+# saveRDS(tab0, paste0(root, "local/runs/mstr/20250807/tab0_DC_problem.rds"))
+```
+
+
+```{r}
+# tab0 <- readRDS(paste0(root, "local/runs/mstr/20250807/tab0_DC_problem.rds"))
+```
+
+```{r}
+#|output: false
+
+
+# keep only first timespot in census
+
+cores <- length(tab0)
+cl <- makeCluster(cores)
+
+clusterEvalQ(cl, {
+  library(dplyr)
+})
+
+tab0S <- parLapply(cl, tab0, function(x) {
+  x %>%
+    filter(abund > 100) %>%
+    mutate(specIdCen = paste0(specId, census)) %>%
+    select(-indId)
+})
+
+stopCluster(cl)
+```
+
+# total model (not species wise)
+
+```{r}
+
+cl <- makeCluster(length(tab0S))
+
+clusterExport(cl, c("tab0S"))
+
+mcS_err0 <- parLapply(cl, tab0S, function(x) {
+    
+    mod <- glm(mortNextGen ~ con, data = x, family = binomial())
+    sfm <- summary(mod)$coefficients
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    
+    res <- data.frame(
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      var = vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+    )
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+```{r}
+sapply(mcS_err0, function(x) {
+  c(round(x$mort_change[1], 8), round(x$var.con[2], 8), round(x$coef[1],8))
+})
+```
+
+\[1,\] = con estimate. Notice, after correction the values for c != 1 are comparable with c = 1 scenarios
+
+\[2,\] = con variance. Likely, must be corrected. After, values are comparable here too.
+
+\[3,\] = intercept remains the same, hence, needs no correction
+
+I used the correcture factor also on the variance covariance matrix.
+
+The results are much closer to the C1 only scenarios. Hence, they should be comparable. Differences that are left over probably stem from the simulation itself.

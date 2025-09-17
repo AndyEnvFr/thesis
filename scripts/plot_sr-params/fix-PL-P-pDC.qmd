@@ -37,13 +37,12 @@ runsRaw  <- readRDS(paste0(root, "/local/runs/plot_sr-params/mat/fix-PL-P-pDC.rd
 #| eval: false
 
 # get conspecific neighbors and proper naming
-runsRaw  <- getConNeigh(runsRaw)
+runsRaw  <- getConNeigh(runsRaw, radius = 5)
 ```
 
-
 ```{r}
-# saveRDS(runsRaw, paste0(root, "/local/runs/plot_sr-params/temp/fix-PL-P-pDC_con.rds"))
-runsRaw  <- readRDS(paste0(root, "/local/runs/plot_sr-params/temp/fix-PL-P-pDC_con.rds"))
+saveRDS(runsRaw, paste0(root, "/local/runs/plot_sr-params/temp/fix-PL-P-pDC_conMax.rds"))
+runsRaw  <- readRDS(paste0(root, "/local/runs/plot_sr-params/temp/fix-PL-P-pDC_conMax.rds"))
 ```
 
 ```{r}
@@ -72,7 +71,6 @@ names(runsRaw) <- namesShort
 ```{r}
 S <- getSpecTime(runsRaw, plot = FALSE)
 ```
-
 
 ```{r}
 # Extract mean and sd of species richness
@@ -120,21 +118,44 @@ Sp2_final <- bind_rows(Sp2_filtered, base0_expanded) %>%
 
 ```
 
-
 ```{r}
 #| fig-width: 10
-#| fig-height: 3.5
+#| fig-height: 5
+
+
+# Create the baseline point for each C value
+baseline_unique <- Sp2_final %>% 
+  filter(N == 0 & NL == 20) %>%
+  group_by(C) %>%
+  slice(1) %>%
+  ungroup()
+
+# Create complete dataset including baseline for lines
+# but keep separate datasets for different point styling
+complete_data <- Sp2_final %>% filter(N > 0)
 
 # Plot
-plotNDD <- ggplot(Sp2_final, aes(x = N, y = meanSR, color = factor(NL), group = NL)) +
-  geom_line(size = .8) +
-  geom_point(size = 2, position = position_dodge(width = 0.1)) +
-  geom_errorbar(
-    aes(ymin = meanSR - sdSR, ymax = meanSR + sdSR),
-    width = 0.05,
-    alpha = 1,
-    position = position_dodge(width = 0.1)
-  ) +
+plotNDD <- ggplot() +
+  # Plot lines connecting all points (including baseline)
+  geom_line(data = Sp2_final, 
+            aes(x = N, y = meanSR, color = factor(NL), group = NL), 
+            size = .8) +
+  # Plot colored points for N > 0
+  geom_point(data = complete_data, 
+             aes(x = N, y = meanSR, color = factor(NL)), 
+             size = 2, position = position_dodge(width = 0.1)) +
+  geom_errorbar(data = complete_data,
+                aes(x = N, y = meanSR, color = factor(NL),
+                    ymin = meanSR - sdSR, ymax = meanSR + sdSR),
+                width = 0.05, alpha = 1,
+                position = position_dodge(width = 0.075)) +
+  # Add the baseline points in black (this will overlay the colored points at N=0)
+  geom_point(data = baseline_unique, 
+             aes(x = N, y = meanSR), 
+             color = "black", size = 2, shape = 3) +
+  geom_errorbar(data = baseline_unique,
+                aes(x = N, y = meanSR, ymin = meanSR - sdSR, ymax = meanSR + sdSR),
+                color = "black", width = 0.005, alpha = 1) +
   facet_wrap(~ C, ncol = 3, scales = "fixed",
              labeller = labeller(C = function(x) paste("nDD kernel =", x))) +
   labs(x = "nDD strength",
@@ -144,19 +165,27 @@ plotNDD <- ggplot(Sp2_final, aes(x = N, y = meanSR, color = factor(NL), group = 
   theme(
     strip.background = element_blank(),
     legend.position = "right",
-    strip.text = element_text(size = 15),
+    strip.text = element_text(size = 15, margin = margin(b = -20)),
+    plot.margin = margin(20, 20, 20, 20),
     panel.spacing = unit(1, "lines"),
     axis.title.x = element_text(margin = margin(t = 15)),
-    axis.title.y = element_text(margin = margin(r = 15))
-  )
+    axis.title.y = element_text(margin = margin(r = 15)),
+    panel.grid.major.y = element_line(color = "grey90", size = 0.2),
+    panel.grid.minor.y = element_line(color = "grey95", size = 0.2),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) + 
+  coord_cartesian(clip = "off") +
+  scale_color_viridis_d(option = "plasma") +
+  scale_x_continuous(breaks = seq(0, 1, by = 0.2))
 
 print(plotNDD)
 ```
 
 ```{r}
-pdf(paste0(root, "local/figures/plot_sr-params/nddEffect.pdf"), width = 10, height = 3.5, onefile = TRUE, useDingbats = FALSE)
+# pdf(paste0(root, "local/figures/plot_sr-params/nddEffect.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
 print(plotNDD)
-dev.off()
+# dev.off()
 ```
 
 Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.
@@ -173,22 +202,27 @@ runsFilt <- lapply(runsRaw, function(x){
 })
 
 # convert matrices to tabular data. This is done parallel, as it takes longer
-cl <- makeCluster(length(runsFilt))
+cl <- makeCluster(length(runsFilt)/2)
 clusterExport(cl, c("getMatToTab", "runsFilt"))
 tab <- parLapply(cl = cl, X = runsFilt, fun = function(x) getMatToTab(x, detailedParams = TRUE))
 
-# saveRDS(tab, paste0(root, "local/runs/plot_sr-params/tab/fix-P-PL-nDC.rds"))
+saveRDS(tab, paste0(root, "local/runs/plot_sr-params/tab/fix-P-PL-pDCMax.rds"))
 ```
 
 ```{r}
-tab <- readRDS(paste0(root, "local/runs/plot_sr-params/tab/fix-P-PL-nDC.rds"))
+# tab <- readRDS(paste0(root, "local/runs/plot_sr-params/tab/fix-P-PL-pDC.rds"))
+tab <- readRDS(paste0(root, "local/runs/plot_sr-params/tab/fix-P-PL-pDCMax.rds"))
 ```
 
 ```{r}
 # keep only first timespot in census
 
-cores <- length(tab)
-cl <- makeCluster(cores)
+cores <- length(tab) / 2
+cl <- makeCluster(30)
+
+clusterEvalQ(cl, {
+  library(dplyr)
+})
 
 tabS <- parLapply(cl, tab, function(x) {
   x %>%
@@ -205,8 +239,10 @@ stopCluster(cl)
 ```{r}
 #| eval: false
 
-cl <- makeCluster(length(tabS))
-
+cl <- makeCluster(length(tabS)/2)
+clusterEvalQ(cl, {
+  library(PhyloSim)
+})
 mcS_err <- parLapply(cl, tabS, function(x) {
   specIDs <- unique(x$specIdCen)
   res <- vector("list", length(specIDs))
@@ -216,16 +252,17 @@ mcS_err <- parLapply(cl, tabS, function(x) {
     dat <- x[x$specIdCen == sID, ]
     mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
     sfm <- summary(mod)$coefficients
-    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+    # corFac <- nrow(getCircularOffsets(max(x$pDC, x$nDC))) / 4
+    vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")] # * corFac # correction factor
 
     mort0 <- plogis(coef(mod)[1])
-    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2]) # * corFac) # correction factor
     
     res[[i]] <- list(
       specId = sID,
       abund = dat$abund[1],
       mort_change = mort1 - mort0,
-      coef = coef(mod)[c(1,2)],
+      coef = coef(mod)[c(1,2)], # * c(1, corFac), # correction factor
       vcov = vc
     )
     i <- i + 1
@@ -242,7 +279,7 @@ stopCluster(cl)
 ```{r}
 #| eval: false
 
-cl <- makeCluster(length(mcS_err))
+cl <- makeCluster(length(mcS_err) / 2)
 mcS_err_sim <- parLapply(cl, mcS_err, function(x){
   lapply(x, function(y){
     sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
@@ -318,7 +355,7 @@ dat_meta <- lapply(m4, function(x) {
 ```
 
 ```{r}
-cl <- makeCluster(length(dat_meta))
+cl <- makeCluster(length(dat_meta) / 2)
 clusterExport(cl, varlist = c("dat_meta"), envir = environment())
 
 metamod <- parLapply(cl, dat_meta, function(x) {
@@ -353,12 +390,12 @@ if(any(failed_indices)) {
 
 # deleting one scenario
 
-saveRDS(dat_meta, paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmeta.rds"))
-saveRDS(metamod, paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamod.rds"))
+saveRDS(dat_meta, paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmetaMax.rds"))
+saveRDS(metamod, paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamodMax.rds"))
 
 
-# metamod <- readRDS(paste0(root, "..."))
-# dat_meta <- readRDS(paste0(root, "..."))
+# metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamod.rds"))
+# dat_meta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmeta.rds"))
 ```
 
 ## predictions
@@ -395,7 +432,7 @@ extract_params <- function(nm) {
 }
 
 ## --- bind list to df with parsed params ---
-pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
+pred_df_raw <- do.call(rbind, lapply(seq_along(pred), function(i) {
   df <- pred[[i]]
   pars <- extract_params(names(pred)[i])
   df$scenario <- names(pred)[i]
@@ -405,26 +442,29 @@ pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
   df
 }))
 
+
 ## --- normalize predict() columns ---
-if ("pred" %in% names(pred_df))   names(pred_df)[names(pred_df)=="pred"]   <- "fitted"
-if ("fit"  %in% names(pred_df))   names(pred_df)[names(pred_df)=="fit"]    <- "fitted"
-if ("ci.lb" %in% names(pred_df))  pred_df$ci_lower <- pred_df$ci.lb
-if ("ci.ub" %in% names(pred_df))  pred_df$ci_upper <- pred_df$ci.ub
+if ("pred" %in% names(pred_df_raw))   names(pred_df_raw)[names(pred_df_raw)=="pred"]   <- "fitted"
+if ("fit"  %in% names(pred_df_raw))   names(pred_df_raw)[names(pred_df_raw)=="fit"]    <- "fitted"
+if ("ci.lb" %in% names(pred_df_raw))  pred_df_raw$ci_lower <- pred_df_raw$ci.lb
+if ("ci.ub" %in% names(pred_df_raw))  pred_df_raw$ci_upper <- pred_df_raw$ci.ub
+
+pred_df <- pred_df_raw %>% filter(N != 0)
 
 ## --- null model (overlay on every plot) ---
 null_nameC1 <- "P1-L5-C1_N0-L20-C1"
-if (null_nameC1 %in% pred_df$scenario) {
-  null_dataC1 <- pred_df[pred_df$scenario == null_nameC1, ]
+if (null_nameC1 %in% pred_df_raw$scenario) {
+  null_dataC1 <- pred_df_raw[pred_df_raw$scenario == null_nameC1, ]
 } 
 #---
 null_nameC3 <- "P1-L5-C1_N0-L20-C3"
-if (null_nameC3 %in% pred_df$scenario) {
-  null_dataC3 <- pred_df[pred_df$scenario == null_nameC3, ]
+if (null_nameC3 %in% pred_df_raw$scenario) {
+  null_dataC3 <- pred_df_raw[pred_df_raw$scenario == null_nameC3, ]
 }
 #---
 null_nameC5 <- "P1-L5-C1_N0-L20-C5"
-if (null_nameC5 %in% pred_df$scenario) {
-  null_dataC5 <- pred_df[pred_df$scenario == null_nameC5, ]
+if (null_nameC5 %in% pred_df_raw$scenario) {
+  null_dataC5 <- pred_df_raw[pred_df_raw$scenario == null_nameC5, ]
 } 
 
 ## --- build separate plots per (NL, C), lines = N levels ---
@@ -488,7 +528,7 @@ for (i in seq_len(nrow(combos))) {
     scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
     labs(title = paste0("NL = ", nl_i, ", C = ", c_i,
                         "   (N-lines: ", length(unique(dat$N)), ")"),
-         x = "Abundance per Census",
+         x = "Abundance",
          y = "Mortality Change",
          color = "N") +
     theme_minimal(base_size = 12) +
@@ -496,35 +536,44 @@ for (i in seq_len(nrow(combos))) {
           plot.title = element_text(size = 14, hjust = 0.5))
 
   # set y-range depending on C
+  # if (c_i == 1) {
+  #   p <- p + coord_cartesian(ylim = c(-0.007, 0.007))
+  # } else if (c_i == 3) {
+  #   p <- p + coord_cartesian(ylim = c(-0.002, 0.002))
+  # } else if (c_i == 5) {
+  #   p <- p + coord_cartesian(ylim = c(-0.00075, 0.00075))
+  # }
+  # set y-range depending on C
   if (c_i == 1) {
-    p <- p + coord_cartesian(ylim = c(-0.007, 0.007))
+    p <- p + coord_cartesian(ylim = c(-0.0004, 0.0008))
   } else if (c_i == 3) {
-    p <- p + coord_cartesian(ylim = c(-0.002, 0.002))
+    p <- p + coord_cartesian(ylim = c(-0.0004, 0.0008))
   } else if (c_i == 5) {
-    p <- p + coord_cartesian(ylim = c(-0.00075, 0.00075))
+    p <- p + coord_cartesian(ylim = c(-0.0004, 0.0008))
   }
+  
   # C1 keeps automatic scaling
 
   plots_list[[i]] <- p
 }
 
-lapply(plots_list, print)
+sapply(plots_list, print)
 ```
-
 
 ## save PDF
 
 ```{r}
-pdf(paste0(root, "local/figures/plot_sr-params/nddSlope.pdf"), width = 6, height = 6, onefile = TRUE, useDingbats = FALSE)
-lapply(plots_list, print)   # each print() → new page
+pdf(paste0(root, "local/figures/plot_sr-params/nddSlopeMax.pdf"), width = 6, height = 6, onefile = TRUE, useDingbats = FALSE)
+sapply(plots_list, print)   # each print() → new page
 dev.off()
 ```
+
 
 # compare correlation (slope) with max species abundance and SR
 
 ```{r}
-datmeta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmeta.rds"))
-metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamod.rds"))
+datmeta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmetaMax.rds"))
+metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamodMax.rds"))
 runs <- readRDS(paste0(root, "local/runs/plot_sr-params/mat/fix-PL-P-pDC.rds"))
 ```
 
@@ -598,55 +647,6 @@ resC3 <- res %>%
   dplyr::filter(grepl("_N.*-C3$", param))
 resC5 <- res %>%
   dplyr::filter(grepl("_N.*-C5$", param))
-```
-
-```{r}
-#| fig-width: 8
-#| fig-height: 5
-
-## helper function: fit lm + glm, plot both panels
-plot_scen <- function(dat, tag, ylim_sr = c(40,90), ylim_abund = NULL) {
-  # models
-  fm1 <- lm(meanSR ~ slope, data = dat)
-  fm2 <- glm(abund ~ slope, data = dat, family = "poisson")
-  newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
-  predi  <- predict(fm1, newdata = newdat, se.fit = TRUE)
-  predii <- predict(fm2, newdata = newdat, se.fit = TRUE, type = "response")
-
-  ## SR plot
-  plot(x = dat$slope, y = dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue",
-       xlab = "mortality change ~ abundance: slope", ylab = "mean species richness",
-       main = paste0("Scenario ", tag))
-  points(x = dat$slope, y = dat$medianSR, pch = 16, col = "red")
-  arrows(x0 = dat$slope, y0 = dat$meanSR - dat$sdSR,
-         x1 = dat$slope, y1 = dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05)
-  lines(newdat$slope, predi$fit, lwd = 2 , col = 1)
-  lines(newdat$slope, predi$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  lines(newdat$slope, predi$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("topright", legend = c("mean SR", "median SR", "fitted lm", "CI"),
-         pch = c(16,16,NA,NA), lty = c(NA,NA,1,2), col = c(4,2,1,1), bty = "n")
-
-  ## Abundance plot
-  plot(x = dat$slope, y = dat$abund, pch = 16, col = 1,
-       xlab = "mortality change ~ abundance: slope", ylab = "max abundance",
-       main = paste0("Scenario ", tag),
-       ylim = ylim_abund)
-  lines(newdat$slope, predii$fit, lwd = 2, col = 1)
-  lines(newdat$slope, predii$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  lines(newdat$slope, predii$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = "grey")
-  legend("topleft", legend = c("abund", "fitted glm pois", "CI"),
-         pch = c(16,NA,NA), lty = c(NA,1,2), col = c(1,1,1), bty = "n")
-
-}
-
-## plot all
-par(mfrow = c(2,2))  # adjust layout as you like
-
-plot_scen(resC1, "C1", ylim_sr = c(40,100), ylim_abund = c(0,15000))
-plot_scen(resC3, "C3", ylim_sr = c(40,100), ylim_abund = c(0,15000))
-plot_scen(resC5, "C5", ylim_sr = c(40,100), ylim_abund = c(0,15000))
-
 ```
 
 ```{r}
@@ -848,12 +848,260 @@ scenario_labels <- c("C1", "C3", "C5")
     # Generate all plots for all scenarios with p-values
     plot_all_scenarios(scenario_data, scenario_labels, 
                        ylim_sr = c(40,100), ylim_abund = c(0,15000))
+    plot_all_scenarios(list(res), "all_data", 
+                       ylim_sr = c(40,100), ylim_abund = c(0,15000))
 # dev.off()
 
 ```
-```{r}
-pdf(paste0(root, "local/figures/plot_sr-params/nddSupplPlots.pdf"), width = 6, height = 6, onefile = TRUE, useDingbats = FALSE)
 
+
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+
+# Parse the param column to extract N, NL, and C values
+res_parsed <- res %>%
+  # Split the param column at the underscore to get the two parts
+  separate(param, into = c("part1", "part2"), sep = "_", remove = FALSE) %>%
+  # Extract N, NL, C from first part (P1-L5-C1 format)
+  extract(part1, into = c("P1", "L1", "C1"), regex = "P([0-9]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
+  # Extract N, NL, C from second part (N0-L20-C1 format)
+  extract(part2, into = c("N", "NL", "C"), regex = "N([0-9.]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
+  # Convert to numeric
+  mutate(
+    N = as.numeric(N),
+    NL = as.numeric(NL),
+    C = as.numeric(C)
+  ) #%>%
+  # Remove the temporary columns we don't need
+  # select(-part1, -part2, -P1, -L1, -C1)
+
+# Check the parsed data
+print("Parsed data structure:")
+print(head(res_parsed))
+
+# Get the N=0 baseline (assuming it exists for NL=20)
+base0 <- res_parsed %>% filter(N == 0, NL == 20)
+
+# All NL values present in the data
+all_NL <- sort(unique(res_parsed$NL))
+
+# For each C value, replicate the N=0 point across all NL values if needed
+if(nrow(base0) > 0) {
+  base0_expanded <- do.call(rbind, lapply(unique(base0$C), function(c_val) {
+    base_c <- base0[base0$C == c_val, ]
+    expanded <- base_c[rep(1, length(all_NL)), ]
+    expanded$NL <- all_NL
+    return(expanded)
+  }))
+  
+  # Remove the original N=0, NL=20 entries to avoid duplicates
+  res_filtered <- res_parsed %>% filter(!(N == 0 & NL == 20))
+  
+  # Bind expanded baseline back
+  res_final <- bind_rows(res_filtered, base0_expanded) %>% 
+    mutate(sdMC = case_when(
+      N == 0 & NL != 20 ~ NA_real_,
+      TRUE ~ sdMC
+    ))
+} else {
+  # If no N=0 baseline exists, use the original data
+  res_final <- res_parsed
+}
+
+# Create the baseline point for each C value (if they exist)
+baseline_unique <- res_final %>% 
+  filter(N == 0) %>%
+  group_by(C) %>%
+  slice(1) %>%
+  ungroup()
+
+# Create complete dataset for points (N > 0)
+complete_data <- res_final %>% filter(N > 0)
+
+# Create the plot
+plotNDD_MC <- ggplot() +
+  # Plot lines connecting all points (including baseline)
+  geom_line(data = res_final, 
+            aes(x = N, y = meanMC, color = factor(NL), group = NL), 
+            size = 0.8) +
+  # Plot colored points for N > 0
+  geom_point(data = complete_data, 
+             aes(x = N, y = meanMC, color = factor(NL)), 
+             size = 2, position = position_dodge(width = 0.05)) +
+  geom_errorbar(data = complete_data,
+                aes(x = N, y = meanMC, color = factor(NL),
+                    ymin = meanMC - sdMC, ymax = meanMC + sdMC),
+                width = 0.05, alpha = 1,
+                position = position_dodge(width = 0.05)) +
+  # Add baseline points if they exist
+  {if(nrow(baseline_unique) > 0) {
+    list(
+      geom_point(data = baseline_unique, 
+                 aes(x = N, y = meanMC), 
+                 color = "black", size = 4, shape = 3),
+      geom_errorbar(data = baseline_unique,
+                    aes(x = N, y = meanMC, ymin = meanMC - sdMC, ymax = meanMC + sdMC),
+                    color = "black", width = 0.005, alpha = 1)
+    )
+  }} +
+  facet_wrap(~ C, ncol = 3, scales = "fixed",
+             labeller = labeller(C = function(x) paste("nDD kernel =", x))) +
+  labs(x = "nDD strength",
+       y = "mean stabilizing CDD",
+       color = "nDD\nspecificity") +
+  theme_classic(base_size = 16) +
+  theme(
+    strip.background = element_blank(),
+    legend.position = "right",
+    strip.text = element_text(size = 15, margin = margin(b = -0)),
+    plot.margin = margin(20, 20, 20, 20),
+    panel.spacing = unit(1, "lines"),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15)),
+    panel.grid.major.y = element_line(color = "grey90", size = 0.2),
+    panel.grid.minor.y = element_line(color = "grey95", size = 0.2),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) + 
+  coord_cartesian(clip = "off") +
+  scale_color_viridis_d(option = "plasma") +
+  scale_x_continuous(breaks = seq(0, 1, by = 0.2)) + 
+    geom_hline(
+    data = baseline_unique,
+    aes(yintercept = meanMC),
+    linetype = "dashed",
+    color = "black"
+  )
+
+print(plotNDD_MC)
+
+```
+```{r}
+pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnMC.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
+print(plotNDD_MC)
 dev.off()
 ```
 
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+
+# Parse the param column to extract N, NL, and C values
+res_parsed <- res %>%
+  # Split the param column at the underscore to get the two parts
+  separate(param, into = c("part1", "part2"), sep = "_", remove = FALSE) %>%
+  # Extract N, NL, C from first part (P1-L5-C1 format)
+  extract(part1, into = c("P1", "L1", "C1"), regex = "P([0-9]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
+  # Extract N, NL, C from second part (N0-L20-C1 format)
+  extract(part2, into = c("N", "NL", "C"), regex = "N([0-9.]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
+  # Convert to numeric
+  mutate(
+    N = as.numeric(N),
+    NL = as.numeric(NL),
+    C = as.numeric(C)
+  ) #%>%
+  # Remove the temporary columns we don't need
+  # select(-part1, -part2, -P1, -L1, -C1)
+
+# Check the parsed data
+print("Parsed data structure:")
+print(head(res_parsed))
+
+# Get the N=0 baseline (assuming it exists for NL=20)
+base0 <- res_parsed %>% filter(N == 0, NL == 20)
+
+# All NL values present in the data
+all_NL <- sort(unique(res_parsed$NL))
+
+# For each C value, replicate the N=0 point across all NL values if needed
+if(nrow(base0) > 0) {
+  base0_expanded <- do.call(rbind, lapply(unique(base0$C), function(c_val) {
+    base_c <- base0[base0$C == c_val, ]
+    expanded <- base_c[rep(1, length(all_NL)), ]
+    expanded$NL <- all_NL
+    return(expanded)
+  }))
+  
+  # Remove the original N=0, NL=20 entries to avoid duplicates
+  res_filtered <- res_parsed %>% filter(!(N == 0 & NL == 20))
+  
+  # Bind expanded baseline back
+  res_final <- bind_rows(res_filtered, base0_expanded) %>% 
+    mutate(sdSR = case_when(
+      N == 0 & NL != 20 ~ NA_real_,
+      TRUE ~ sdSR
+    ))
+} else {
+  # If no N=0 baseline exists, use the original data
+  res_final <- res_parsed
+}
+
+# Create the baseline point for each C value (if they exist)
+baseline_unique <- res_final %>% 
+  filter(N == 0) %>%
+  group_by(C) %>%
+  slice(1) %>%
+  ungroup()
+
+# Create complete dataset for points (N > 0)
+complete_data <- res_final %>% filter(N > 0)
+
+# Create the plot
+plotNDD_SR <- ggplot() +
+  # Plot lines connecting all points (including baseline)
+  geom_line(data = res_final, 
+            aes(x = N, y = meanSR, color = factor(NL), group = NL), 
+            size = 0.8) +
+  # Plot colored points for N > 0
+  geom_point(data = complete_data, 
+             aes(x = N, y = meanSR, color = factor(NL)), 
+             size = 2, position = position_dodge(width = 0.05)) +
+  geom_errorbar(data = complete_data,
+                aes(x = N, y = meanSR, color = factor(NL),
+                    ymin = meanSR - sdSR, ymax = meanSR + sdSR),
+                width = 0.05, alpha = 1,
+                position = position_dodge(width = 0.05)) +
+  # Add baseline points if they exist
+  {if(nrow(baseline_unique) > 0) {
+    list(
+      geom_point(data = baseline_unique, 
+                 aes(x = N, y = meanSR), 
+                 color = "black", size = 4, shape = 3),
+      geom_errorbar(data = baseline_unique,
+                    aes(x = N, y = meanSR, ymin = meanSR - sdSR, ymax = meanSR + sdSR),
+                    color = "black", width = 0.005, alpha = 1)
+    )
+  }} +
+  facet_wrap(~ C, ncol = 3, scales = "fixed",
+             labeller = labeller(C = function(x) paste("nDD kernel =", x))) +
+  labs(x = "nDD strength",
+       y = "mean stabilizing CDD",
+       color = "nDD\nspecificity") +
+  theme_classic(base_size = 16) +
+  theme(
+    strip.background = element_blank(),
+    legend.position = "right",
+    strip.text = element_text(size = 15, margin = margin(b = -20)),
+    plot.margin = margin(20, 20, 20, 20),
+    panel.spacing = unit(1, "lines"),
+    axis.title.x = element_text(margin = margin(t = 15)),
+    axis.title.y = element_text(margin = margin(r = 15)),
+    panel.grid.major.y = element_line(color = "grey90", size = 0.2),
+    panel.grid.minor.y = element_line(color = "grey95", size = 0.2),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()
+  ) + 
+  coord_cartesian(clip = "off") +
+  scale_color_viridis_d(option = "plasma") +
+  scale_x_continuous(breaks = seq(0, 1, by = 0.2)) 
+
+print(plotNDD_SR)
+
+```
+
+```{r}
+pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnSR.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
+print(plotNDD_SR)
+dev.off()
+```

@@ -36,8 +36,8 @@ Runs are not comparable, if they have different DC!
 runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250807/runs_DC_problem.rds"))
 ```
 
-Here comes two possible different methods:
-    for RNULL getConNeigh sets radius as the maximum DC for nDD or pDD: e.g., if nDC = 1, pDC = 1, only von Neumann neighborhood. If nDC = 3, pDC = 1, it gets 28 circular neighbors.
+Here comes two possible different methods: for RNULL getConNeigh sets radius as the maximum DC for nDD or pDD: e.g., if nDC = 1, pDC = 1, only von Neumann neighborhood. If nDC = 3, pDC = 1, it gets 28 circular neighbors.
+
 ```{r}
 #| eval: false
 
@@ -118,7 +118,8 @@ mcS_err0 <- parLapply(cl, tab0S, function(x) {
     
     res <- data.frame(
       mort_change = mort1 - mort0,
-      coef = coef(mod)[c(1,2)]
+      coef = coef(mod)[c(1,2)],
+      var = vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
     )
   return(res)
 })
@@ -148,7 +149,8 @@ mcS_err0_corrected <- parLapply(cl, tab0S, function(x) {
     
     res <- data.frame(
       mort_change = mort1 - mort0,
-      coef = coef(mod)[c(1,2)]
+      coef = coef(mod)[c(1,2)],
+      var = vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")] * corFac
     )
   return(res)
 })
@@ -157,35 +159,19 @@ mcS_err0_corrected <- parLapply(cl, tab0S, function(x) {
 stopCluster(cl)
 ```
 
-
 ```{r}
-sapply(mcS_err0_corrected, function(x){
-  return(round(x$mort_change[1],8))
-})
-```
-```{r}
-sapply(mcS_err0, function(x){
-  return(round(x$mort_change[1],8))
+sapply(mcS_err0_corrected, function(x) {
+  c(round(x$mort_change[1], 8), round(x$var.con[2], 8))
 })
 ```
 
-While for the C3C3 run the corFac could compensate for the effects of different neihgborhoods, for the C3C1 run this was not possible, because the corFac corrects for both, nDD and pDD and they have different kernels here. 
+```{r}
+sapply(mcS_err0, function(x) {
+  c(round(x$mort_change[1], 8), round(x$var.con[2], 8))
+})
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+While for the C3C3 run the corFac could compensate for the effects of different neihgborhoods, for the C3C1 run this was not possible, because the corFac corrects for both, nDD and pDD and they have different kernels here.
 
 # code below probably not needed
 

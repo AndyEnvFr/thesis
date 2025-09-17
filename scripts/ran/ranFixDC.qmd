@@ -22,7 +22,7 @@ library(viridis)
 root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
 
-Data is portioned in 3 50-fold-batches for better handling. Therefore, the analysis is repeated three times ranRuns_[i,ii,iii].rds
+Data is portioned in 3 50-fold-batches for better handling. Therefore, the analysis is repeated three times ranRuns\_\[i,ii,iii\].rds
 
 ## Data preparation
 
@@ -66,7 +66,6 @@ names(runsRaw) <- namesShort
 ```{r}
 S <- getSpecTime(runsRaw, plot = TRUE)
 ```
-
 
 Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.
 
@@ -867,11 +866,13 @@ combined_plot <- grid.arrange(
 # ggsave(paste0(root, "local/figures/ran/meanSR_slope_CV_iii.pdf"), plot2, width = 10, height = 6, dpi = 300)
 # ggsave(paste0(root, "local/figures/ran/meanSR_params_iii.pdf"), combined_plot, width = 15, height = 10, dpi = 300)
 ```
+
 ```{r}
 saveRDS(res, paste0(root, "/local/runs/mstr/20250903/ranRes_i.rds"))
 ```
 
 #all results combined
+
 ```{r}
 resi <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRes_i.rds"))
 resii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRes_ii.rds"))
@@ -879,7 +880,6 @@ resiii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRes_iii.rds"))
 
 res_all <- rbind(resi,resii,resiii)
 ```
-
 
 ```{r}
 # filter by scenarios
@@ -1112,7 +1112,6 @@ pdf(paste0(root, "local/figures/ran/ran_all.pdf"), width = 10, height = 6.5, one
 dev.off()
 
 ```
-
 
 ## mutlidemsional plots
 

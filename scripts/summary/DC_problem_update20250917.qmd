@@ -1,0 +1,143 @@
+---
+title: "PhyloSim Changes"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tidyverse)
+library(lattice)
+library(ggplot2)
+library(metafor)
+library(MASS)
+library(viridis)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+Here I show, that a corrector factor can account for the different density Cut (i.e., range kernel) for nDD and pDD.
+
+The corrector factor is calculated as follows
+
+in a c=1 scenario only, the effect is spread on 4 neighbors and we calculate the effect of only 1/4 of all neighbors, i.e., 1 (con estimate * 1) .
+
+as soon as either nDD or pDD has c>1 the effect is spread on multiple neighbors. On how many can be checked with the function: getCirularOffset(c).
+
+Then we must correct for the new number of neighbors / 4, here the effect of 1/4 of all neighbors includes 7 neighbors. Therefore, we correct as follows: (con estimate * 7)
+
+```{r}
+tab0 <- readRDS(paste0(root, "local/runs/mstr/20250807/tab0_DC_problem.rds"))
+```
+
+```{r}
+#|output: false
+
+
+# keep only first timespot in census
+
+cores <- length(tab0)
+cl <- makeCluster(cores)
+
+clusterEvalQ(cl, {
+  library(dplyr)
+})
+
+tab0S <- parLapply(cl, tab0, function(x) {
+  x %>%
+    filter(abund > 100) %>%
+    mutate(specIdCen = paste0(specId, census)) %>%
+    select(-indId)
+})
+
+stopCluster(cl)
+```
+
+# total model (not species wise)
+
+```{r}
+
+cl <- makeCluster(length(tab0S))
+
+clusterExport(cl, c("tab0S"))
+
+mcS_err0 <- parLapply(cl, tab0S, function(x) {
+    
+    mod <- glm(mortNextGen ~ con, data = x, family = binomial())
+    sfm <- summary(mod)$coefficients
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    
+    res <- data.frame(
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      var = vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+    )
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+```{r}
+
+cl <- makeCluster(length(tab0S))
+
+clusterExport(cl, c("tab0S"))
+
+mcS_err0_corrected <- parLapply(cl, tab0S, function(x) {
+    
+    if (x$nDC[1] != 1 | x$pDC[1] != 1) {
+      kernel <- max(x$nDC[1], x$pDC[1])
+      corFac <- nrow(PhyloSim::getCircularOffsets(kernel)) / 4
+    } else {corFac <- 1}
+    
+    mod <- glm(mortNextGen ~ con, data = x, family = binomial())
+    sfm <- summary(mod)$coefficients
+
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2] * corFac)
+    
+    res <- data.frame(
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[c(1,2)],
+      var = vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")] * corFac
+    )
+  return(res)
+})
+
+# Stop the cluster
+stopCluster(cl)
+```
+
+```{r}
+sapply(mcS_err0_corrected, function(x) {
+  c(round(x$mort_change[1], 8), round(x$var.con[2], 8), round(x$coef[1],8))
+})
+```
+
+```{r}
+sapply(mcS_err0, function(x) {
+  c(round(x$mort_change[1], 8), round(x$var.con[2], 8), round(x$coef[1],8))
+})
+```
+
+[1,] = con estimate. Notice, after correction the values for c != 1 are comparable with c = 1 scenarios
+
+[2,] = con variance. Likely, must be corrected. After, values are comparable here too.
+
+[3,] = intercept remains the same, hence, needs no correction     
+
+I used the correcture factor also on the variance covariance matrix.
+
+The results are much closer to the C1 only scenarios. Hence, they should be comparable. Differences that are left over probably stem from the simulation itself.
+
