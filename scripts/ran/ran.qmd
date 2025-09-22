@@ -29,14 +29,14 @@ Data is portioned in 3 50-fold-batches for better handling. Therefore, the analy
 ```{r}
 #| eval: false
 
-runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRuns_iii.rds"))
+runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRuns_i.rds"))
 ```
 
 ```{r}
 #| eval: false
 
 # get conspecific neighbors and proper naming
-runsRaw  <- getConNeigh(runsRaw)
+# runsRaw  <- getConNeigh(runsRaw, radius = 5)
 ```
 
 ```{r}
@@ -61,6 +61,7 @@ namesShort <- names(runsRaw) %>%
 
 ```{r}
 names(runsRaw) <- namesShort
+class(runsRaw) <- "PhylosimList"
 ```
 
 ```{r}
@@ -84,14 +85,14 @@ stopCluster(cl)
 ```
 
 ```{r}
-tab <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranTab_i.rds"))
+tab <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranTab_iii.rds"))
 ```
 
 ```{r}
 # keep only first timespot in census
 
 cores <- length(tab)
-cl <- makeCluster(cores)
+cl <- makeCluster(25)
 
 clusterEvalQ(cl, {
   library(dplyr)
@@ -112,7 +113,7 @@ stopCluster(cl)
 ```{r}
 #| eval: false
 
-cl <- makeCluster(length(tabS))
+cl <- makeCluster(25)
 
 mcS_err <- parLapply(cl, tabS, function(x) {
   specIDs <- unique(x$specIdCen)
@@ -149,7 +150,7 @@ stopCluster(cl)
 ```{r}
 #| eval: false
 
-cl <- makeCluster(length(mcS_err))
+cl <- makeCluster(25)
 mcS_err_sim <- parLapply(cl, mcS_err, function(x){
   lapply(x, function(y){
     sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
@@ -260,8 +261,8 @@ if(any(failed_indices)) {
 
 # deleting one scenario
 
-saveRDS(dat_meta, paste0(root, "/local/runs/mstr/20250903/ranDatmeta_i.rds"))
-saveRDS(metamod, paste0(root, "/local/runs/mstr/20250903/ranMetamod_i.rds"))
+saveRDS(dat_meta, paste0(root, "/local/runs/mstr/20250903/ranDatmetaMax_iii.rds"))
+saveRDS(metamod, paste0(root, "/local/runs/mstr/20250903/ranMetamodMax_iii.rds"))
 
 
 # metamod <- readRDS(paste0(root, "..."))
@@ -432,15 +433,15 @@ lapply(plots_list, print)
 ```{r}
 # pdf(paste0(root, "local/figures/plot_sr-params/pddSlope.pdf"), width = 5, height = 5, onefile = TRUE, useDingbats = FALSE)
 lapply(plots_list, print)   # each print() → new page
-dev.off()
+# dev.off()
 ```
 
 # compare correlation (slope) with max species abundance and SR
 
 ```{r}
-datmeta <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranDatmeta_i.rds"))
-metamod <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranMetamod_i.rds"))
-runs <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRuns_i.rds"))
+datmeta <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranDatmetaMax_iii.rds"))
+metamod <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranMetamodMax_iii.rds"))
+runs <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRuns_iii.rds"))
 
 pred <- lapply(datmeta, function(x){
   expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
@@ -868,14 +869,14 @@ combined_plot <- grid.arrange(
 # ggsave(paste0(root, "local/figures/ran/meanSR_params_iii.pdf"), combined_plot, width = 15, height = 10, dpi = 300)
 ```
 ```{r}
-saveRDS(res, paste0(root, "/local/runs/mstr/20250903/ranRes_i.rds"))
+saveRDS(res, paste0(root, "/local/runs/mstr/20250903/ranResMax_iii.rds"))
 ```
 
 #all results combined
 ```{r}
-resi <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRes_i.rds"))
-resii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRes_ii.rds"))
-resiii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRes_iii.rds"))
+resi <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResMax_i.rds"))
+resii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResMax_ii.rds"))
+resiii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResMax_iii.rds"))
 
 res_all <- rbind(resi,resii,resiii)
 ```
@@ -1101,13 +1102,19 @@ scenario_dataP <- list(resPC1, resPC2, resPC3, resPC4, resPC5)
 scenario_labelsP <- c("pC1","pC2", "pC3","pC4", "pC5")
 scenario_dataN <- list(resNC1,resNC2, resNC3,resNC4, resNC5)
 scenario_labelsN <- c("nC1","nC2", "nC3","nC4", "nC5")
+scenario_labelsP <- c("pC1","pC2", "pC3","pC4", "pC5")
+
+scenario_all <- list(res_all)
+scenario_label_all <- c("all")
 
 
-pdf(paste0(root, "local/figures/ran/ran_all.pdf"), width = 10, height = 6.5, onefile = TRUE, useDingbats = FALSE)
+pdf(paste0(root, "local/figures/ran/ran_allMax.pdf"), width = 10, height = 6.5, onefile = TRUE, useDingbats = FALSE)
     # Generate all plots for all scenarios with p-values
     plot_all_scenarios(scenario_dataP, scenario_labelsP, 
                        ylim_sr = c(40,100), ylim_abund = c(0,15000))
     plot_all_scenarios(scenario_dataN, scenario_labelsN, 
+                       ylim_sr = c(40,100), ylim_abund = c(0,15000))
+    plot_all_scenarios(scenario_all, scenario_label_all, 
                        ylim_sr = c(40,100), ylim_abund = c(0,15000))
 dev.off()
 
@@ -1199,22 +1206,46 @@ plot5 <- ggplot(res_extended, aes(x = PC, y = NC, color = meanSR)) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
+# 6. NEW: Plot P vs PL, colored by meanSR
+plot6 <- ggplot(res_extended, aes(x = P, y = PL, color = meanSR)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_viridis_c(name = "Mean SR") +
+  labs(title = "P vs PL (colored by Mean SR)",
+       x = "P parameter",
+       y = "PL parameter") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# 7. NEW: Plot N vs NL, colored by meanSR
+plot7 <- ggplot(res_extended, aes(x = N, y = NL, color = meanSR)) +
+  geom_point(size = 3, alpha = 0.7) +
+  scale_color_viridis_c(name = "Mean SR") +
+  labs(title = "N vs NL (colored by Mean SR)",
+       x = "N parameter",
+       y = "NL parameter") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5))
+
 # Display plots
 print(plot1)
 print(plot2)
 print(plot3)
 print(plot4)
 print(plot5)
+print(plot6)  # New plot
+print(plot7)  # New plot
 
 # If you want to save all plots in one figure
 combined_plot <- grid.arrange(
-  plot3, plot4, plot5,
-  ncol = 2, nrow = 2,
+  plot3, plot4, plot5,plot6, plot7,
+  ncol = 3, nrow = 2,
   top = "Parameter Relationships"
 )
 
 # Save plots if needed
-ggsave(paste0(root, "local/figures/ran/meanSR_slope_int_all.pdf"), plot1, width = 10, height = 6, dpi = 300)
-ggsave(paste0(root, "local/figures/ran/meanSR_slope_CV_all.pdf"), plot2, width = 10, height = 6, dpi = 300)
-ggsave(paste0(root, "local/figures/ran/meanSR_params_all.pdf"), combined_plot, width = 15, height = 10, dpi = 300)
+# ggsave(paste0(root, "local/figures/ran/meanSR_slope_int_allMax.pdf"), plot1, width = 10, height = 6, dpi = 300)
+# ggsave(paste0(root, "local/figures/ran/meanSR_slope_CV_allMax.pdf"), plot2, width = 10, height = 6, dpi = 300)
+# ggsave(paste0(root, "local/figures/ran/meanSR_params_allMax.pdf"), combined_plot, width = 15, height = 10, dpi = 300)
+
 ```
+

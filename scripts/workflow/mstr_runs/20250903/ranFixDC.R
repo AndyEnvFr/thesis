@@ -4,7 +4,7 @@ library(parallel)
 # root <- "~/Uni/Master/MA/"
 root <- "~/cyber_synch/"
 
-set.seed(NULL)
+set.seed(5489122)
 
 draws <- 150
 
@@ -60,7 +60,7 @@ for (j in seq_along(param_blocks)) {
   )
   
   out_file <- sprintf("ranRunsFixDC_%s.rds",
-                      c("i","ii","iii")[j])
+                      c("ii","iii","iv")[j])
   
   saveRDS(runz, file.path(root, "local/runs/mstr/20250903", out_file))
 }

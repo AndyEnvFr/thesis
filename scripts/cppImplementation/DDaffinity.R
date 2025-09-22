@@ -108,15 +108,15 @@ nicheWidthFunction <- function(x, lambda = 1, factor = 20) {
 # -----------------------------------------------------------------------------------------------------------------
 
 # why factor 20 ?
-par(mfrow = c(1,2), mar = c(6,6,6,1))
-plot(nicheWidthFunction(seq(0,.2,0.001),lambda = 20, factor = 20), type = "l",
-     x = seq(0,.2,0.001), xlab = "difference", ylab = "lambda", main = "factor 20")
-lines(nicheWidthFunction(seq(0,.2,0.001), lambda = 10, factor = 20),x = seq(0,.2,0.001))
-lines(nicheWidthFunction(seq(0,.2,0.001),lambda = 5, factor = 20), x = seq(0,.2,0.001))
-lines(nicheWidthFunction(seq(0,.2,0.001),lambda = 2, factor = 20), x = seq(0,.2,0.001))
-lines(nicheWidthFunction(seq(0,.2,0.001),lambda = 1, factor = 20), x = seq(0,.2,0.001))
-lines(nicheWidthFunction(seq(0,.2,0.001),lambda = .5, factor = 20), x = seq(0,.2,0.001))
-lines(nicheWidthFunction(seq(0,.2,0.001),lambda = .01, factor = 20), x = seq(0,.2,0.001))
+par(mfrow = c(1,1), mar = c(6,6,6,1))
+plot(nicheWidthFunction(seq(0,1,0.001),lambda = 20, factor = 20), type = "l",
+     x = seq(0,1,0.001), xlab = "difference", ylab = "lambda", main = "factor 20")
+lines(nicheWidthFunction(seq(0,1,0.001), lambda = 10, factor = 20),x = seq(0,1,0.001))
+lines(nicheWidthFunction(seq(0,1,0.001),lambda = 5, factor = 20), x = seq(0,1,0.001))
+lines(nicheWidthFunction(seq(0,1,0.001),lambda = 2, factor = 20), x = seq(0,1,0.001))
+lines(nicheWidthFunction(seq(0,1,0.001),lambda = 1, factor = 20), x = seq(0,1,0.001))
+lines(nicheWidthFunction(seq(0,1,0.001),lambda = .5, factor = 20), x = seq(0,1,0.001))
+lines(nicheWidthFunction(seq(0,1,0.001),lambda = .01, factor = 20), x = seq(0,1,0.001))
 abline(v = 0.04, lty = 3)
 abline(v = 0.15, lty = 1, col = "red" )
 

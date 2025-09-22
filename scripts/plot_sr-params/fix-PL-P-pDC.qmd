@@ -578,6 +578,54 @@ runs <- readRDS(paste0(root, "local/runs/plot_sr-params/mat/fix-PL-P-pDC.rds"))
 ```
 
 ```{r}
+
+namesShort <- names(datmeta) %>%
+  stringr::str_remove("_disp.+") %>% 
+  stringr::str_replace("Cut", "-C") %>% 
+  stringr::str_replace("Cut", "-C") %>% 
+  stringr::str_replace("pdd", "P") %>% 
+  stringr::str_replace("ndd", "N") %>% 
+  stringr::str_replace_all("Var", "-L")
+
+
+pred <- lapply(datmeta, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 1000))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_N)
+  x
+})
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamod[[i]]
+  cbind(x, predict(object = y, newmods = x$log_N))
+})
+names(pred) <- namesShort   # <- your vector like the one you listed
+
+## --- helper: parse N, NL, C from the *second* chunk (ignore P-part) ---
+extract_params <- function(nm) {
+  # expect "P1-L5-C1_N0.2-L10-C3"
+  rhs <- sub(".*_", "", nm)                 # "N0.2-L10-C3"
+  N  <- as.numeric(sub("N([0-9.]+).*", "\\1", rhs))
+  NL <- as.numeric(sub(".*-L([0-9.]+).*", "\\1", rhs))
+  C  <- as.numeric(sub(".*-C([0-9.]+)$",   "\\1", rhs))
+  data.frame(N = N, NL = NL, C = C)
+}
+
+## --- bind list to df with parsed params ---
+pred_df_raw <- do.call(rbind, lapply(seq_along(pred), function(i) {
+  df <- pred[[i]]
+  pars <- extract_params(names(pred)[i])
+  df$scenario <- names(pred)[i]
+  df$N  <- pars$N
+  df$NL <- pars$NL
+  df$C  <- pars$C
+  df
+}))
+
+
 # get slopes
 slope <- sapply(metamod, function(x){
   ret <- coef(x)[2]
@@ -901,7 +949,7 @@ if(nrow(base0) > 0) {
   # Bind expanded baseline back
   res_final <- bind_rows(res_filtered, base0_expanded) %>% 
     mutate(sdMC = case_when(
-      N == 0 & NL != 20 ~ NA_real_,
+      N == 0 & NL != 20 ~ sdMC,
       TRUE ~ sdMC
     ))
 } else {
@@ -978,7 +1026,7 @@ print(plotNDD_MC)
 
 ```
 ```{r}
-pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnMC.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
+# pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnMC.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
 print(plotNDD_MC)
 dev.off()
 ```
@@ -1029,7 +1077,7 @@ if(nrow(base0) > 0) {
   # Bind expanded baseline back
   res_final <- bind_rows(res_filtered, base0_expanded) %>% 
     mutate(sdSR = case_when(
-      N == 0 & NL != 20 ~ NA_real_,
+      N == 0 & NL != 20 ~ sdSR,
       TRUE ~ sdSR
     ))
 } else {
@@ -1101,7 +1149,7 @@ print(plotNDD_SR)
 ```
 
 ```{r}
-pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnSR.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
+# pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnSR.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
 print(plotNDD_SR)
 dev.off()
 ```
