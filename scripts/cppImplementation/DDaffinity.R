@@ -119,5 +119,3 @@ lines(nicheWidthFunction(seq(0,1,0.001),lambda = .5, factor = 20), x = seq(0,1,0
 lines(nicheWidthFunction(seq(0,1,0.001),lambda = .01, factor = 20), x = seq(0,1,0.001))
 abline(v = 0.04, lty = 3)
 abline(v = 0.15, lty = 1, col = "red" )
-
-

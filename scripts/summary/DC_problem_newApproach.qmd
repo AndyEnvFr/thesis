@@ -23,9 +23,7 @@ library(viridis)
 root <- "~/cyber_synch/" # work from uni bayreuth server
 ```
 
-Here, I try a new approach: i deetect the max range of neighbors in the batch for each runs.
-Eventually, a nDC and pDC = 1 runs will be compared with 28 nieghbors, if in the same batch max DC = 3.
-
+Here, I try a new approach: i deetect the max range of neighbors in the batch for each runs. Eventually, a nDC and pDC = 1 runs will be compared with 28 nieghbors, if in the same batch max DC = 3.
 
 ## Data preparation
 
@@ -72,7 +70,6 @@ clusterExport(cl, c("getMatToTab", "runsRNULL"))
 tab0 <- parLapply(cl = cl, X = runsRNULL, fun = function(x) getMatToTab(x, detailedParams = TRUE))
 # saveRDS(tab0, paste0(root, "local/runs/mstr/20250807/tab0_DC_problem.rds"))
 ```
-
 
 ```{r}
 # tab0 <- readRDS(paste0(root, "local/runs/mstr/20250807/tab0_DC_problem.rds"))
