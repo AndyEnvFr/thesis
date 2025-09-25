@@ -25,17 +25,16 @@ Abbreviations\
 \[n,p\]DD = \[neagitve, positive\] density dependence
 
 What does stabilizing CDD mean in my thesis ?\
-I quantified stabilizng CDD similar to Hülsmann et al. (2024.) It is defined as the increase in the probability of mortality with the addition of one conspecific neighbor. I will walk you through the step-by-step process of adapting the analysis pipeline, initially designed for empirical data, to my simulated data. This script is based on XXXXX tutorial.
+I quantified stabilizng CDD similar to Hülsmann et al. (2024.) It is defined as the increase in the probability of mortality with the addition of one conspecific neighbor. I will walk you through the step-by-step process of adapting the analysis pipeline, initially designed for empirical data, to my simulated data. This script is based on Krishnadas et al. (in prep).
 
 # Workflow
 
-To get an overview of the workflow, here the main step:  
+To get an overview of the workflow, here the main step:
 
 -   load the simulations
 -   detect the number of conspecific neighbors for all individuals
 -   convert result matrices to tabular data
--   for each run extract species wise information (conspecific neighbors and species abundance)
-Now we have species wise information. The next steps are applied to each species of each run.
+-   for each run extract species wise information (conspecific neighbors and species abundance) Now we have species wise information. The next steps are applied to each species of each run.
 -   run a binomial glm with mortality chance as response and conspecific neighbors as predictors
 -   extract the coefficients and variance-covariance matrix (=vcov) for all species
 -   simulate new coefficients based on the extracted one and the vcov with the `MASS::mvrnorm()` function
@@ -43,18 +42,16 @@ Now we have species wise information. The next steps are applied to each species
     -   by averaging after predicting from simulations I account for the non-linear predictions resulting from the sigmoidal logit link function of the binomial glm
 -   with the `metafor::rma()` function I run the meta regression with the species abundance as moderator variable, correcting for uncertainty differences between different species abundances
 -   visualization of the resulting regressions and further plots
-    
 
 # Data preparation and explanation
 
-The runs that I load are generated with a random sampling of the nDD and pDD strength, specificity kernel, and spatial kernel.  
-The strength is a simple scalar that ranges from 0 to 1.
-For details on the specificity kernel see XXXXX.
-In a first step, I present the spatial kernel (param = densityCut).
+The runs that I load are generated with a random sampling of the nDD and pDD strength, specificity kernel, and spatial kernel.\
+The strength is a simple scalar that ranges from 0 to 1. For details on the specificity kernel see XXXXX. In a first step, I present the spatial kernel (param = densityCut).
 
 ## The spatial kernel (parameter = densityCut)
 
 ### visualization and mathematical definition
+
 The parameter for the spatial kernel is named *nDensityCut* or *pDensityCut*, depending on which DD effect it refers to. The provided value is used as the *radius* to generate a circular neighborhood around the focal cell. Neighbors within this radius exert a density-dependent (DD) effect on the focal cell. While the overall net effect remains constant, increasing the size of the neighborhood causes the DD effect from each individual neighbor to be spread out among the new neighbors. As a result, the net effect remains unchanged, but the influence of each individual neighbor is diluted.
 
 The next chunk shows a function that can be used to asses the neighborhood of different radii.
@@ -185,13 +182,13 @@ res <- sapply(runsRaw, function(x){
 })
 ```
 
-The batch contains the following densityCut values: `r sort(unique(res))`, indicating that nDD or pDD has a variable spatial extent across runs. This is important for our regression method, where the number of conspecific neighbors serves as a predictor. To ensure comparability across the 50 runs in the batch, we use the largest spatial kernel observed in the batch for all runs (XXXXX explains why). The maximum value in our batch is `r max(res)`. Thus, even if a run has nDensityCut = 1 and pDensityCut = 2, we expand the radius for counting conspecific neighbors to `r max(res)`. 
+The batch contains the following densityCut values: `r sort(unique(res))`, indicating that nDD or pDD has a variable spatial extent across runs. This is important for our regression method, where the number of conspecific neighbors serves as a predictor. To ensure comparability across the 50 runs in the batch, we use the largest spatial kernel observed in the batch for all runs (XXXXX explains why). The maximum value in our batch is `r max(res)`. Thus, even if a run has nDensityCut = 1 and pDensityCut = 2, we expand the radius for counting conspecific neighbors to `r max(res)`.
 
 ## Assessing conspecific neighbors and mortalities
 
-Having determined the maximum spatial kernel, we use it to define the neighborhood radius within which conspecific neighbors are counted. The function below does this. 
+Having determined the maximum spatial kernel, we use it to define the neighborhood radius within which conspecific neighbors are counted. The function below does this.
 
-Structure of runs before counting conspecific neighbors: `r names(runsRaw[[1]]$Output[[1]]) `
+Structure of runs before counting conspecific neighbors: `r names(runsRaw[[1]]$Output[[1]])`
 
 ```{r}
 #| eval: false
@@ -205,7 +202,8 @@ runsCon  <- getConNeigh(runsRaw, radius = 5)
 # this code runs in background. The chunk above is not executed
 runsCon  <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRunsCon5_i.rds"))
 ```
-Structure of runs before counting conspecific neighbors: `r names(runsCon[[1]]$Output[[1]]) `
+
+Structure of runs before counting conspecific neighbors: `r names(runsCon[[1]]$Output[[1]])`
 
 The process added a matrix of conspecific neighbors and a mortality matrix, both shown below.
 
@@ -238,8 +236,9 @@ mtext("y-dimensions",
 
 To better understand how data is sampled with respect to time (i.e., how generations are set) we do an excursion.
 
-### Generations and censii
-Hülsmann et al. (2024) use dynamic data for their analysis, meaning that the same plot is re-measured after a certain period—approximately five years in their study. Each measurement is referred to as a census. Only plots with at least one re-measurement were included. Between the measurements for each species the probability of mortality was analyzed with respect to conspecific neighbors.  
+### Generations and censi
+
+Hülsmann et al. (2024) use dynamic data for their analysis, meaning that the same plot is re-measured after a certain period—approximately five years in their study. Each measurement is referred to as a census. Only plots with at least one re-measurement were included. Between the measurements for each species the probability of mortality was analyzed with respect to conspecific neighbors.
 
 I adopt a similar approach for my simulated data. I assess the simulation landscape every $n$ generations. Unlike the empirical approach, I analyze mortality changes at only the subsequent generation $n+1$. Together, $n$ and $n+1$ form a *set* of censuses, representing a single data unit. Different sets of censuses are independent, as $n$ is chosen large enough to fully reshuffle the landscape matrix. Thus, one generation interval in the simulation is analogous to the five-year interval in the empirical data. The assessed generations in the current dataset are shown below.
 
@@ -249,7 +248,7 @@ head(runsRaw[[1]]$Model$runs)
 tail(runsRaw[[1]]$Model$runs)
 ```
 
-Now we can better interpret @fig-con_mort_mat (bottom-right). Only a single color is visible because the generations are so far apart that no individual survives between them. Therefore, each set of censuses ($n$ and $n+1$) can be treated as independent observations, allowing us to apply a simple logit-link function in the binomial GLM. This contrasts with the complementary log-log link used by Hülsmann et al. (2024), which accounts for a time series of consecutive censuses.  
+Now we can better interpret @fig-con_mort_mat (bottom-right). Only a single color is visible because the generations are so far apart that no individual survives between them. Therefore, each set of censuses ($n$ and $n+1$) can be treated as independent observations, allowing us to apply a simple logit-link function in the binomial GLM. This contrasts with the complementary log-log link used by Hülsmann et al. (2024), which accounts for a time series of consecutive censuses.
 
 One more detail: we allow the community to reach an equilibrium, which is visually assessed here. We discard earlier generations and analyze only those starting from the equilibrium. We assess the equilibtrium by checking the species richness in the community.
 
@@ -258,7 +257,9 @@ example <- list(runsCon[[1]],runsCon[[43]]) # pick only two, otherwise plots occ
 class(example) <- "PhylosimList"
 S <- getSpecTime(example, plot = TRUE, ymax = 100, title = c("run 1", "run 43"))
 ```
+
 Run 43 clearly demonstrates that the community must reach equilibrium over time. We discard all non-equilibrium periods by generously removing half of the runs.
+
 ```{r}
 runsConEq <- lapply(runsCon, function(x){
   x$Output <- x$Output[101:200] # discard matrices
@@ -275,10 +276,11 @@ class(example) <- "PhylosimList"
 
 S <- getSpecTime(example, plot = TRUE, ymax = 100, title = c("run 1", "run 43"))
 ```
+
 Now that the pre-equilibrium generations have been discarded, we can convert the matrices into tabular data.
 
-
 ## Converting matrices to tabular data
+
 Next, we convert the matrix data into tabular data with the `PhyloSim::getMatToTab()` function. With the argument `detailedParams = TRUE` we include the parameter settings as separate columns. We save the tabular data.
 
 ```{r}
@@ -298,6 +300,7 @@ tabRaw <- readRDS(paste0(root, "local/runs/mstr/20250903/ranTabMax_i.rds"))
 ```
 
 Now, we delete every second generation. Remember, we calculated moralities that happened between $n$ and $n+1$. The resulting matrix was stored in $n$. Therefore, $n+1$ is no longer needed and discarded.
+
 ```{r}
 
 tab <- lapply(tabRaw, function(x){
@@ -309,7 +312,8 @@ tab <- lapply(tabRaw, function(x){
 head(tab[[1]]) # first run in batch
 tail(tab[[1]])
 ```
-We now have tabular data, where the columns are abbreviations. Their full meanings are: individual ID, species ID, mortality in the next generation ($n+1$), number of conspecific neighbors, species abundance, pDD/nDD strength (>0:1), pDD/nDD specificity parameter (denoted as Var, >0:20), and the radius used for the spatial kernel (pDC/nDC,>0). Note that Var is equivalent to specificity; the different name is a remnant from previous terminology. The n/pDDVar value is used as lambda in the exponential function that defines the specificity kernel.  
+
+We now have tabular data, where the columns are abbreviations. Their full meanings are: individual ID, species ID, mortality in the next generation ($n+1$), number of conspecific neighbors, species abundance, pDD/nDD strength (\>0:1), pDD/nDD specificity parameter (denoted as Var, \>0:20), and the radius used for the spatial kernel (pDC/nDC,\>0). Note that Var is equivalent to specificity; the different name is a remnant from previous terminology. The n/pDDVar value is used as lambda in the exponential function that defines the specificity kernel.
 
 # Statistical analysis
 
@@ -336,6 +340,7 @@ stopCluster(cl)
 ```
 
 To quantify stabilizing CDD, I assess the effect of a single conspecific neighbor on an individual’s mortality. For this, I run species-wise binomial GLMs, using mortality status as the response and the number of conspecific neighbors as the predictor. I then extract the model coefficients (intercept and conspecific neighbor coefficient) along with the variance-covariance matrix.
+
 ```{r}
 
 cores <- length(tab)
@@ -368,14 +373,15 @@ stopCluster(cl)
 ```
 
 The resulting data contains species wise information with its abundance, the coefficients and the variance-covariance matrix of the model.
+
 ```{r}
 head(mcS_err[[1]])[1:2] # first run in batch, first and second species within this run
 ```
 
-
-The next code estimates the variance of the marginal effect of a conspecific neighbor on mortality using a posterior simulation (Tutorial et al. XXXX). It simulates 100 draws of the GLM coefficients from their multivariate normal distribution, computes predicted *stabilizing CDD* by averaging through all simulations, and additionally computes the standard error, and 95% intervals. This is necessary for a binomial GLM because the logit coefficients are non-linear on the probability scale, so simulating captures the true effect and its uncertainty.  
+The next code estimates the variance of the marginal effect of a conspecific neighbor on mortality using a posterior simulation (Tutorial et al. XXXX). It simulates 100 draws of the GLM coefficients from their multivariate normal distribution, computes predicted *stabilizing CDD* by averaging through all simulations, and additionally computes the standard error, and 95% intervals. This is necessary for a binomial GLM because the logit coefficients are non-linear on the probability scale, so simulating captures the true effect and its uncertainty.
 
 To compute the predicted mortality probabilities, I first calculate the survival probability under the intercept scenario, representing the baseline probability for an individual without any additional conspecific neighbors. Next, I calculate the survival probability for one extra conspecific neighbor. The difference between these two probabilities corresponds to the change in survival probability per additional conspecific neighbor, which is used to quantify stabilizing CDD as defined in Hülsmann et al. (2024).
+
 ```{r}
 
 cores <- length(mcS_err)
@@ -400,13 +406,15 @@ mcS_err_sim <- parLapply(cl, mcS_err, function(x){
 # Stop the cluster
 stopCluster(cl)
 ```
+
 From the coefficients and the variances-covariance matrix we simulated and averaged stabilizing CDD with its standard error and 95% intervals (ci_low and ci_high).
+
 ```{r}
 head(mcS_err_sim[[1]]) # first run in batch, first six species
 ```
 
-
 Then, I flatten the nested simulation results into single data frames per run and add a column with the log-transformed species abundance.
+
 ```{r}
 
 m4 <- lapply(mcS_err_sim, function(group) {
@@ -422,11 +430,13 @@ m4 <- lapply(m4, function(group) {
 ```
 
 Like `mcS_err_sim`but flattened.
+
 ```{r}
 head(m4[[1]])
 ```
 
 In another preparatory step the data is converted to an escalc object, needed for the meta regression via the `metafor::escalc()` function, with species ID as the study label. `measure = "GEN"` implies that effect size (yi) and its variance (sei) are already calculated and supplied to the function.
+
 ```{r}
 
 dat_meta <- lapply(m4, function(x) {
@@ -435,13 +445,14 @@ dat_meta <- lapply(m4, function(x) {
 ```
 
 Same as before but as escalc object
+
 ```{r}
 dat_meta[[1]][1:6,1:7] # somehow head() doesnt work on escalc objects
 class(dat_meta[[1]])
 ```
 
-
 This code fits a **meta regression** model for each dataset in parallel. For each species, it fits a meta-regression model `metafor::rma()` with log_N as a moderator, meaning the model tests whether stabilizing CDD varies systematically with species abundance. In case the model fails for some runs, I build a tryCatch mechanisms that excludes this failed run from the results.
+
 ```{r}
 cl <- makeCluster(length(dat_meta))
 clusterExport(cl, varlist = c("dat_meta"), envir = environment())
@@ -480,6 +491,7 @@ if(any(failed_indices)) {
 
 summary(metamod[[1]])
 ```
+
 ```{r}
 #| include: false
 #| eval: false
@@ -512,6 +524,7 @@ names(pred) <- names(metamod)
 Because I am interested in the relationship between stabilizing CDD and species abundance, I extract the slope from the meta-regression model. A more negative slope indicates a stronger negative relationship, while a slope of 0 indicates no relationship. Additionally, I extract species abundance, the coefficient of variation (CV = SD / mean), and mean species richness (SR). The SR is averaged after filtering out non-equilibrium generations (see Assessing conspecific neighbors and mortalities).
 
 Finally, I filter the results by different spatial kernels to verify that the applied GLM—with an increased neighborhood radius even where DD acted within a smaller kernel (see The spatial kernel)—produces valid results across all parameter settings.
+
 ```{r}
 names(runsCon) <- names(dat_meta)
 srRaw <- getSpecTime(runsCon, plot = FALSE)
@@ -519,6 +532,10 @@ srRaw <- getSpecTime(runsCon, plot = FALSE)
 # Get slopes
 slope <- map_dbl(metamod, ~ coef(.x)[2]) %>%
   enframe(name = "param", value = "slope")
+
+# Get standard error of slopes
+seSlope <- map_dbl(metamod, ~ se(.x)[2]) %>%
+  enframe(name = "param", value = "seSlope")
 
 # Get abundance (use max to exclude extreme values)
 abund <- map_dbl(dat_meta, ~ max(.x$abund)) %>%
@@ -546,7 +563,7 @@ sr <- map(srRaw, ~ {
   mutate(medianSR = as.integer(medianSR))
 
 # Combine all results
-res <- list(slope, sr, abund, cv) %>%
+res <- list(slope, seSlope, sr, abund, cv) %>%
   reduce(left_join, by = "param") %>%
   mutate(abund = as.integer(abund))
 
@@ -563,7 +580,7 @@ res_scenarios <- map2(scenario_types$prefix, scenario_types$comp, ~ {
 ```{r}
 #| fig-width: 7
 #| fig-height: 7
-#| fig-cap: ["Relationships between stabilizing CDD parameters and community diversity metrics for randomly sampled nDD and pDD scenarios. A linear regression with 95% confidence intervals is fitted for the data in the corresponding panels. Data is sorted by nDD spatial kernel (= nDC) and pdd(= pDC), except the last plot that contains all combined data. The slope results from the metaregression and encapsulates the relationship between stabilizing CDD and species abundance - the more negative it is, the stronger the negative relationship. Mean species richness is averaged across one run after filtering out non-equilibrium generations. Max abundance is the maximum abundance of any species within one run. CV is the coefficient of variation calculated by standard deviation of stabilizing CDD divided by mean stabilizing CDD. Top-left: Mean species richness vs slope. Top-right: Maximum abundance vs slope with log-transformed model fit. Bottom-left: Mean species richness vs CV stabilizing CDD (%) colored by slope values. Bottom-right: Mean species richness vs mean stabilizing CDD (%) with log-transformed relationship and slope-colored points.","","","","","","","","","",""]
+#| fig-cap: ["Relationships between stabilizing CDD parameters and community diversity metrics for randomly sampled nDD and pDD scenarios. A linear regression with 95% confidence intervals is fitted for the data in the corresponding panels and corresponding P values provided. Data is sorted by nDD spatial kernel (= nDC) and pdd(= pDC), except the last plot that contains all combined data. The slope (x-axis top-left and -right) results from the metaregression (see above) between stabilizing CDD and species abundance - the more negative it is, the stronger the negative relationship. Mean species richness is averaged across one run after filtering out non-equilibrium generations. Max abundance is the maximum abundance of any species within one run. CV is the coefficient of variation calculated by standard deviation of stabilizing CDD divided by mean stabilizing CDD. Top-left: Mean species richness vs slope. Top-right: Maximum abundance vs slope with log-transformed model fit. Bottom-left: Mean species richness vs CV stabilizing CDD (%) colored by slope values. Bottom-right: Mean species richness vs mean stabilizing CDD (%) with log-transformed relationship and slope-colored points.","","","","","","","","","",""]
 
 ## ---- helper functions ----
 pred_lm_log <- function(mod, newdata, k = 2) {
@@ -585,7 +602,7 @@ format_pvalue <- function(p) {
   }
 }
 
-# Unified function for species richness vs slope plot
+# Unified function for species richness vs slope plot (WITH HORIZONTAL ERROR BARS)
 plot_sr_slope <- function(dat, tag, ylim_sr = c(40,100)) {
   fm1 <- lm(meanSR ~ slope, data = dat)
   newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
@@ -595,16 +612,22 @@ plot_sr_slope <- function(dat, tag, ylim_sr = c(40,100)) {
   p_val <- summary(fm1)$coefficients[2, 4]  # p-value for slope coefficient
   p_text <- format_pvalue(p_val)
   
-  plot(dat$slope, dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue",
-       xlab = "slope", ylab = "mean species richness")
-  points(dat$slope, dat$medianSR, pch = 16, col = "red")
-  arrows(dat$slope, dat$meanSR - dat$sdSR, dat$slope, dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05)
+  plot(dat$slope, dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue", cex = .8,
+       xlab = "slope of fitted meta regression", ylab = "mean species richness")
+  points(dat$slope, dat$medianSR, pch = 16, cex = .8, col = "red")
+  
+  # Horizontal error bars for seSlope
+  arrows(dat$slope - dat$seSlope, dat$meanSR, dat$slope + dat$seSlope, dat$meanSR,
+         angle = 90, code = 3, length = 0.05, lwd = .5, col = rgb(0,0,0,.5))
+  # # Vertical error bars (existing)
+  # arrows(dat$slope, dat$meanSR - dat$sdSR, dat$slope, dat$meanSR + dat$sdSR,
+  #        angle = 90, code = 3, length = 0.05)
+  
   lines(newdat$slope, predi$fit, lwd = 2, col = 1)
   lines(newdat$slope, predi$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
   lines(newdat$slope, predi$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("topright", legend = c("mean SR", "median SR", "fitted lm", "CI"),
-         pch = c(16,16,NA,NA), lty = c(NA,NA,1,2), col = c(4,2,1,1), bty = "n")
+  legend("topright", legend = c("mean SR", "median SR"),
+         pch = c(16,16), col = c(4,2), bty = "n")
   
   # Add p-value text
   text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
@@ -612,7 +635,7 @@ plot_sr_slope <- function(dat, tag, ylim_sr = c(40,100)) {
        labels = p_text, pos = 4, cex = 0.9, col = "darkred")
 }
 
-# Unified function for abundance vs slope plot (now using log transform and lm)
+# Unified function for abundance vs slope plot (WITH HORIZONTAL ERROR BARS)
 plot_abund_slope <- function(dat, tag) {
   # Log-transform abundance (add 1 to avoid log(0))
   dat$log_abund <- log(dat$abund)
@@ -625,22 +648,25 @@ plot_abund_slope <- function(dat, tag) {
   p_val <- summary(fm)$coefficients[2, 4]
   p_text <- format_pvalue(p_val)
   # Plot log-transformed abundances
-  plot(dat$slope, dat$log_abund, pch = 16, col = 1,
-       xlab = "slope", ylab = "log(max abundance)")
+  plot(dat$slope, dat$log_abund, pch = 16, col = 1, cex = .8,
+       xlab = "slope of fitted meta regression", ylab = "log(max abundance)")
+  
+  # Horizontal error bars for seSlope (NEW)
+  arrows(dat$slope - dat$seSlope, dat$log_abund, dat$slope + dat$seSlope, dat$log_abund,
+         angle = 90, code = 3, length = 0.05,lwd = .5, col = rgb(0,0,0,.5))
+  
   # Add fitted line and confidence intervals
   lines(newdat$slope, log(pg$fit), lwd = 2, col = 1)
   lines(newdat$slope, log(pg$lo), lwd = 1, lty = 2, col = 1)
   lines(newdat$slope, log(pg$hi), lwd = 1, lty = 2, col = 1)
   # Add legend
-  legend("topleft", legend = c("fitted lm", "CI"), lty = c(1,2),
-         col = c(1,1), bty = "n")
   # Add p-value text
-  text(x = par("usr")[1] + 0.75*diff(par("usr")[1:2]),
-       y = par("usr")[4] - 0.05*diff(par("usr")[3:4]),
+  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
+       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
        labels = p_text, pos = 4, cex = 0.9, col = "darkred")
 }
 
-# Unified function for species richness vs CV mortality change
+# Unified function for species richness vs CV mortality change (unchanged)
 plot_sr_cvmc <- function(dat, tag, ylim_sr = c(40,90)) {
   fm3 <- lm(meanSR ~ cvMC, data = dat)
   newdat <- data.frame(cvMC = seq(min(dat$cvMC), max(dat$cvMC), length = 100))
@@ -651,10 +677,11 @@ plot_sr_cvmc <- function(dat, tag, ylim_sr = c(40,90)) {
   p_text <- format_pvalue(p_val)
   
   cols <- viridis(length(dat$slope))[rank(dat$slope)]
-  plot(dat$cvMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
+  cols_error <- cols %>% adjustcolor(alpha.f = 0.75)
+  plot(dat$cvMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols, cex = .8,
        xlab = "CV of stabilizing CDD", ylab = "mean species richness")
   arrows(dat$cvMC, dat$meanSR - dat$sdSR, dat$cvMC, dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05, col = cols)
+         angle = 90, code = 3, length = 0.05, col = cols_error, lwd =.5)
   lines(newdat$cvMC, pred$fit, lwd = 2, col = 1)
   lines(newdat$cvMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
   lines(newdat$cvMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
@@ -669,7 +696,7 @@ plot_sr_cvmc <- function(dat, tag, ylim_sr = c(40,90)) {
        labels = p_text, pos = 4, cex = 0.9, col = "darkred")
 }
 
-# Unified function for species richness vs mean stabilizing CDD
+# Unified function for species richness vs mean stabilizing CDD (unchanged)
 plot_sr_meanmc <- function(dat, tag, ylim_sr = c(40,90)) {
   fm4 <- lm(meanSR ~ meanMC, data = dat)
   newdat <- data.frame(meanMC = seq(min(dat$meanMC), max(dat$meanMC), length = 100))
@@ -680,8 +707,12 @@ plot_sr_meanmc <- function(dat, tag, ylim_sr = c(40,90)) {
   p_text <- format_pvalue(p_val)
   
   cols <- viridis(length(dat$slope))[rank(dat$slope)]
-  plot(dat$meanMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
+  cols_error <- cols %>% adjustcolor(alpha.f = .75)
+  plot(dat$meanMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols, cex = .8,
        xlab = "mean stabilizing CDD (%)", ylab = "mean species richness")
+    # Horizontal error bars for sdMC
+  arrows(dat$meanMC - dat$sdMC, dat$meanSR, dat$meanMC + dat$sdMC, dat$meanSR,
+         angle = 90, code = 3, length = 0.05, lwd = .5, col = cols_error)
   lines(newdat$meanMC, pred$fit, lwd = 2, col = 1)
   lines(newdat$meanMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
   lines(newdat$meanMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
@@ -689,12 +720,10 @@ plot_sr_meanmc <- function(dat, tag, ylim_sr = c(40,90)) {
          fill = viridis(5),
          legend = signif(seq(min(dat$slope), max(dat$slope), length.out = 5), 2),
          bty = "n", cex = .8)
-  legend("topleft", legend = c("fitted lm", "CI"),
-         lty = c(1,2), bty = "n")
   
   # Add p-value text
-  text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
+  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
+       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]),  
        labels = p_text, pos = 4, cex = 0.9, col = "darkred")
 }
 
@@ -706,7 +735,8 @@ plot_all_scenarios <- function(scenario_list, scenario_names,
   # For each scenario, create all 4 plot types
   for(i in 1:n_scenarios) {
     # Set up 2x2 grid for each scenario with main title
-    par(mfrow = c(2, 2), mar = c(4,4,3,2), oma = c(0, 0, 2, 0))
+    par(mfrow = c(2, 2), mar = c(4,4,3,2), oma = c(0, 0, 2, 0))       # change this for single or mulit-panel plots
+    # par(mfrow = c(1, 1), mar = c(6,4,3,2), oma = c(0, 0, 2, 0))       # change this for single or mulit-panel plots
     
     # Main analysis plots
     plot_sr_slope(scenario_list[[i]], scenario_names[i], ylim_sr)
@@ -738,7 +768,9 @@ plot_all_scenarios(scenario_dataP, scenario_labelsP,
 plot_all_scenarios(list(res), "combined data", 
                    ylim_sr = c(40,100))
 ```
+
 I analyzed 50 random runs here and repeated the same procedure for 100 additional runs. Next, we load these datasets, combine them, and visualize the results for the full set of runs.
+
 ```{r}
 #| fig-width: 7
 #| fig-height: 7
@@ -753,6 +785,17 @@ res_all <- rbind(resi,resii,resiii)
 # Generate plot for combined data
 plot_all_scenarios(list(res_all), "combined data", 
                    ylim_sr = c(40,100))
+```
+
+```{r}
+#| fig-width: 5
+#| fig-height: 5
+
+
+# pdf(paste0(root, "local/figures/ran/ran_allMax.pdf"), width = 5, height = 5, onefile = TRUE, useDingbats = FALSE)
+# plot_all_scenarios(list(res_all), "", 
+#                    ylim_sr = c(40,100))
+# dev.off()
 ```
 
 # References

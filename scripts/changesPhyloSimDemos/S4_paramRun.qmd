@@ -1,0 +1,124 @@
+---
+title: "Setting the parameters and running the simulations"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+In this short demo I show, how the parameter settings are chosen for my runs. This specific file was used for the randomly generated runs. However, the random draws can easily be replaced by fixed values. I'll still stick to the random logic here. First, we set a seed for reproducability and chose the number of random runs we want to simulate.
+
+```{r}
+#| eval: false
+
+library(PhyloSim)
+library(parallel)
+
+# root <- "~/Uni/Master/MA/"  
+root <- "~/cyber_synch/"
+
+set.seed(25092025)
+draws <- 150
+```
+
+Then we specify the random sampling for each parameter. If parameters are unused, like `environment`, we just assign 0 to it. Each run generates a new seed (`seed_draws`).
+
+```{r}
+#| eval: false
+
+ndd_draws        <- runif(draws, min = 0, max = 1)
+pdd_draws        <- runif(draws, min = 0, max = 1)
+nddVar_draws     <- runif(draws, min = 0.01, max = 20)
+pddVar_draws     <- runif(draws, min = 0.01, max = 20)
+nDensityCut_draws<- sample(1:5, size = draws, replace = TRUE)
+pDensityCut_draws<- sample(1:5, size = draws, replace = TRUE)
+seed_draws       <- as.integer(runif(draws, 1, .Machine$integer.max))
+environment_draws<- rep(0, draws)
+```
+
+Then we use the `PhyloSim::createCompletePar()` function to specify the parameters. We use a loop to generate `draws` parameter sets.\
+In all of my runs in this thesis, I fixed the values for following parameters:
+
+-   `dispersal = 1`
+
+    -   seed dispersal: recruitment can only happen at direct neighborhood to parent
+
+-   `specRate = 2`
+
+    -   speciation rate: *n* new species enter the matrix each generation, where *n* = `rpois(1, 2)` and redrawn at each generation
+
+-   `fitnessBaseMortalityRatio = 3000`
+
+    -   every 3000th [while loop](https://github.com/TheoreticalEcology/EcoPhyloSim/blob/da4b03c267f9ddc94397f4c9d44d72500263a119/PhyloSim/src/Grid.cpp#L365-L366) within the death lottery is skipped, hence the targeted individuum survives (in c++ code the parameter is names mortalityStrength).
+
+-   `type = "base"`
+
+    -   from createCompletePar {PhyloSim} help page: "base" is running the default model. Other possibilities are "Leipzig" and "Rneutral" which will run a neutral model purely in R.
+
+-   `fitnessActsOn = "mortality"`
+
+    -   fitness of individuals influences their mortality chances. Other possible options (however, not implemented for local dispersal) are "reproduction" or "both"
+
+-   `runs = sort(c((1:100 * 900), (1:100 * 900) + 1 ))`
+
+    -   The runs argument specifies the time-points for which results should be returned. The runs are specified according to the census (i.e., generation) structure needed for the analysis (see S2 "Generations and Censi")
+
+```{r}
+#| eval: false
+
+params <- vector("list", length = draws) # draws = 150 -> 150 parameter sets
+for (i in seq_len(draws)) {
+  params[[i]] <- createCompletePar(
+    x = 128, y = 128,                    # size of matrix
+    negativeDensity = ndd_draws[i],
+    nDensityCut = nDensityCut_draws[i],
+    nDDNicheWidth = nddVar_draws[i],
+    positiveDensity = pdd_draws[i],
+    pDensityCut = pDensityCut_draws[i],
+    pDDNicheWidth = pddVar_draws[i],
+    dispersal = 1,
+    specRate = 2,
+    environment = environment_draws[i],
+    fitnessBaseMortalityRatio = 3000,
+    seed = seed_draws[i],
+    type = "base",
+    protracted = 0,                     # options with = 0 are unused
+    fission = 0,
+    redQueen = 0,
+    redQueenStrength = 0,
+    airmat = 0,
+    fitnessActsOn = "mortality",
+    scenario =                          # allows labeling of runs
+      sprintf("ndd%.4f_var%.3f_pdd%.4f_var%.3f_nCut%d_pCut%d_seed%d",
+                       ndd_draws[i], nddVar_draws[i],
+                       pdd_draws[i], pddVar_draws[i],
+                       nDensityCut_draws[i], pDensityCut_draws[i], seed_draws[i]),
+    runs = sort(c((1:100 * 900), (1:100 * 900) + 1 ))
+  )
+}
+```
+
+The next step is optional and depends on your computational capacities. Since I worked in a large cluster, I could run 50 parameter sets simultaneously. I runs 3 batches sequentially because the machine has not 150 cores. Each batch simulates 50 runs in parallel. The `Phylosim::runSimulationBatch()` functino has inherent function for parallel processing.
+
+```{r}
+#| eval: false
+
+# split 150 parameter settings into 3 blocks à 50
+param_blocks <- split(params, ceiling(seq_along(params) / 50))
+
+# parallel simulation splitted in 3 sequential blocks
+for (j in seq_along(param_blocks)) {
+  runz <- runSimulationBatch(
+    param_blocks[[j]],
+    parallel = min(length(param_blocks[[j]]), 50),
+    backup_path = file.path(root, "local/runs/mstr/backups/")
+  )
+  
+  out_file <- sprintf("ranRuns_%s.rds",
+                      c("i","ii","iii")[j])
+  
+  saveRDS(runz, file.path(root, "local/runs/mstr/20250903", out_file))
+}
+
+```

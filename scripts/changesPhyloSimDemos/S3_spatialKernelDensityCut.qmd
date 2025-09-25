@@ -1,0 +1,154 @@
+---
+title: "Demo GLM approach"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+To get stabilizing CDD, the first step is to run a binomial GLM with mortality ~ number of conspecific neighbors. With the resulting coefficient of the predictor we can calculate stabilizing CDD according to Hülsmann et al.(2024). This is a short tutorial on how to run the GLM with the simulated data.
+
+## Data preparation
+
+I show, that the same radius for counting conspecific neighbors should be used within one batch to guarantee comparability.
+We load one batch (= `runs`) but count conspecific neighbors in two different ways, for didactic purpose. The function `getConNeigh()` does this count. For details on the kernel definition see expKernelDemo.qmd XXXX.  
+
+`RadiusMax` counts conspecific neighbors within a fixed spatial kernel of radius = 5, regardless of the actual DD effect radius in each run. For example, if both nDD (`nDensityCut`) and pDD (`pDensityCut`) equal 1, only the four nearest neighbors in a von Neumann neighborhood have a DD effect on the focal cell. Nevertheless, using `radius = 5` in `getConNeigh()` counts all conspecifics within a radius of 5 corresponding to 80 neighbors.
+
+In contrast, `RadiusNULL` uses `radius = NULL`, which sets the neighborhood radius to the maximum of nDensityCut and pDensityCut for each run. For instance, if a run has nDensityCut = 2 and pDensityCut = 4, conspecifics are counted within a radius = 4. Thus, the largest DensityCut in a run determines the effective neighborhood for counting conspecifics. 
+
+We load the raw runs and apply both described methods.
+```{r}
+#| eval: false
+
+runs <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRuns_i.rds"))
+
+RadiusMax <- getConNeigh(runs, radius = 5)
+RadiusNULL <- getConNeigh(runs, radius = NULL)
+
+TabMax <- getMatToTab(RadiusMax, detailedParams = T)
+TabNULL <-getMatToTab(RadiusNULL, detailedParams = T) 
+```
+
+```{r}
+#| include: false
+
+TabMax <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranTabMax_i.rds"))
+TabNULL <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranTab_i.rds"))
+```
+
+Very rare species are filtered out, to increase statistical robustness and to ensures GLM runs without error.
+Then binomial GLM is fitted and the estimates extracted.
+```{r}
+#| eval: false
+
+cl <- makeCluster(25)
+clusterExport(cl, c("getMatToTab", "TabNULL"))
+
+clusterEvalQ(cl, {
+  library(dplyr)
+})
+
+# ------------ sort species wise data ------------
+tabNULLs <- parLapply(cl, TabNULL, function(x) {
+  x %>%
+    filter(abund > 100) %>%
+    mutate(specIdCen = paste0(specId, census)) %>%
+    select(-indId)
+})
+# ------------ run glm ------------
+FitNULL <- parLapply(cl, tabNULLs, function(x) {
+    mod <- glm(mortNextGen ~ con, data = x, family = binomial())
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    res <- data.frame(
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[2]
+    )
+  return(res)
+})
+stopCluster(cl)
+
+# ----------------------------------------------
+# ----------------------------------------------
+# ----------------------------------------------
+
+cl <- makeCluster(25)
+clusterExport(cl, c("getMatToTab", "TabMax"))
+
+clusterEvalQ(cl, {
+  library(dplyr)
+})
+
+
+# ------------ sort species wise data ------------
+TabMaxs <- parLapply(cl, TabMax, function(x) {
+  x %>%
+    filter(abund > 100) %>%
+    mutate(specIdCen = paste0(specId, census)) %>%
+    select(-indId)
+})
+
+# ------------ run glm ------------
+FitMax <- parLapply(cl, TabMaxs, function(x) {
+    mod <- glm(mortNextGen ~ con, data = x, family = binomial())
+    mort0 <- plogis(coef(mod)[1])
+    mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+    res <- data.frame(
+      mort_change = mort1 - mort0,
+      coef = coef(mod)[2]
+    )
+  return(res)
+})
+stopCluster(cl)
+```
+# Binomial GLM
+
+Data is restructured
+```{r}
+#| eval: false
+
+resMax <- do.call(rbind.data.frame, FitMax)
+rownames(resMax) <- str_remove(pattern = "\\.\\d$", string = rownames(resMax))
+
+resNULL <- do.call(rbind.data.frame, FitNULL)
+rownames(resNULL) <- str_remove(pattern = "\\.\\d$", string = rownames(resNULL))
+```
+
+```{r}
+#| include: false
+
+# saveRDS(resMax, paste0(root, "/local/runs/mstr/20250903/ranGlmMax.rds"))
+# saveRDS(resNULL, paste0(root, "/local/runs/mstr/20250903/ranGlmNULL.rds"))
+
+resMax  <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranGlmMax.rds"))
+resNULL <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranGlmNULL.rds"))
+```
+
+Estimator values (i.e., coefficients) of nb. conspecific neighbors are plotted. 
+```{r}
+#| fig-height: 3
+#| fig-width: 9.5
+#| fig-cap: "Estimator of the effect of conspecific neighbors on mortality from a binomial GLM after plogis() backtransformation. Left, with conspecific count for every run within a radius of rMax, whereby rMax is the maximum radius (i.e., parameter = densityCut) within the batch. Middle, the conspecific count for each run within a batch is determined by the maximum radius within each run. Thus, runs have different radii to count conspecific neighbors. Right, both methods compared."
+
+
+par(mfrow = c(1,3))
+plot(resMax$coef, ylim = c(-0.0015,0.0015), ylab = "coefficient")
+plot(resNULL$coef, ylim = c(-0.0015,0.0015), ylab = "coefficient")
+boxplot(
+  list(RadiusMax = resMax$coef, RadiusNULL = resNULL$coef),
+  ylim = c(-0.0015, 0.0015),
+  ylab = "coeficient"
+)
+```
+This analysis shows that using the maximum radius within a batch gives more reliable coefficients and make the runs comparable within a batch.

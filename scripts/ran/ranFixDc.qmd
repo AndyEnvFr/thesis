@@ -29,14 +29,14 @@ Data is portioned in 3 50-fold-batches for better handling. Therefore, the analy
 ```{r}
 #| eval: false
 
-runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRuns_i.rds"))
+runsRaw  <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRunsFixDC_iii.rds"))
 ```
 
 ```{r}
 #| eval: false
 
 # get conspecific neighbors and proper naming
-# runsRaw  <- getConNeigh(runsRaw, radius = 5)
+runsRaw  <- getConNeigh(runsRaw, radius = 5)
 ```
 
 ```{r}
@@ -80,18 +80,18 @@ tab <- parLapply(cl = cl, X = runsRaw, fun = function(x) getMatToTab(x, detailed
 stopCluster(cl)
 
 
-# saveRDS(tab, paste0(root, "/local/runs/mstr/20250903/ranTab_iii.rds"))
+# saveRDS(tab, paste0(root, "/local/runs/mstr/20250903/ranTabFixDC_iii.rds"))
 ```
 
 ```{r}
-tab <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranTab_iii.rds"))
+tab <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranTabFixDC_ii.rds"))
 ```
 
 ```{r}
 # keep only first timespot in census
 
 cores <- length(tab)
-cl <- makeCluster(25)
+cl <- makeCluster(50)
 
 clusterEvalQ(cl, {
   library(dplyr)
@@ -112,7 +112,7 @@ stopCluster(cl)
 ```{r}
 #| eval: false
 
-cl <- makeCluster(25)
+cl <- makeCluster(50)
 
 mcS_err <- parLapply(cl, tabS, function(x) {
   specIDs <- unique(x$specIdCen)
@@ -149,7 +149,7 @@ stopCluster(cl)
 ```{r}
 #| eval: false
 
-cl <- makeCluster(25)
+cl <- makeCluster(50)
 mcS_err_sim <- parLapply(cl, mcS_err, function(x){
   lapply(x, function(y){
     sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
@@ -257,24 +257,42 @@ if(any(failed_indices)) {
 ```
 
 ```{r}
-
 # deleting one scenario
 
-saveRDS(dat_meta, paste0(root, "/local/runs/mstr/20250903/ranDatmetaMax_iii.rds"))
-saveRDS(metamod, paste0(root, "/local/runs/mstr/20250903/ranMetamodMax_iii.rds"))
+# saveRDS(dat_meta, paste0(root, "/local/runs/mstr/20250903/ranFixDCDatmetaMax_ii.rds"))
+# saveRDS(metamod, paste0(root, "/local/runs/mstr/20250903/ranFixDCMetamodMax_ii.rds"))
 
 
-# metamod <- readRDS(paste0(root, "..."))
-# dat_meta <- readRDS(paste0(root, "..."))
+metamod <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranFixDCMetamodMax_i.rds"))
+datmeta <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranFixDCDatmetaMax_i.rds"))
+runsCon <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRunsFixDC_i.rds"))
 ```
 
 ## predictions
 
 ### log_N
+```{r}
+namesShort <- names(metamod) %>% 
+  str_replace("pdd", "P") %>% 
+  str_replace("Var", "-L") %>% 
+  str_replace("Cut", "-C") %>% 
+  str_replace("ndd", "N") %>% 
+  str_replace("Var", "-L") %>% 
+  str_replace("Cut", "-C") %>% 
+  str_remove("_disp1_sr2_fbmr3000_faoM") %>% 
+  str_replace_all("([0-9]+\\.[0-9]+)", function(x) sprintf("%.4f", as.numeric(x))
+  )
+
+names(metamod) <- namesShort
+names(datmeta) <- namesShort
+names(runsCon) <- namesShort
+```
+
+
 
 ```{r}
 ## --- build predictions (as you had) ---
-pred <- lapply(dat_meta, function(x){
+pred <- lapply(datmeta, function(x){
   expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
                           max(x$log_N, na.rm = TRUE),
                           length.out = 1000))
@@ -288,181 +306,9 @@ pred <- lapply(seq_along(pred), function(i){
   y <- metamod[[i]]
   cbind(x, predict(object = y, newmods = x$log_N))
 })
-names(pred) <- namesShort   # <- your vector like the one you listed
+names(pred) <- namesShort  # <- your vector like the one you listed
 
-## --- FIXED helper: parse P, PL, C from scenario name ---
-extract_params <- function(nm) {
-  # expect "P0.2-L20-C1_N1-L5-C1"
-  # Split on underscore and take first part
-  lhs <- sub("_.*", "", nm)                 # "P0.2-L20-C1"
-  
-  # Extract P, PL (L value), and C from first part
-  P  <- as.numeric(sub("P([0-9.]+)-.*", "\\1", lhs))
-  PL <- as.numeric(sub(".*-L([0-9.]+)-.*", "\\1", lhs))
-  C  <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", lhs))
-  
-  data.frame(P = P, PL = PL, C = C)
-}
-
-## --- bind list to df with parsed params ---
-pred_df <- do.call(rbind, lapply(seq_along(pred), function(i) {
-  df <- pred[[i]]
-  pars <- extract_params(names(pred)[i])
-  df$scenario <- names(pred)[i]
-  df$P  <- pars$P
-  df$PL <- pars$PL
-  df$C  <- pars$C
-  df
-}))
-
-## --- normalize predict() columns ---
-if ("pred" %in% names(pred_df))   names(pred_df)[names(pred_df)=="pred"]   <- "fitted"
-if ("fit"  %in% names(pred_df))   names(pred_df)[names(pred_df)=="fit"]    <- "fitted"
-if ("ci.lb" %in% names(pred_df))  pred_df$ci_lower <- pred_df$ci.lb
-if ("ci.ub" %in% names(pred_df))  pred_df$ci_upper <- pred_df$ci.ub
-
-## --- null model (overlay on every plot) ---
-null_nameC1 <- "P0-L20-C1_N1-L5-C1"
-if (null_nameC1 %in% pred_df$scenario) {
-  null_dataC1 <- pred_df[pred_df$scenario == null_nameC1, ]
-} else {
-  null_dataC1 <- NULL
-}
-
-null_nameC3 <- "P0-L20-C3_N1-L5-C1"
-if (null_nameC3 %in% pred_df$scenario) {
-  null_dataC3 <- pred_df[pred_df$scenario == null_nameC3, ]
-} else {
-  null_dataC3 <- NULL
-}
-
-null_nameC5 <- "P0-L20-C5_N1-L5-C1"
-if (null_nameC5 %in% pred_df$scenario) {
-  null_dataC5 <- pred_df[pred_df$scenario == null_nameC5, ]
-} else {
-  null_dataC5 <- NULL
-}
-
-## --- build separate plots per (PL, C), lines = P levels ---
-library(ggplot2)
-
-# common axes
-x_range <- range(pred_df$abund[pred_df$abund > 0 & is.finite(pred_df$abund)], na.rm = TRUE)
-y_range <- range(c(pred_df$ci_lower, pred_df$ci_upper), na.rm = TRUE)
-
-# order P nicely for legend
-pred_df$P_fac <- factor(pred_df$P, levels = sort(unique(pred_df$P)))
-
-combos <- unique(pred_df[c("PL","C")])
-combos <- combos[order(combos$PL, combos$C), ]
-
-plots_list <- vector("list", nrow(combos))
-names(plots_list) <- paste0("PL", combos$PL, "_C", combos$C)
-
-for (i in seq_len(nrow(combos))) {
-  pl_i <- combos$PL[i]
-  c_i  <- combos$C[i]
-  dat  <- subset(pred_df, PL == pl_i & C == c_i)
-  if (nrow(dat) == 0) next
-
-  p <- ggplot()
-
-  # add null only if C == 1
-  if (c_i == 1 & !is.null(null_dataC1)) {
-    p <- p +
-      geom_ribbon(data = null_dataC1,
-                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
-                  alpha = 0.15, fill = "grey50") +
-      geom_line(data = null_dataC1,
-                aes(x = abund, y = fitted),
-                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
-  }
-  # add null only if C == 3
-  if (c_i == 3 & !is.null(null_dataC3)) {
-    p <- p +
-      geom_ribbon(data = null_dataC3,
-                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
-                  alpha = 0.15, fill = "grey50") +
-      geom_line(data = null_dataC3,
-                aes(x = abund, y = fitted),
-                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
-  }
-  # add null only if C == 5
-  if (c_i == 5 & !is.null(null_dataC5)) {
-    p <- p +
-      geom_ribbon(data = null_dataC5,
-                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
-                  alpha = 0.15, fill = "grey50") +
-      geom_line(data = null_dataC5,
-                aes(x = abund, y = fitted),
-                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
-  }
-
-  # treatment lines
-  p <- p +
-    geom_line(data = dat, aes(x = abund, y = fitted, color = P_fac), size = 1.2) +
-    scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
-    labs(title = paste0("PL = ", pl_i, ", C = ", c_i,
-                        "   (P-lines: ", length(unique(dat$P)), ")"),
-         x = "Abundance per Census",
-         y = "Mortality Change",
-         color = "P") +
-    theme_minimal(base_size = 12) +
-    theme(legend.position = "bottom",
-          plot.title = element_text(size = 14, hjust = 0.5))
-
-  # set y-range depending on C
-  if (c_i == 1) {
-    p <- p + coord_cartesian(ylim = c(-0.005, 0.01))
-  } else if (c_i == 3) {
-    p <- p + coord_cartesian(ylim = c(-0.0025, 0.0045))
-  } else if (c_i == 5) {
-    p <- p + coord_cartesian(ylim = c(-0.0005, 0.0012))
-  }
-
-  plots_list[[i]] <- p
-}
-
-# Print all plots
-lapply(plots_list, print)
-```
-
-## save PDF
-
-```{r}
-# pdf(paste0(root, "local/figures/plot_sr-params/pddSlope.pdf"), width = 5, height = 5, onefile = TRUE, useDingbats = FALSE)
-lapply(plots_list, print)   # each print() → new page
-# dev.off()
-```
-
-# compare correlation (slope) with max species abundance and SR
-
-```{r}
-dat_meta <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranDatmetaMax_iii.rds"))
-metamod <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranMetamodMax_iii.rds"))
-runs <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRuns_iii.rds"))
-
-pred <- lapply(dat_meta, function(x){
-  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
-                          max(x$log_N, na.rm = TRUE),
-                          length.out = 1000))
-})
-pred <- lapply(pred, function(x){
-  x$abund <- exp(x$log_N)
-  x
-})
-pred <- lapply(seq_along(pred), function(i){
-  x <- pred[[i]]
-  y <- metamod[[i]]
-  cbind(x, predict(object = y, newmods = x$log_N))
-})
-names(pred) <- names(metamod)
-```
-
-
-```{r}
-names(runs) <- names(dat_meta)
-srRaw <- getSpecTime(runs, plot = FALSE)
+srRaw <- getSpecTime(runsCon, plot = FALSE)
 
 # Get slopes
 slope <- map_dbl(metamod, ~ coef(.x)[2]) %>%
@@ -473,7 +319,7 @@ seSlope <- map_dbl(metamod, ~ se(.x)[2]) %>%
   enframe(name = "param", value = "seSlope")
 
 # Get abundance (use max to exclude extreme values)
-abund <- map_dbl(dat_meta, ~ max(.x$abund)) %>%
+abund <- map_dbl(datmeta, ~ max(.x$abund)) %>%
   enframe(name = "param", value = "abund")
 
 # Get CV of predictions
@@ -503,23 +349,20 @@ res <- list(slope, seSlope, sr, abund, cv) %>%
   mutate(abund = as.integer(abund))
 
 # Filter by scenario types
-scenario_types <- expand.grid(prefix = c("P", "N"), comp = paste0("C", 1:5), stringsAsFactors = FALSE)
+scenario_comps <- paste0("C", 1:5)
 
-res_scenarios <- map2(scenario_types$prefix, scenario_types$comp, ~ {
-  pattern <- if (.x == "P") paste0(.x, ".*-", .y, "_") else paste0(.x, ".*-", .y, "$")
+res_scenarios <- map(scenario_comps, ~ {
+  pattern <- paste0(".*-", .x)  # matches both P and N runs
   res %>% filter(grepl(pattern, param))
 }) %>%
-  set_names(paste0(scenario_types$prefix, scenario_types$comp))
+  set_names(scenario_comps)
 ```
 
 
 ```{r}
-saveRDS(res, paste0(root, "/local/runs/mstr/20250903/ranResMax_iii.rds"))
-```
-
-```{r}
-#| fig-width: 10
-#| fig-height: 6.5
+#| fig-width: 7
+#| fig-height: 7
+#| fig-cap: ["Relationships between stabilizing CDD parameters and community diversity metrics for randomly sampled nDD and pDD scenarios. A linear regression with 95% confidence intervals is fitted for the data in the corresponding panels and corresponding P values provided. Data is sorted by nDD spatial kernel (= nDC) and pdd(= pDC), except the last plot that contains all combined data. The slope (x-axis top-left and -right) results from the metaregression (see above) between stabilizing CDD and species abundance - the more negative it is, the stronger the negative relationship. Mean species richness is averaged across one run after filtering out non-equilibrium generations. Max abundance is the maximum abundance of any species within one run. CV is the coefficient of variation calculated by standard deviation of stabilizing CDD divided by mean stabilizing CDD. Top-left: Mean species richness vs slope. Top-right: Maximum abundance vs slope with log-transformed model fit. Bottom-left: Mean species richness vs CV stabilizing CDD (%) colored by slope values. Bottom-right: Mean species richness vs mean stabilizing CDD (%) with log-transformed relationship and slope-colored points.","","","","","","","","","",""]
 
 ## ---- helper functions ----
 pred_lm_log <- function(mod, newdata, k = 2) {
@@ -551,22 +394,22 @@ plot_sr_slope <- function(dat, tag, ylim_sr = c(40,100)) {
   p_val <- summary(fm1)$coefficients[2, 4]  # p-value for slope coefficient
   p_text <- format_pvalue(p_val)
   
-  plot(dat$slope, dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue",
-       xlab = "slope", ylab = "mean species richness")
-  points(dat$slope, dat$medianSR, pch = 16, col = "red")
+  plot(dat$slope, dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue", cex = .8,
+       xlab = "slope of fitted meta regression", ylab = "mean species richness")
+  points(dat$slope, dat$medianSR, pch = 16, cex = .8, col = "red")
   
   # Horizontal error bars for seSlope
   arrows(dat$slope - dat$seSlope, dat$meanSR, dat$slope + dat$seSlope, dat$meanSR,
-         angle = 90, code = 3, length = 0.05)
-  # Vertical error bars (existing)
-  arrows(dat$slope, dat$meanSR - dat$sdSR, dat$slope, dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05)
+         angle = 90, code = 3, length = 0.05, lwd = .5, col = rgb(0,0,0,.5))
+  # # Vertical error bars (existing)
+  # arrows(dat$slope, dat$meanSR - dat$sdSR, dat$slope, dat$meanSR + dat$sdSR,
+  #        angle = 90, code = 3, length = 0.05)
   
   lines(newdat$slope, predi$fit, lwd = 2, col = 1)
   lines(newdat$slope, predi$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
   lines(newdat$slope, predi$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("topright", legend = c("mean SR", "median SR", "fitted lm", "CI"),
-         pch = c(16,16,NA,NA), lty = c(NA,NA,1,2), col = c(4,2,1,1), bty = "n")
+  legend("topright", legend = c("mean SR", "median SR"),
+         pch = c(16,16), col = c(4,2), bty = "n")
   
   # Add p-value text
   text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
@@ -587,23 +430,21 @@ plot_abund_slope <- function(dat, tag) {
   p_val <- summary(fm)$coefficients[2, 4]
   p_text <- format_pvalue(p_val)
   # Plot log-transformed abundances
-  plot(dat$slope, dat$log_abund, pch = 16, col = 1,
-       xlab = "slope", ylab = "log(max abundance)")
+  plot(dat$slope, dat$log_abund, pch = 16, col = 1, cex = .8,
+       xlab = "slope of fitted meta regression", ylab = "log(max abundance)")
   
   # Horizontal error bars for seSlope (NEW)
   arrows(dat$slope - dat$seSlope, dat$log_abund, dat$slope + dat$seSlope, dat$log_abund,
-         angle = 90, code = 3, length = 0.05, col = 1)
+         angle = 90, code = 3, length = 0.05,lwd = .5, col = rgb(0,0,0,.5))
   
   # Add fitted line and confidence intervals
   lines(newdat$slope, log(pg$fit), lwd = 2, col = 1)
   lines(newdat$slope, log(pg$lo), lwd = 1, lty = 2, col = 1)
   lines(newdat$slope, log(pg$hi), lwd = 1, lty = 2, col = 1)
   # Add legend
-  legend("topleft", legend = c("fitted lm", "CI"), lty = c(1,2),
-         col = c(1,1), bty = "n")
   # Add p-value text
-  text(x = par("usr")[1] + 0.75*diff(par("usr")[1:2]),
-       y = par("usr")[4] - 0.05*diff(par("usr")[3:4]),
+  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
+       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
        labels = p_text, pos = 4, cex = 0.9, col = "darkred")
 }
 
@@ -618,10 +459,11 @@ plot_sr_cvmc <- function(dat, tag, ylim_sr = c(40,90)) {
   p_text <- format_pvalue(p_val)
   
   cols <- viridis(length(dat$slope))[rank(dat$slope)]
-  plot(dat$cvMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
+  cols_error <- cols %>% adjustcolor(alpha.f = 0.75)
+  plot(dat$cvMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols, cex = .8,
        xlab = "CV of stabilizing CDD", ylab = "mean species richness")
   arrows(dat$cvMC, dat$meanSR - dat$sdSR, dat$cvMC, dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05, col = cols)
+         angle = 90, code = 3, length = 0.05, col = cols_error, lwd =.5)
   lines(newdat$cvMC, pred$fit, lwd = 2, col = 1)
   lines(newdat$cvMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
   lines(newdat$cvMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
@@ -647,11 +489,12 @@ plot_sr_meanmc <- function(dat, tag, ylim_sr = c(40,90)) {
   p_text <- format_pvalue(p_val)
   
   cols <- viridis(length(dat$slope))[rank(dat$slope)]
-  plot(dat$meanMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
+  cols_error <- cols %>% adjustcolor(alpha.f = .75)
+  plot(dat$meanMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols, cex = .8,
        xlab = "mean stabilizing CDD (%)", ylab = "mean species richness")
     # Horizontal error bars for sdMC
   arrows(dat$meanMC - dat$sdMC, dat$meanSR, dat$meanMC + dat$sdMC, dat$meanSR,
-         angle = 90, code = 3, length = 0.05)
+         angle = 90, code = 3, length = 0.05, lwd = .5, col = cols_error)
   lines(newdat$meanMC, pred$fit, lwd = 2, col = 1)
   lines(newdat$meanMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
   lines(newdat$meanMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
@@ -659,12 +502,10 @@ plot_sr_meanmc <- function(dat, tag, ylim_sr = c(40,90)) {
          fill = viridis(5),
          legend = signif(seq(min(dat$slope), max(dat$slope), length.out = 5), 2),
          bty = "n", cex = .8)
-  legend("topleft", legend = c("fitted lm", "CI"),
-         lty = c(1,2), bty = "n")
   
   # Add p-value text
-  text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
+  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
+       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]),  
        labels = p_text, pos = 4, cex = 0.9, col = "darkred")
 }
 
@@ -676,7 +517,8 @@ plot_all_scenarios <- function(scenario_list, scenario_names,
   # For each scenario, create all 4 plot types
   for(i in 1:n_scenarios) {
     # Set up 2x2 grid for each scenario with main title
-    par(mfrow = c(2, 2), mar = c(4,4,3,2), oma = c(0, 0, 2, 0))
+    # par(mfrow = c(2, 2), mar = c(4,4,3,2), oma = c(0, 0, 2, 0))       # change this for single or mulit-panel plots
+    par(mfrow = c(1, 1), mar = c(6,4,3,2), oma = c(0, 0, 2, 0))       # change this for single or mulit-panel plots
     
     # Main analysis plots
     plot_sr_slope(scenario_list[[i]], scenario_names[i], ylim_sr)
@@ -691,18 +533,28 @@ plot_all_scenarios <- function(scenario_list, scenario_names,
 
 ## ---- apply to scenarios C1-C5 ----
 # Assuming you have data objects: resC1, resC2, resC3, resC4, resC5
-scenario_dataP <- res_scenarios[str_detect(string = names(res_scenarios),pattern = "P")]
-scenario_labelsP <- c("pDC = 1","pDC = 2", "pDC = 3","pDC = 4", "pDC = 5")
-scenario_dataN <- res_scenarios[str_detect(string = names(res_scenarios),pattern = "N")]
-scenario_labelsN <- c("nDC = 1","nDC = 2", "nDC = 3","nDC = 4", "nDC = 5")
+scenario_data1<- res_scenarios[str_detect(string = names(res_scenarios),pattern = "1")]
+scenario_label1 <- "DC = 1"
+scenario_data2<- res_scenarios[str_detect(string = names(res_scenarios),pattern = "2")]
+scenario_label2 <- "DC = 2"
+scenario_data3<- res_scenarios[str_detect(string = names(res_scenarios),pattern = "3")]
+scenario_label3 <- "DC = 3"
+scenario_data4<- res_scenarios[str_detect(string = names(res_scenarios),pattern = "4")]
+scenario_label4 <- "DC = 4"
+scenario_data5<- res_scenarios[str_detect(string = names(res_scenarios),pattern = "5")]
+scenario_label5 <- "DC = 5"
 
-# # Generate all plots for negative scenarios
-# plot_all_scenarios(scenario_dataN, scenario_labelsN,
-#                    ylim_sr = c(40,100))
-# 
-# # Generate all plots for positive scenarios (fixed label bug)
-# plot_all_scenarios(scenario_dataP, scenario_labelsP,
-#                    ylim_sr = c(40,100))
+# Generate all plots for negative scenarios
+plot_all_scenarios(scenario_data1, scenario_label1,
+                   ylim_sr = c(40,100))
+plot_all_scenarios(scenario_data2, scenario_label2,
+                   ylim_sr = c(40,100))
+plot_all_scenarios(scenario_data3, scenario_label3,
+                   ylim_sr = c(40,100))
+plot_all_scenarios(scenario_data4, scenario_label4,
+                   ylim_sr = c(40,100))
+plot_all_scenarios(scenario_data5, scenario_label5,
+                   ylim_sr = c(40,100))
 
 # Generate plot for combined data
 plot_all_scenarios(list(res), "combined data", 
@@ -711,15 +563,30 @@ plot_all_scenarios(list(res), "combined data",
 
 
 ```{r}
-# pdf(paste0(root, "local/figures/plot_sr-params/pddSupplPlots.pdf"), width = 10, height = 6.5, onefile = TRUE, useDingbats = FALSE)
-    # Generate all plots for all scenarios with p-values
-    # plot_all_scenarios(scenario_dataP, scenario_labelsP, 
-    #                    ylim_sr = c(40,100), ylim_abund = c(0,15000))
-    # plot_all_scenarios(scenario_dataN, scenario_labelsN, 
-    #                    ylim_sr = c(40,100), ylim_abund = c(0,15000))
-# dev.off()
-
+# saveRDS(res, paste0(root, "/local/runs/mstr/20250903/ranResFixDC_i.rds"))
 ```
+
+```{r}
+#| fig-width: 7
+#| fig-height: 7
+#| fig-cap: "Relationships between stabilizing CDD parameters and community diversity metrics for randomly sampled nDD and pDD scenarios. A linear regression with 95% confidence intervals is fitted for the data in the corresponding panels. Data comes from 150 runs with randomly sampled parametrization. The slope results from the metaregression and encapsulates the relationship between stabilizing CDD and species abundance - the more negative it is, the stronger the negative relationship. Mean species richness is averaged across one run after filtering out non-equilibrium generations. Max abundance is the maximum abundance of any species within one run. CV is the coefficient of variation calculated by standard deviation of stabilizing CDD divided by mean stabilizing CDD. Top-left: Mean species richness vs slope. Top-right: Maximum abundance vs slope with log-transformed model fit. Bottom-left: Mean species richness vs CV stabilizing CDD (%) colored by slope values. Bottom-right: Mean species richness vs mean stabilizing CDD (%) with log-transformed relationship and slope-colored points."
+
+resi <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResFixDC_i.rds"))
+resii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResFixDC_ii.rds"))
+resiii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResFixDC_iii.rds"))
+
+res_all <- rbind(resi,resii,resiii)
+
+# Generate plot for combined data
+plot_all_scenarios(list(res_all), "", 
+                   ylim_sr = c(40,100))
+# 
+# pdf(paste0(root, "local/figures/ran/ran_allFixDC.pdf"), width = 5, height = 5, onefile = TRUE, useDingbats = FALSE)
+# plot_all_scenarios(list(res_all), "",
+#                    ylim_sr = c(40,100))
+# dev.off()
+```
+
 
 ## rac
 
@@ -835,7 +702,7 @@ combined_plot <- grid.arrange(
 # ggsave(paste0(root, "local/figures/ran/meanSR_params_iii.pdf"), combined_plot, width = 15, height = 10, dpi = 300)
 ```
 
-  #all results combined
+#all results combined
 
 ```{r}
 resi <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResMax_i.rds"))
