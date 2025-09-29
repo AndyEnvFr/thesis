@@ -271,6 +271,7 @@ runsCon <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranRunsFixDC_i.rds"))
 ## predictions
 
 ### log_N
+
 ```{r}
 namesShort <- names(metamod) %>% 
   str_replace("pdd", "P") %>% 
@@ -287,8 +288,6 @@ names(metamod) <- namesShort
 names(datmeta) <- namesShort
 names(runsCon) <- namesShort
 ```
-
-
 
 ```{r}
 ## --- build predictions (as you had) ---
@@ -357,7 +356,6 @@ res_scenarios <- map(scenario_comps, ~ {
 }) %>%
   set_names(scenario_comps)
 ```
-
 
 ```{r}
 #| fig-width: 7
@@ -561,7 +559,6 @@ plot_all_scenarios(list(res), "combined data",
                    ylim_sr = c(40,100))
 ```
 
-
 ```{r}
 # saveRDS(res, paste0(root, "/local/runs/mstr/20250903/ranResFixDC_i.rds"))
 ```
@@ -577,8 +574,16 @@ resiii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResFixDC_iii.rds"))
 
 res_all <- rbind(resi,resii,resiii)
 
+resi <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResMax_i.rds"))
+resii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResMax_ii.rds"))
+resiii <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResMax_iii.rds"))
+
+res_all <- rbind(resi,resii,resiii)
+
 # Generate plot for combined data
 plot_all_scenarios(list(res_all), "", 
+                   ylim_sr = c(40,100))
+plot_all_scenarios(list(res_allo), "", 
                    ylim_sr = c(40,100))
 # 
 # pdf(paste0(root, "local/figures/ran/ran_allFixDC.pdf"), width = 5, height = 5, onefile = TRUE, useDingbats = FALSE)
@@ -586,7 +591,6 @@ plot_all_scenarios(list(res_all), "",
 #                    ylim_sr = c(40,100))
 # dev.off()
 ```
-
 
 ## rac
 

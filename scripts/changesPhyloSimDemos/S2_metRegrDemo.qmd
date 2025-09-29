@@ -45,8 +45,7 @@ To get an overview of the workflow, here the main step:
 
 # Data preparation and explanation
 
-The runs that I load are generated with a random sampling of the nDD and pDD strength, specificity kernel, and spatial kernel.\
-The strength is a simple scalar that ranges from 0 to 1. For details on the specificity kernel see XXXXX. In a first step, I present the spatial kernel (param = densityCut).
+The runs that I load are generated with a random sampling of the nDD and pDD strength, specificity kernel, and spatial kernel (see S4). The strength is a simple scalar that ranges from 0 to 1, the specificity kernel amplifies the DD effect for related neighbors and reduces it for unrelated (For details, see S1), and the spatial kernel (param = `densityCut`) dictates the range of effect of the DD effects. Latter is presented first.
 
 ## The spatial kernel (parameter = densityCut)
 
@@ -407,7 +406,7 @@ mcS_err_sim <- parLapply(cl, mcS_err, function(x){
 stopCluster(cl)
 ```
 
-From the coefficients and the variances-covariance matrix we simulated and averaged stabilizing CDD with its standard error and 95% intervals (ci_low and ci_high).
+From the coefficients and the variances-covariance matrix we simulated and averaged stabilizing CDD (Average Marginal Effect AME, see. Mood 2010.) with its standard error and 95% intervals (ci_low and ci_high).
 
 ```{r}
 head(mcS_err_sim[[1]]) # first run in batch, first six species
@@ -489,6 +488,14 @@ if(any(failed_indices)) {
 #| include: false
 #| eval: false
 
+metamod <- readRDS(paste0(root, "local/runs/mstr/20250903/ranMetamodMax_i.rds"))
+dat_meta <- readRDS(paste0(root, "local/runs/mstr/20250903/ranDatmetaMax_i.rds"))
+```
+
+```{r}
+#| include: false
+#| eval: false
+
 summary(metamod[[1]])
 ```
 
@@ -496,7 +503,7 @@ summary(metamod[[1]])
 #| include: false
 #| eval: false
 
-plot(metamod[[1]])
+metafor::plot.rma.uni(metamod[[1]])
 ```
 
 # Visualize results
@@ -803,3 +810,6 @@ plot_all_scenarios(list(res_all), "combined data",
 Hülsmann, L., Chisholm, R. A., Comita, L., Visser, M. D., de Souza Leite, M., Aguilar, S., Anderson-Teixeira, K. J., Bourg, N. A., Brockelman, W. Y., Bunyavejchewin, S., Castaño, N., Chang-Yang, C.-H., Chuyong, G. B., Clay, K., Davies, S. J., Duque, A., Ediriweera, S., Ewango, C., Gilbert, G. S., … Hartig, F. (2024). Latitudinal patterns in stabilizing density dependence of forest communities. Nature, 627(8004), 564–571. https://doi.org/10.1038/s41586-024-07118-4
 
 Krishnadas, M., B. Bachelot, R. Bagchi, et al. In Preparation. “Conspecific Density Dependence in Plant Communities: A TheoryBased Toolkit for Empirical Studies.”
+
+Mood, C. (2010). Logistic Regression: Why We Cannot Do What We Think We Can Do, and What We Can Do About It. European Sociological Review, 26(1), 67–82. https://doi.org/10.1093/esr/jcp006
+

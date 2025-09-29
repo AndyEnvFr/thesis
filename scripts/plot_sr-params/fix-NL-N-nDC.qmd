@@ -354,12 +354,14 @@ if(any(failed_indices)) {
 
 # deleting one scenario
 
-saveRDS(dat_meta, paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_datmetaMax.rds"))
-saveRDS(metamod, paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_metamodMax.rds"))
+# saveRDS(dat_meta, paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_datmetaMax.rds"))
+# saveRDS(metamod, paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_metamodMax.rds"))
 
 
-# metamod <- readRDS(paste0(root, "..."))
-# dat_meta <- readRDS(paste0(root, "..."))
+metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_metamodMax.rds"))
+dat_meta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_datmetaMax.rds"))
+namesShort <- names(metamod)
+
 ```
 
 ## predictions
@@ -367,6 +369,19 @@ saveRDS(metamod, paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_me
 ### log_N
 
 ```{r}
+#| fig-width: 8
+#| fig-height: 5
+
+
+cb_colors <- c(
+  "#029E73",  # Green
+  "#0173B2",  # Blue
+  "#DE8F05",  # Orange
+  "#CC78BC",  # Purple
+  "firebrick"   # Brown
+)
+
+
 ## --- build predictions (as you had) ---
 pred <- lapply(dat_meta, function(x){
   expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
@@ -382,19 +397,14 @@ pred <- lapply(seq_along(pred), function(i){
   y <- metamod[[i]]
   cbind(x, predict(object = y, newmods = x$log_N))
 })
-names(pred) <- namesShort   # <- your vector like the one you listed
+names(pred) <- namesShort
 
-## --- FIXED helper: parse P, PL, C from scenario name ---
+## --- helper function (unchanged) ---
 extract_params <- function(nm) {
-  # expect "P0.2-L20-C1_N1-L5-C1"
-  # Split on underscore and take first part
-  lhs <- sub("_.*", "", nm)                 # "P0.2-L20-C1"
-  
-  # Extract P, PL (L value), and C from first part
+  lhs <- sub("_.*", "", nm)
   P  <- as.numeric(sub("P([0-9.]+)-.*", "\\1", lhs))
   PL <- as.numeric(sub(".*-L([0-9.]+)-.*", "\\1", lhs))
   C  <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", lhs))
-  
   data.frame(P = P, PL = PL, C = C)
 }
 
@@ -417,104 +427,75 @@ if ("ci.ub" %in% names(pred_df_raw))  pred_df_raw$ci_upper <- pred_df_raw$ci.ub
 
 pred_df <- pred_df_raw %>% filter(P != 0)
 
-## --- null model (overlay on every plot) ---
+## --- null models for each C value ---
 null_nameC1 <- "P0-L20-C1_N1-L5-C1"
-if (null_nameC1 %in% pred_df_raw$scenario) {
-  null_dataC1 <- pred_df_raw[pred_df_raw$scenario == null_nameC1, ]
-} else {
-  null_dataC1 <- NULL
-}
+null_dataC1 <- if (null_nameC1 %in% pred_df_raw$scenario) pred_df_raw[pred_df_raw$scenario == null_nameC1, ] else NULL
 
 null_nameC3 <- "P0-L20-C3_N1-L5-C1"
-if (null_nameC3 %in% pred_df_raw$scenario) {
-  null_dataC3 <- pred_df_raw[pred_df_raw$scenario == null_nameC3, ]
-} else {
-  null_dataC3 <- NULL
-}
+null_dataC3 <- if (null_nameC3 %in% pred_df_raw$scenario) pred_df_raw[pred_df_raw$scenario == null_nameC3, ] else NULL
 
 null_nameC5 <- "P0-L20-C5_N1-L5-C1"
-if (null_nameC5 %in% pred_df_raw$scenario) {
-  null_dataC5 <- pred_df_raw[pred_df_raw$scenario == null_nameC5, ]
-} else {
-  null_dataC5 <- NULL
-}
+null_dataC5 <- if (null_nameC5 %in% pred_df_raw$scenario) pred_df_raw[pred_df_raw$scenario == null_nameC5, ] else NULL
 
-## --- build separate plots per (PL, C), lines = P levels ---
+## --- CHANGED: build separate plots per (P, C), lines = PL levels ---
 library(ggplot2)
 
 # common axes
 x_range <- range(pred_df$abund[pred_df$abund > 0 & is.finite(pred_df$abund)], na.rm = TRUE)
 y_range <- range(c(pred_df$ci_lower, pred_df$ci_upper), na.rm = TRUE)
 
-# order P nicely for legend
-pred_df$P_fac <- factor(pred_df$P, levels = sort(unique(pred_df$P)))
+# order PL nicely for legend (now PL is color)
+pred_df$PL_fac <- factor(pred_df$PL, levels = sort(unique(pred_df$PL)))
 
-combos <- unique(pred_df[c("PL","C")])
-combos <- combos[order(combos$PL, combos$C), ]
+# CHANGED: now combinations are P and C
+combos <- unique(pred_df[c("P", "C")])
+combos <- combos[order(combos$P, combos$C), ]
 
 plots_list <- vector("list", nrow(combos))
-names(plots_list) <- paste0("PL", combos$PL, "_C", combos$C)
+names(plots_list) <- paste0("P", combos$P, "_C", combos$C)
 
 for (i in seq_len(nrow(combos))) {
-  pl_i <- combos$PL[i]
-  c_i  <- combos$C[i]
-  dat  <- subset(pred_df, PL == pl_i & C == c_i)
+  p_i <- combos$P[i]
+  c_i <- combos$C[i]
+  dat <- subset(pred_df, P == p_i & C == c_i)
   if (nrow(dat) == 0) next
 
   p <- ggplot()
 
-  # add null only if C == 1
-  if (c_i == 1 & !is.null(null_dataC1)) {
+  # add appropriate null model
+  null_data <- if (c_i == 1) null_dataC1 else if (c_i == 3) null_dataC3 else if (c_i == 5) null_dataC5 else NULL
+  
+  if (!is.null(null_data)) {
     p <- p +
-      geom_ribbon(data = null_dataC1,
+      geom_ribbon(data = null_data,
                   aes(x = abund, ymin = ci_lower, ymax = ci_upper),
-                  alpha = 0.15, fill = "grey50") +
-      geom_line(data = null_dataC1,
+                  alpha = 0.2, fill = "black") +
+      geom_line(data = null_data,
                 aes(x = abund, y = fitted),
-                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
-  }
-  # add null only if C == 3
-  if (c_i == 3 & !is.null(null_dataC3)) {
-    p <- p +
-      geom_ribbon(data = null_dataC3,
-                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
-                  alpha = 0.15, fill = "grey50") +
-      geom_line(data = null_dataC3,
-                aes(x = abund, y = fitted),
-                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
-  }
-  # add null only if C == 5
-  if (c_i == 5 & !is.null(null_dataC5)) {
-    p <- p +
-      geom_ribbon(data = null_dataC5,
-                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
-                  alpha = 0.15, fill = "grey50") +
-      geom_line(data = null_dataC5,
-                aes(x = abund, y = fitted),
-                linetype = "dashed", size = 1.1, color = "black", alpha = 0.9)
+                linetype = "dashed", size = .5, color = "black", alpha = 0.9)
   }
 
-  # treatment lines
-  p <- p +
-    geom_line(data = dat, aes(x = abund, y = fitted, color = P_fac), size = 1.2) +
-    scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
-    labs(title = paste0("PL = ", pl_i, ", C = ", c_i,
-                        "   (P-lines: ", length(unique(dat$P)), ")"),
-         x = "Abundance",
-         y = "Mortality Change",
-         color = "P") +
-    theme_minimal(base_size = 12) +
-    theme(legend.position = "bottom",
-          plot.title = element_text(size = 14, hjust = 0.5))
-
-  # set y-range depending on C
-  if (c_i == 1) {
-    p <- p + coord_cartesian(ylim = c(-0.0004, 0.0008))
-  } else if (c_i == 3) {
-    p <- p + coord_cartesian(ylim = c(-0.0004, 0.0008))
-  } else if (c_i == 5) {
-    p <- p + coord_cartesian(ylim = c(-0.0004, 0.0008))
-  }
+  # CHANGED: treatment lines now colored by PL (specificity)
+p <- p +
+  geom_ribbon(data = dat, 
+              aes(x = abund, ymin = ci_lower, ymax = ci_upper, fill = PL_fac),
+              alpha = 0.1) +
+  geom_line(data = dat, 
+            aes(x = abund, y = fitted, color = PL_fac), 
+            size = 1.2) +
+  scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
+  labs(title = paste0("strength = ", p_i, ", radius = ", c_i),
+       x = "species abundance",
+       y = "stabilizing CDD (%)",
+       color = "specificity (lambda)",
+       fill = "specificity (lambda)") +
+  theme_classic(base_size = 16) +
+  theme(legend.position = "bottom",
+        legend.key.size = unit(0.5, "cm"),
+        plot.title = element_text(size = 14, hjust = 0.5)) +
+  scale_color_manual(values = cb_colors) +
+  scale_fill_manual(values = cb_colors) +  # Add this for ribbon colors
+  coord_cartesian(ylim = c(-0.0004, 0.0013))
 
   plots_list[[i]] <- p
 }
@@ -526,15 +507,16 @@ sapply(plots_list, print)
 ## save PDF
 
 ```{r}
-# pdf(paste0(root, "local/figures/plot_sr-params/pddSlopeMax.pdf"), width = 6, height = 6, onefile = TRUE, useDingbats = FALSE)
-lapply(plots_list, print)   # each print() → new page
-# dev.off()
+pdf(paste0(root, "local/figures/plot_sr-params/pddSlopeMax.pdf"), width = 6, height = 6, onefile = TRUE, useDingbats = FALSE)
+sapply(plots_list, print)   # each print() → new page
+dev.off()
 ```
 
 # compare correlation (slope) with max species abundance and SR
 
 ```{r}
 datmeta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_datmetaMax.rds"))
+dat_meta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_datmetaMax.rds"))
 metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_metamodMax.rds"))
 runs <- readRDS(paste0(root, "local/runs/plot_sr-params/mat/fix-N-NL-nDC.rds"))
 ```
@@ -656,7 +638,6 @@ resC3 <- res %>%
 resC5 <- res %>%
   dplyr::filter(grepl("P.*-C5_", param))
 ```
-
 
 ```{r}
 #| fig-width: 10
@@ -863,6 +844,16 @@ scenario_labels <- c("C1", "C3", "C5")
 
 ```
 
+```{r}
+cb_colors <- c(
+  "#029E73",  # Green
+  "#0173B2",  # Blue
+  "#DE8F05",  # Orange
+  "#CC78BC",  # Purple
+  "firebrick"   # Brown
+)
+
+```
 
 ```{r}
 #| fig-width: 10
@@ -873,7 +864,7 @@ res_parsed <- res %>%
   # Split the param column at the underscore to get the two parts
   separate(param, into = c("part1", "part2"), sep = "_", remove = FALSE) %>%
   # Extract P, PL, C from first part (P1-L5-C1 format) - this is our pDD data
-  extract(part1, into = c("P", "PL", "C1"), regex = "P([0-9.]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
+  extract(part1, into = c("P", "PL", "C1"), regex = "P([0-9.]+)-L([0-9.]+)-C([0-9]+)", remove = FALSE) %>%
   # Extract N, NL, C from second part (N0-L20-C1 format) - this should be fixed nDD
   extract(part2, into = c("N", "NL", "C2"), regex = "N([0-9.]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
   # Convert to numeric
@@ -946,16 +937,16 @@ plotPDD_SR <- ggplot() +
   # Plot lines connecting all points (including baseline)
   geom_line(data = res_final, 
             aes(x = P, y = meanSR, color = factor(PL), group = PL), 
-            size = 0.8) +
+            size = 1) +
   # Plot colored points for P > 0
   geom_point(data = complete_data, 
              aes(x = P, y = meanSR, color = factor(PL)), 
-             size = 2, position = position_dodge(width = 0.05)) +
+             size = 2, position = position_dodge(width = 0.075)) +
   geom_errorbar(data = complete_data,
                 aes(x = P, y = meanSR, color = factor(PL),
                     ymin = meanSR - sdSR, ymax = meanSR + sdSR),
-                width = 0.05, alpha = 1,
-                position = position_dodge(width = 0.05)) +
+                width = 0.05, alpha = .5, size = .75,
+                position = position_dodge(width = 0.075)) +
   # Add baseline points if they exist
   {if(nrow(baseline_unique) > 0) {
     list(
@@ -968,10 +959,10 @@ plotPDD_SR <- ggplot() +
     )
   }} +
   facet_wrap(~ C, ncol = 3, scales = "fixed",
-             labeller = labeller(C = function(x) paste("pDD kernel =", x))) +
-  labs(x = "pDD strength",
+             labeller = labeller(C = function(x) paste("radius =", x))) +
+  labs(x = "strength",
        y = "mean species richness",
-       color = "pDD\nspecificity") +
+       color = "lambda\n(specificity)") +
   theme_classic(base_size = 16) +
   theme(
     strip.background = element_blank(),
@@ -987,19 +978,18 @@ plotPDD_SR <- ggplot() +
     panel.grid.minor.x = element_blank()
   ) + 
   coord_cartesian(clip = "off") +
-  scale_color_viridis_d(option = "plasma") +
+  scale_color_manual(values = cb_colors) +
   scale_x_continuous(breaks = seq(0, 1, by = 0.2)) 
 
 print(plotPDD_SR)
 
 ```
+
 ```{r}
-pdf(paste0(root, "local/figures/plot_sr-params/pddEffectOnSR.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
-print(plotPDD_SR)
-dev.off()
+# pdf(paste0(root, "local/figures/plot_sr-params/pddEffectOnSR.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
+# print(plotPDD_SR)
+# dev.off()
 ```
-
-
 
 ```{r}
 #| fig-width: 10
@@ -1010,9 +1000,9 @@ res_parsed <- res %>%
   # Split the param column at the underscore to get the two parts
   separate(param, into = c("part1", "part2"), sep = "_", remove = FALSE) %>%
   # Extract P, PL, C from first part (P1-L5-C1 format) - this is our pDD data
-  extract(part1, into = c("P", "PL", "C1"), regex = "P([0-9.]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
+  extract(part1, into = c("P", "PL", "C1"), regex = "P([0-9.]+)-L([0-9.]+)-C([0-9]+)", remove = FALSE) %>%
   # Extract N, NL, C from second part (N0-L20-C1 format) - this should be fixed nDD
-  extract(part2, into = c("N", "NL", "C2"), regex = "N([0-9.]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
+  extract(part2, into = c("N", "NL", "C2"), regex = "N([0-9.]+)-L([0-9.]+)-C([0-9]+)", remove = FALSE) %>%
   # Convert to numeric
   mutate(
     P = as.numeric(P),
@@ -1087,12 +1077,12 @@ plotPDD_MC <- ggplot() +
   # Plot colored points for P > 0
   geom_point(data = complete_data, 
              aes(x = P, y = meanMC, color = factor(PL)), 
-             size = 2, position = position_dodge(width = 0.05)) +
+             size = 2, position = position_dodge(width = 0.075)) +
   geom_errorbar(data = complete_data,
                 aes(x = P, y = meanMC, color = factor(PL),
                     ymin = meanMC - sdMC, ymax = meanMC + sdMC),
-                width = 0.05, alpha = 1,
-                position = position_dodge(width = 0.05)) +
+                width = 0.05, alpha = .5, size = .75,
+                position = position_dodge(width = 0.075)) +
   # Add baseline points if they exist
   {if(nrow(baseline_unique) > 0) {
     list(
@@ -1105,10 +1095,10 @@ plotPDD_MC <- ggplot() +
     )
   }} +
   facet_wrap(~ C, ncol = 3, scales = "fixed",
-             labeller = labeller(C = function(x) paste("pDD kernel =", x))) +
-  labs(x = "pDD strength",
-       y = "mean stabilizing CDD",
-       color = "pDD\nspecificity") +
+             labeller = labeller(C = function(x) paste("radius =", x))) +
+  labs(x = "strength",
+       y = "mean stabilizing CDD (%)",
+       color = "lambda\n(specificity)") +
   theme_classic(base_size = 16) +
   theme(
     strip.background = element_blank(),
@@ -1124,7 +1114,7 @@ plotPDD_MC <- ggplot() +
     panel.grid.minor.x = element_blank()
   ) + 
     coord_cartesian(clip = "off") +
-  scale_color_viridis_d(option = "plasma") +
+  scale_color_manual(values = cb_colors) +
   scale_x_continuous(breaks = seq(0, 1, by = 0.2)) + 
     geom_hline(
     data = baseline_unique,
