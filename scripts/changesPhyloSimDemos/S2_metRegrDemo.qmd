@@ -812,4 +812,3 @@ Hülsmann, L., Chisholm, R. A., Comita, L., Visser, M. D., de Souza Leite, M., A
 Krishnadas, M., B. Bachelot, R. Bagchi, et al. In Preparation. “Conspecific Density Dependence in Plant Communities: A TheoryBased Toolkit for Empirical Studies.”
 
 Mood, C. (2010). Logistic Regression: Why We Cannot Do What We Think We Can Do, and What We Can Do About It. European Sociological Review, 26(1), 67–82. https://doi.org/10.1093/esr/jcp006
-

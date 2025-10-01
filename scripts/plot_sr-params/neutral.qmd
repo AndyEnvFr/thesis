@@ -1,0 +1,190 @@
+---
+title: "PhyloSim Changes"
+author: "A.I."
+format:
+  html:
+    number-sections: true
+editor: visual
+---
+
+```{r}
+#| warning: false
+library(PhyloSim)
+library(parallel)
+library(dplyr)
+library(tidyverse)
+library(lattice)
+library(ggplot2)
+library(metafor)
+library(MASS)
+library(viridis)
+# root <- "~/Uni/Master/MA/" # work from local machine
+root <- "~/cyber_synch/" # work from uni bayreuth server
+```
+
+**Here, I plot the effects of N, NL, nDC while all P properties are fixed**
+
+## Data preparation
+
+```{r}
+#| eval: false
+
+# load in runs with exp kernel
+runsRaw  <- readRDS(paste0(root, "/local/runs/plot_sr-params/mat/neutral.rds"))
+```
+
+```{r}
+#| eval: false
+
+# get conspecific neighbors and proper naming
+runsRaw  <- getConNeigh(runsRaw, radius = 5)
+```
+
+
+```{r}
+S <- getSpecTime(runsRaw, plot = FALSE)
+```
+
+```{r}
+# Extract mean and sd of species richness
+Sp <- data.frame(rep(NA, 102))
+Sp$vals <- S$spec_rich[99:200]
+Sp$mean <- mean(Sp$vals)
+Sp$sd <- sd(Sp$vals)
+Sp <- Sp[1,-c(1,2)]
+colnames(Sp) <- c("meanSR", "sdSR")
+Sp$params <- "neutral" 
+```
+
+```{r}
+# export neutral sceanrio data
+# saveRDS(Sp, paste0(root, "/local/runs/plot_sr-params/neutralSR.rds"))
+```
+
+Next, we convert the matrix data into tabular data. With the argument detailedParams we include the parameter settings a seperate cols. We save the tabular data.
+
+```{r}
+#| eval: false
+
+
+# reduce size of data by burn in period until equilibrium is reached
+runsFilt <- runsRaw
+runsFilt$Output <- runsRaw$Output[99:200]
+runsFilt$Model$runs <- runsRaw$Model$runs[99:200]
+
+# convert matrices to tabular data. This is done parallel, as it takes longer
+tab <- getMatToTab(runsFilt, detailedParams = TRUE)
+saveRDS(tab, paste0(root, "local/runs/plot_sr-params/tab/neut.rds"))
+```
+
+```{r}
+tab <- readRDS(paste0(root, "local/runs/plot_sr-params/tab/neut.rds"))
+```
+
+```{r}
+# keep only first timespot in census
+
+tabS <- tab %>%
+  filter(abund > 100) %>%
+  mutate(specIdCen = paste0(specId, census)) %>%
+  dplyr::select(-indId)
+```
+
+### Metafor analysis: correcting for uncertainty
+
+```{r}
+#| eval: false
+
+specIDs <- unique(tabS$specIdCen)
+res <- vector("list", length(specIDs))
+
+i <- 1
+for (sID in specIDs) {
+  dat <- tabS[tabS$specIdCen == sID, ]
+  mod <- glm(mortNextGen ~ con, data = dat, family = binomial())
+  
+  sfm <- summary(mod)$coefficients
+  vc <- vcov(mod)[c("(Intercept)", "con"), c("(Intercept)", "con")]
+  
+  mort0 <- plogis(coef(mod)[1])
+  mort1 <- plogis(coef(mod)[1] + coef(mod)[2])
+  
+  res[[i]] <- list(
+    specId = sID,
+    abund = dat$abund[1],
+    mort_change = mort1 - mort0,
+    coef = coef(mod)[c(1,2)],
+    vcov = vc
+  )
+  i <- i + 1
+}
+
+mcS_err <- res
+```
+
+## compute variance of the marginal effect through a "posterior" simulation
+
+```{r}
+#| eval: false
+
+mcS_err_sim <- lapply(mcS_err, function(y) {
+  sim <- MASS::mvrnorm(n = 100, mu = c(y$coef[1], y$coef[2]), Sigma = y$vcov)
+  mort0 <- plogis(sim[, 1])
+  mort1 <- plogis(sim[, 1] + sim[, 2])
+  mort_diff <- mort1 - mort0
+  
+  data.frame(
+    abund   = y$abund,
+    specId  = y$specId,
+    mean    = mean(mort_diff),
+    se      = sd(mort_diff),
+    ci_low  = quantile(mort_diff, 0.025),
+    ci_high = quantile(mort_diff, 0.975)
+  )
+})
+
+# bind all into one df
+mcS_err_sim_df <- bind_rows(mcS_err_sim)
+```
+
+## unlist inner lists and add log abund
+
+```{r}
+#| eval: false
+
+m4 <- mcS_err_sim_df %>%
+  mutate(
+    log_N = log(abund)
+  )
+```
+
+## fitting model
+
+```{r}
+#| eval: false
+
+dat_meta <- escalc(measure = "GEN", yi = mean, sei = se, slab = specId, data = m4)
+```
+
+```{r}
+
+metamod <- metafor::rma(
+      yi = yi,
+      vi = vi,
+      mods = ~ log_N,
+      method = "REML",
+      data = dat_meta
+    )
+```
+
+```{r}
+
+# deleting one scenario
+# 
+# saveRDS(dat_meta, paste0(root, "local/runs/plot_sr-params/metafor/datmetaNeut.rds"))
+# saveRDS(metamod, paste0(root, "local/runs/plot_sr-params/metafor/metamodNeut.rds"))
+
+# metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamodMax.rds"))
+# dat_meta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmetaMax.rds"))
+
+```

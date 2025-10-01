@@ -518,12 +518,12 @@ for (i in seq_len(nrow(combos))) {
               aes(x = abund, y = fitted, color = NL_fac), 
               size = 1.2) +
     scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
-    labs(title = paste0("strength = ", n_i, ", radius = ", c_i),
+    labs(title = paste0("nDD strength = ", n_i, ", nDD radius = ", c_i),
          x = "species abundance",
          y = "stabilizing CDD (%)",
-         color = "specificity (lambda)",
-         fill = "specificity (lambda)") +
-    theme_classic(base_size = 16) +
+         color = "nDD specificity (lambda)",
+         fill = "nDD specificity (lambda)") +
+    theme_classic(base_size = 14) +
     theme(legend.position = "bottom",
           legend.key.size = unit(0.5, "cm"),
           # legend.text = element_text(size = 10),
@@ -531,7 +531,12 @@ for (i in seq_len(nrow(combos))) {
           plot.title = element_text(size = 14, hjust = 0.5)) +
     scale_color_manual(values = cb_colors) +
     scale_fill_manual(values = cb_colors) +
-    coord_cartesian(ylim = c(-0.0004, 0.0010))
+    coord_cartesian(ylim = c(-0.0004, 0.0010))+ 
+        annotate("text",
+             x = 3000, y = 0.001,
+             label = "pDD fixed at\nstrength = 1\nlambda = 5\nradius = 1",
+             hjust = 0, vjust = 1,
+             size = 4)
 
   plots_list[[i]] <- p
 }
@@ -548,17 +553,397 @@ sapply(plots_list, print)
 # sapply(plots_list, print)   # each print() → new page
 # dev.off()
 ```
+## plot with only null and schroeder settings
+
+```{r}
+metamodNDD <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamodMax.rds"))
+dat_metaNDD <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmetaMax.rds"))
+namesShortNDD <- names(metamodNDD)
+
+metamodPDD <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_metamodMax.rds"))
+dat_metaPDD <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-N-NL-nDC_datmetaMax.rds"))
+namesShortPDD <- names(metamodPDD)
+
+# metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamodMax.rds"))
+# dat_meta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmetaMax.rds"))
+# namesShort <- names(metamod)
+
+# load neutral data too
+neutSR <- readRDS(paste0(root, "local/runs/plot_sr-params/neutralSR.rds"))
+datmetaNeut <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/datmetaNeut.rds"))
+metamodNeut <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/metamodNeut.rds"))
+```
+
+```{r}
+# get SR for strong nDD and strong pDD runs
+pDDS <- readRDS(paste0(root, "local/runs/plot_sr-params/mat/fix-N-NL-nDC.rds"))
+nDDS <- readRDS(paste0(root, "local/runs/plot_sr-params/mat/fix-PL-P-pDC.rds"))
+
+pDDSR <- getSpecTime(pDDS, plot = FALSE)
+nDDSR <- getSpecTime(nDDS, plot = FALSE)
+
+names(pDDSR) <- names(metamodPDD)
+names(nDDSR) <- names(metamodNDD)
+
+pDDSR <- pDDSR[["P1-L20-C5_N1-L5-C1"]] %>% 
+  mutate(meanSR = mean(spec_rich),
+         sdSR = sd (spec_rich)) %>% 
+  dplyr::select(-year, -spec_rich) %>% 
+  slice(1)
+nDDSR <- nDDSR[["P1-L5-C1_N1-L20-C5"]] %>% 
+  mutate(meanSR = mean(spec_rich),
+         sdSR = sd (spec_rich)) %>% 
+  dplyr::select(-year, -spec_rich) %>% 
+  slice(1)
+```
+
+
+```{r}
+# append neut data to DD data
+
+dat_metaNDD <- c(dat_metaNDD, list(datmetaNeut))
+metamodNDD <- c(metamodNDD, list(metamodNeut))
+```
+
+```{r}
+namesshort <- names(dat_metaNDD)
+namesshort[length(namesshort)] <- "neutral"
+```
+
+## plot with only neutral and schroeder settings
+
+care null != neutral
+```{r}
+#| fig-width: 7
+#| fig-height: 6
+
+cb_colors <- c(
+  "firebrick",
+  "olivedrab"
+)
+
+## --- Helper function to extract all params ---
+extract_params <- function(nm) {
+  # Split by underscore to get both parts
+  parts <- strsplit(nm, "_")[[1]]
+
+  # First part: P-PL-PC
+  first <- parts[1]
+  P  <- as.numeric(sub("P([0-9.]+).*", "\\1", first))
+  PL <- as.numeric(sub(".*-L([0-9.]+).*", "\\1", first))
+  PC <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", first))
+
+  # Second part: N-NL-NC
+  second <- parts[2]
+  N  <- as.numeric(sub("N([0-9.]+).*", "\\1", second))
+  NL <- as.numeric(sub(".*-L([0-9.]+).*", "\\1", second))
+  NC <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", second))
+
+  data.frame(P = P, PL = PL, PC = PC, N = N, NL = NL, NC = NC)
+}
+
+## --- Process NDD data ---
+pred_ndd <- lapply(dat_metaNDD, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 1000))
+})
+pred_ndd <- lapply(pred_ndd, function(x){
+  x$abund <- exp(x$log_N)
+  x
+})
+pred_ndd <- lapply(seq_along(pred_ndd), function(i){
+  x <- pred_ndd[[i]]
+  y <- metamodNDD[[i]]
+  cbind(x, predict(object = y, newmods = x$log_N))
+})
+names(pred_ndd) <- namesshort
+
+pred_df_ndd_raw <- do.call(rbind, lapply(seq_along(pred_ndd), function(i) {
+  df <- pred_ndd[[i]]
+  pars <- extract_params(names(pred_ndd)[i])
+  df$scenario <- names(pred_ndd)[i]
+  df$P  <- pars$P
+  df$PL <- pars$PL
+  df$PC <- pars$PC
+  df$N  <- pars$N
+  df$NL <- pars$NL
+  df$NC <- pars$NC
+  df
+}))
+
+if ("pred" %in% names(pred_df_ndd_raw))   names(pred_df_ndd_raw)[names(pred_df_ndd_raw)=="pred"]   <- "fitted"
+if ("fit"  %in% names(pred_df_ndd_raw))   names(pred_df_ndd_raw)[names(pred_df_ndd_raw)=="fit"]    <- "fitted"
+if ("ci.lb" %in% names(pred_df_ndd_raw))  pred_df_ndd_raw$ci_lower <- pred_df_ndd_raw$ci.lb
+if ("ci.ub" %in% names(pred_df_ndd_raw))  pred_df_ndd_raw$ci_upper <- pred_df_ndd_raw$ci.ub
+
+## --- Process PDD data ---
+pred_pdd <- lapply(dat_metaPDD, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 1000))
+})
+pred_pdd <- lapply(pred_pdd, function(x){
+  x$abund <- exp(x$log_N)
+  x
+})
+pred_pdd <- lapply(seq_along(pred_pdd), function(i){
+  x <- pred_pdd[[i]]
+  y <- metamodPDD[[i]]
+  cbind(x, predict(object = y, newmods = x$log_N))
+})
+names(pred_pdd) <- names(dat_metaPDD)
+
+pred_df_pdd_raw <- do.call(rbind, lapply(seq_along(pred_pdd), function(i) {
+  df <- pred_pdd[[i]]
+  pars <- extract_params(names(pred_pdd)[i])
+  df$scenario <- names(pred_pdd)[i]
+  df$P  <- pars$P
+  df$PL <- pars$PL
+  df$PC <- pars$PC
+  df$N  <- pars$N
+  df$NL <- pars$NL
+  df$NC <- pars$NC
+  df
+}))
+
+if ("pred" %in% names(pred_df_pdd_raw))   names(pred_df_pdd_raw)[names(pred_df_pdd_raw)=="pred"]   <- "fitted"
+if ("fit"  %in% names(pred_df_pdd_raw))   names(pred_df_pdd_raw)[names(pred_df_pdd_raw)=="fit"]    <- "fitted"
+if ("ci.lb" %in% names(pred_df_pdd_raw))  pred_df_pdd_raw$ci_lower <- pred_df_pdd_raw$ci.lb
+if ("ci.ub" %in% names(pred_df_pdd_raw))  pred_df_pdd_raw$ci_upper <- pred_df_pdd_raw$ci.ub
+## --- ------ ------ ------ ------ ------ ---
+
+# nDD treatment: P=1, PL=5, PC=1, N=1, NL=20, NC=5
+ndd_data <- pred_df_ndd_raw[pred_df_ndd_raw$P == 1 & pred_df_ndd_raw$PL == 5 &
+                             pred_df_ndd_raw$PC == 1 & pred_df_ndd_raw$N == 1 &
+                             pred_df_ndd_raw$NL == 20 & pred_df_ndd_raw$NC == 5, ]
+# pDD treatment: P=1, PL=5, PC=1, N=1, NL=20, NC=5
+pdd_data <- pred_df_pdd_raw[pred_df_pdd_raw$P == 1 & pred_df_pdd_raw$PL == 20 &
+                             pred_df_pdd_raw$PC == 5 & pred_df_pdd_raw$N == 1 &
+                             pred_df_pdd_raw$NL == 5 & pred_df_pdd_raw$NC == 1, ]
+
+neut_data <- pred_df_ndd_raw[pred_df_ndd_raw$scenario == "neutral", ]
+
+# Combine data and add labels
+neut_data$treatment <- "neutral run"
+ndd_data$treatment <- "high nDD"
+pdd_data$treatment <- "high pDD"
+
+combined_data <- rbind(
+  neut_data[, c("abund", "fitted", "ci_lower", "ci_upper", "treatment")],
+  ndd_data[, c("abund", "fitted", "ci_lower", "ci_upper", "treatment")],
+  pdd_data[, c("abund", "fitted", "ci_lower", "ci_upper", "treatment")]
+)
+
+combined_data$treatment <- factor(combined_data$treatment,
+                                   levels = c("neutral run",
+                                             "high pDD",
+                                             "high nDD"))
+
+x_range <- range(combined_data$abund[combined_data$abund > 0], na.rm = TRUE)
+
+p <- ggplot(combined_data, aes(x = abund, y = fitted,
+                                color = treatment,
+                                fill = treatment,
+                                linetype = treatment)) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
+  scale_color_manual(values = c("darkgrey", "olivedrab3", "firebrick")) +
+  scale_fill_manual(values = c("darkgrey", "olivedrab3", "firebrick")) +
+  scale_linetype_manual(values = c("dashed", "solid", "solid")) +
+  labs(title = "",
+       x = "species abundance",
+       y = "stabilizing CDD (%)",
+       color = "Treatment",
+       fill = "Treatment",
+       linetype = "Treatment") +
+  theme_classic(base_size = 14) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        plot.title = element_text(size = 14, hjust = 0.5)) +
+  coord_cartesian(ylim = c(-0.0005, 0.0010))  +
+  guides(color = guide_legend(reverse = TRUE),
+         fill = guide_legend(reverse = TRUE),
+         linetype = guide_legend(reverse = TRUE)) +
+          annotate("text",
+             x = 2500, y = 0.001,
+             label = "mean species\nrichness ",
+             hjust = 0, vjust = 1,
+             size = 5) +
+          annotate("text",
+             x = 2500, y = 0.00055,
+             label = round(neutSR$meanSR,2),
+             hjust = 0, vjust = 1,
+             size = 5, col = "darkgrey") +
+          annotate("text",
+             x = 2500, y = 0.00075,
+             label = round(nDDSR$meanSR,2),
+             hjust = 0, vjust = 1,
+             size = 5,col = "firebrick") +
+          annotate("text",
+             x = 2500, y = 0.00065,
+             label = round(pDDSR$meanSR,2),
+             hjust = 0, vjust = 1,
+             size = 5, col = "olivedrab3")
+print(p)
+```
+```{r}
+# pdf(paste0(root, "local/figures/plot_sr-params/paramSchroed.pdf"), width = 6, height = 6, onefile = TRUE, useDingbats = FALSE)
+# print(p)
+# dev.off()
+```
+```{r}
+#| fig-width: 7
+#| fig-height: 6
+
+## --- Helper function to extract all params ---
+extract_params <- function(nm) {
+  # Split by underscore to get both parts
+  parts <- strsplit(nm, "_")[[1]]
+
+  # First part: P-PL-PC
+  first <- parts[1]
+  P  <- as.numeric(sub("P([0-9.]+).*", "\\1", first))
+  PL <- as.numeric(sub(".*-L([0-9.]+).*", "\\1", first))
+  PC <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", first))
+
+  # Second part: N-NL-NC
+  second <- parts[2]
+  N  <- as.numeric(sub("N([0-9.]+).*", "\\1", second))
+  NL <- as.numeric(sub(".*-L([0-9.]+).*", "\\1", second))
+  NC <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", second))
+
+  data.frame(P = P, PL = PL, PC = PC, N = N, NL = NL, NC = NC)
+}
+
+## --- Process NDD data ---
+pred_ndd <- lapply(dat_metaNDD, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 1000))
+})
+pred_ndd <- lapply(pred_ndd, function(x){
+  x$abund <- exp(x$log_N)
+  x
+})
+pred_ndd <- lapply(seq_along(pred_ndd), function(i){
+  x <- pred_ndd[[i]]
+  y <- metamodNDD[[i]]
+  cbind(x, predict(object = y, newmods = x$log_N))
+})
+names(pred_ndd) <- namesshort
+
+pred_df_ndd_raw <- do.call(rbind, lapply(seq_along(pred_ndd), function(i) {
+  df <- pred_ndd[[i]]
+  pars <- extract_params(names(pred_ndd)[i])
+  df$scenario <- names(pred_ndd)[i]
+  df$P  <- pars$P
+  df$PL <- pars$PL
+  df$PC <- pars$PC
+  df$N  <- pars$N
+  df$NL <- pars$NL
+  df$NC <- pars$NC
+  df
+}))
+
+if ("pred" %in% names(pred_df_ndd_raw))   names(pred_df_ndd_raw)[names(pred_df_ndd_raw)=="pred"]   <- "fitted"
+if ("fit"  %in% names(pred_df_ndd_raw))   names(pred_df_ndd_raw)[names(pred_df_ndd_raw)=="fit"]    <- "fitted"
+if ("ci.lb" %in% names(pred_df_ndd_raw))  pred_df_ndd_raw$ci_lower <- pred_df_ndd_raw$ci.lb
+if ("ci.ub" %in% names(pred_df_ndd_raw))  pred_df_ndd_raw$ci_upper <- pred_df_ndd_raw$ci.ub
+
+
+# nDD treatment: P=1, PL=5, PC=1, N=1, NL=20, NC=5
+ndd_data <- pred_df_ndd_raw[pred_df_ndd_raw$P == 1 & pred_df_ndd_raw$PL == 5 &
+                             pred_df_ndd_raw$PC == 1 & pred_df_ndd_raw$N == 1 &
+                             pred_df_ndd_raw$NL == 20 & pred_df_ndd_raw$NC == 5, ]
+
+neut_data <- pred_df_ndd_raw[pred_df_ndd_raw$scenario == "neutral", ]
+
+# Combine data and add labels
+neut_data$treatment <- "neutral run"
+ndd_data$treatment <- "Schroeder scenario"
+
+combined_data <- rbind(
+  neut_data[, c("abund", "fitted", "ci_lower", "ci_upper", "treatment")],
+  ndd_data[, c("abund", "fitted", "ci_lower", "ci_upper", "treatment")]
+)
+
+combined_data$treatment <- factor(combined_data$treatment,
+                                   levels = c("neutral run",
+                                             "Schroeder scenario"))
+
+x_range <- range(combined_data$abund[combined_data$abund > 0], na.rm = TRUE)
+
+pp <- ggplot(combined_data, aes(x = abund, y = fitted,
+                                color = treatment,
+                                fill = treatment,
+                                linetype = treatment)) +
+  geom_ribbon(aes(ymin = ci_lower, ymax = ci_upper), alpha = 0.2, color = NA) +
+  geom_line(size = 1.2) +
+  scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
+  scale_color_manual(values = c("darkgrey", "firebrick")) +
+  scale_fill_manual(values = c("darkgrey", "firebrick")) +
+  scale_linetype_manual(values = c("dashed", "solid")) +
+  labs(title = "",
+       x = "species abundance",
+       y = "stabilizing CDD (%)",
+       color = "Treatment",
+       fill = "Treatment",
+       linetype = "Treatment") +
+  theme_classic(base_size = 14) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        plot.title = element_text(size = 14, hjust = 0.5)) +
+  coord_cartesian(ylim = c(-0.0005, 0.0010))  +
+  guides(color = guide_legend(reverse = TRUE),
+         fill = guide_legend(reverse = TRUE),
+         linetype = guide_legend(reverse = TRUE)) +
+          annotate("text",
+             x = 1000, y = 0.001,
+             label = "mean species\nrichness ",
+             hjust = 0, vjust = 1,
+             size = 5) +
+          annotate("text",
+             x = 1000, y = 0.00065,
+             label = round(neutSR$meanSR,2),
+             hjust = 0, vjust = 1,
+             size = 6, col = "darkgrey") +
+          annotate("text",
+             x = 1000, y = 0.00075,
+             label = format(round(nDDSR$meanSR, 1), nsmall = 2),
+             hjust = 0, vjust = 1,
+             size = 6,col = "firebrick")
+print(pp)
+```
+```{r}
+pdf(paste0(root, "local/figures/plot_sr-params/paramSchroedOnly.pdf"), width = 6, height = 6, onefile = TRUE, useDingbats = FALSE)
+print(pp)
+dev.off()
+```
+
 
 # compare correlation (slope) with max species abundance and SR
-
 ```{r}
 datmeta <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_datmetaMax.rds"))
 metamod <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/fix-PL-P-pDC_metamodMax.rds"))
 runs <- readRDS(paste0(root, "local/runs/plot_sr-params/mat/fix-PL-P-pDC.rds"))
+
+# load neutral data too
+neutSR <- readRDS(paste0(root, "local/runs/plot_sr-params/neutralSR.rds"))
+datmetaNeut <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/datmetaNeut.rds"))
+metamodNeut <- readRDS(paste0(root, "local/runs/plot_sr-params/metafor/metamodNeut.rds"))
 ```
 
 ```{r}
+# append neut data to DD data
 
+datmeta <- c(datmeta, list(datmetaNeut))
+metamod <- c(metamod, list(metamodNeut))
+```
+
+
+```{r}
 namesShort <- names(datmeta) %>%
   stringr::str_remove("_disp.+") %>% 
   stringr::str_replace("Cut", "-C") %>% 
@@ -567,6 +952,7 @@ namesShort <- names(datmeta) %>%
   stringr::str_replace("ndd", "N") %>% 
   stringr::str_replace_all("Var", "-L")
 
+namesShort[length(namesShort)] <- "neutral"
 
 pred <- lapply(datmeta, function(x){
   expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
@@ -612,7 +998,7 @@ slope <- sapply(metamod, function(x){
   return(ret)
 })
 res <- as.data.frame(slope)
-rownames(res) <- names(metamod)
+rownames(res) <- namesShort
 
 # get intercept
 int <- sapply(metamod, function(x){
@@ -620,7 +1006,7 @@ int <- sapply(metamod, function(x){
   return(int = ret)
 })
 int <- data.frame(
-  param = names(metamod),
+  param = namesShort,
   int = int
 )
 
@@ -648,7 +1034,8 @@ sr <- sapply(srRaw, function(x) {
   vals <- x$spec_rich[99:200]
   c(meanSR = mean(vals), sdSR = sd(vals), medianSR = median(vals))
 }) %>% t() %>% as.data.frame()
-rownames(sr) <- names(metamod)
+sr <- rbind(sr,c(neutSR$meanSR, neutSR$sdSR, NA))
+rownames(sr) <- namesShort
 
 # combine all results
 res <- res %>% 
@@ -668,230 +1055,14 @@ res <- res %>%
          abund = as.integer(abund)) %>% 
   left_join(cv, by = "param")
 
-# filter by scenarios
-resC1 <- res %>%
-  dplyr::filter(grepl("_N.*-C1$", param))
-resC3 <- res %>%
-  dplyr::filter(grepl("_N.*-C3$", param))
-resC5 <- res %>%
-  dplyr::filter(grepl("_N.*-C5$", param))
-```
-
-```{r}
-#| fig-width: 10
-#| fig-height: 6.5
-
-## ---- helper functions ----
-pred_glm_pois <- function(mod, newdata, k = 2) {
-  lp <- predict(mod, newdata = newdata, se.fit = TRUE, type = "link")
-  fit <- exp(lp$fit)
-  lo  <- exp(lp$fit - k*lp$se.fit)
-  hi  <- exp(lp$fit + k*lp$se.fit)
-  list(fit = fit, lo = lo, hi = hi)
-}
-
-# Helper function to format p-values
-format_pvalue <- function(p) {
-  if (p < 0.001) {
-    return("p < 0.001")
-  } else if (p < 0.01) {
-    return(sprintf("p = %.3f", p))
-  } else {
-    return(sprintf("p = %.2f", p))
-  }
-}
-
-# Unified function for species richness vs slope plot
-plot_sr_slope <- function(dat, tag, ylim_sr = c(40,100)) {
-  fm1 <- lm(meanSR ~ slope, data = dat)
-  newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
-  predi <- predict(fm1, newdata = newdat, se.fit = TRUE)
-  
-  # Extract p-value
-  p_val <- summary(fm1)$coefficients[2, 4]  # p-value for slope coefficient
-  p_text <- format_pvalue(p_val)
-  
-  plot(dat$slope, dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue",
-       xlab = "mortality change ~ abundance: slope", ylab = "mean species richness",
-       main = paste0("Species Richness - Scenario ", tag))
-  points(dat$slope, dat$medianSR, pch = 16, col = "red")
-  arrows(dat$slope, dat$meanSR - dat$sdSR, dat$slope, dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05)
-  lines(newdat$slope, predi$fit, lwd = 2, col = 1)
-  lines(newdat$slope, predi$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  lines(newdat$slope, predi$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("topright", legend = c("mean SR", "median SR", "fitted lm", "CI"),
-         pch = c(16,16,NA,NA), lty = c(NA,NA,1,2), col = c(4,2,1,1), bty = "n")
-  
-  # Add p-value text
-  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
-}
-
-# Unified function for abundance vs slope plot
-plot_abund_slope <- function(dat, tag, ylim_abund = NULL) {
-  fm2 <- glm(abund ~ slope, data = dat, family = poisson())
-  newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
-  pg <- pred_glm_pois(fm2, newdat, k = 2)
-  
-  # Extract p-value
-  p_val <- summary(fm2)$coefficients[2, 4]  # p-value for slope coefficient
-  p_text <- format_pvalue(p_val)
-  
-  plot(dat$slope, dat$abund, pch = 16, col = 1,
-       xlab = "mortality change ~ abundance: slope", ylab = "max abundance",
-       main = paste0("Abundance - Scenario ", tag), ylim = ylim_abund)
-  lines(newdat$slope, pg$fit, lwd = 2, col = 1)
-  lines(newdat$slope, pg$lo, lwd = 1, lty = 2, col = 1)
-  lines(newdat$slope, pg$hi, lwd = 1, lty = 2, col = "grey")
-  legend("topleft", legend = c("abund", "fitted glm pois", "CI"),
-         pch = c(16,NA,NA), lty = c(NA,1,2), col = c(1,1,1), bty = "n")
-  
-  # Add p-value text
-  text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
-}
-
-# Unified function for species richness vs CV mortality change
-plot_sr_cvmc <- function(dat, tag, ylim_sr = c(40,90)) {
-  fm3 <- lm(meanSR ~ cvMC, data = dat)
-  newdat <- data.frame(cvMC = seq(min(dat$cvMC), max(dat$cvMC), length = 100))
-  pred <- predict(fm3, newdata = newdat, se.fit = TRUE)
-  
-  # Extract p-value
-  p_val <- summary(fm3)$coefficients[2, 4]  # p-value for cvMC coefficient
-  p_text <- format_pvalue(p_val)
-  
-  cols <- viridis(length(dat$slope))[rank(dat$slope)]
-  plot(dat$cvMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
-       xlab = "CV Mortality Change", ylab = "mean species richness",
-       main = paste0("SR vs CV MC - Scenario ", tag))
-  arrows(dat$cvMC, dat$meanSR - dat$sdSR, dat$cvMC, dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05, col = cols)
-  lines(newdat$cvMC, pred$fit, lwd = 2, col = 1)
-  lines(newdat$cvMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
-  lines(newdat$cvMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("topright", title = "slope",
-         fill = viridis(5),
-         legend = signif(seq(min(dat$slope), max(dat$slope), length.out = 5), 2),
-         bty = "n")
-  
-  # Add p-value text
-  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
-}
-
-# Unified function for species richness vs mean mortality change
-plot_sr_meanmc <- function(dat, tag, ylim_sr = c(40,90)) {
-  fm4 <- lm(meanSR ~ log(meanMC), data = dat)
-  newdat <- data.frame(meanMC = seq(min(dat$meanMC), max(dat$meanMC), length = 100))
-  pred <- predict(fm4, newdata = newdat, se.fit = TRUE)
-  
-  # Extract p-value
-  p_val <- summary(fm4)$coefficients[2, 4]  # p-value for log(meanMC) coefficient
-  p_text <- format_pvalue(p_val)
-  
-  cols <- viridis(length(dat$slope))[rank(dat$slope)]
-  plot(dat$meanMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
-       xlab = "mean Mortality Change", ylab = "mean species richness",
-       main = paste0("SR vs Mean MC - Scenario ", tag))
-  lines(newdat$meanMC, pred$fit, lwd = 2, col = 1)
-  lines(newdat$meanMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
-  lines(newdat$meanMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("bottomright", title = "slope",
-         fill = viridis(5),
-         legend = signif(seq(min(dat$slope), max(dat$slope), length.out = 5), 2),
-         bty = "n")
-  legend("topleft", legend = c("fitted lm log(meanMC)", "CI"),
-         lty = c(1,2), bty = "n")
-  
-  # Add p-value text
-  text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
-}
-
-
-# Master plotting function for all scenario plots (6 plot types per scenario)
-plot_all_scenarios <- function(scenario_list, scenario_names, 
-                              ylim_sr = c(40,100), ylim_abund = c(0,15000)) {
-  n_scenarios <- length(scenario_list)
-  
-  # For each scenario, create all 6 plot types
-  for(i in 1:n_scenarios) {
-    # Set up 2x3 grid for each scenario
-    par(mfrow = c(2, 3), mar = c(4,4,3,2))
-    
-    cat("Plotting scenario", scenario_names[i], "\n")
-    
-    # Main analysis plots
-    plot_sr_slope(scenario_list[[i]], scenario_names[i], ylim_sr)
-    plot_abund_slope(scenario_list[[i]], scenario_names[i], ylim_abund)
-    plot_sr_cvmc(scenario_list[[i]], scenario_names[i], ylim_sr)
-    plot_sr_meanmc(scenario_list[[i]], scenario_names[i], ylim_sr)
-    
-    # Additional diagnostic plots with models and p-values
-    cols <- viridis(length(scenario_list[[i]]$slope))[rank(scenario_list[[i]]$slope)]
-    
-    # Diagnostic 1: SD MC vs slope (with linear model and p-value)
-    fm_diag1 <- lm(slope ~ sdMC, data = scenario_list[[i]])
-    p_val1 <- summary(fm_diag1)$coefficients[2, 4]
-    p_text1 <- format_pvalue(p_val1)
-    
-    plot(scenario_list[[i]]$sdMC, scenario_list[[i]]$slope, pch = 16, 
-         xlab = "SD Mortality Change", ylab = "slope",
-         main = paste0("SD MC vs Slope - Scenario ", scenario_names[i]))
-    abline(fm_diag1, col = "black", lwd = 2)
-    text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]), 
-         y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-         labels = p_text1, pos = 4, cex = 0.9, col = "darkred")
-    
-    # Diagnostic 2: SD MC vs meanSR (colored by slope, with linear model and p-value)
-    fm_diag2 <- lm(meanSR ~ sdMC, data = scenario_list[[i]])
-    p_val2 <- summary(fm_diag2)$coefficients[2, 4]
-    p_text2 <- format_pvalue(p_val2)
-    
-    plot(scenario_list[[i]]$sdMC, scenario_list[[i]]$meanSR, pch = 16, col = cols,
-         xlab = "SD Mortality Change", ylab = "mean species richness",
-         main = paste0("SD MC vs SR - Scenario ", scenario_names[i]), ylim = c(45,85))
-    abline(fm_diag2, col = "black", lwd = 2)
-    legend("bottomright", title = "slope", fill = viridis(5),
-           legend = signif(seq(min(scenario_list[[i]]$slope), max(scenario_list[[i]]$slope), length.out = 5), 2), bty = "n")
-    text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
-         y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-         labels = p_text2, pos = 4, cex = 0.9, col = "darkred")
-  }
-}
-
-## ---- apply to scenarios C1-C5 ----
-# Assuming you have data objects: resC1, resC2, resC3, resC4, resC5
-scenario_data <- list(resC1, resC3, resC5)
-scenario_labels <- c("C1", "C3", "C5")
-
-
-# pdf(paste0(root, "local/figures/plot_sr-params/nddSupplPlots.pdf"), width = 10, height = 6.5, onefile = TRUE, useDingbats = FALSE)
-    # Generate all plots for all scenarios with p-values
-    plot_all_scenarios(scenario_data, scenario_labels, 
-                       ylim_sr = c(40,100), ylim_abund = c(0,15000))
-    plot_all_scenarios(list(res), "all_data", 
-                       ylim_sr = c(40,100), ylim_abund = c(0,15000))
-# dev.off()
-
-```
-
-```{r}
-#| fig-width: 10
-#| fig-height: 5
+rownames(res) <- namesShort
 
 # Parse the param column to extract N, NL, and C values
 res_parsed <- res %>%
   # Split the param column at the underscore to get the two parts
   separate(param, into = c("part1", "part2"), sep = "_", remove = FALSE) %>%
   # Extract N, NL, C from first part (P1-L5-C1 format)
-  extract(part1, into = c("P1", "L1", "C1"), regex = "P([0-9]+)-L([0-9.]+)-C([0-9]+)", remove = FALSE) %>%
+  extract(part1, into = c("P1", "L1", "C1"), regex = "P([0-9]+)-L([0-9]+)-C([0-9]+)", remove = FALSE) %>%
   # Extract N, NL, C from second part (N0-L20-C1 format)
   extract(part2, into = c("N", "NL", "C"), regex = "N([0-9.]+)-L([0-9.]+)-C([0-9]+)", remove = FALSE) %>%
   # Convert to numeric
@@ -927,9 +1098,9 @@ if(nrow(base0) > 0) {
   
   # Bind expanded baseline back
   res_final <- bind_rows(res_filtered, base0_expanded) %>% 
-    mutate(sdMC = case_when(
-      N == 0 & NL != 20 ~ sdMC,
-      TRUE ~ sdMC
+    mutate(sdSR = case_when(
+      N == 0 & NL != 20 ~ sdSR,
+      TRUE ~ sdSR
     ))
 } else {
   # If no N=0 baseline exists, use the original data
@@ -946,7 +1117,42 @@ baseline_unique <- res_final %>%
 # Create complete dataset for points (N > 0)
 complete_data <- res_final %>% filter(N > 0)
 
-# Create the plot
+```
+```{r}
+cb_colors <- c(
+  "#029E73",  # Green
+  "#0173B2",  # Blue
+  "#DE8F05",  # Orange
+  "#CC78BC",  # Purple
+  "firebrick"   # Brown
+)
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 5
+
+# After your res_final creation and before creating the plot, add:
+
+# Extract the neutral scenario data
+neutral_data <- res_parsed %>% 
+  filter(param == "neutral") %>%
+  slice(1)  # Take first row if there are duplicates
+
+# Create neutral data frame expanded to all C values
+if(nrow(neutral_data) > 0) {
+  neutMC_df <- expand.grid(
+    N = 0,
+    meanMC = neutral_data$meanMC,
+    sdMC = neutral_data$sdMC,
+    C = unique(res_final$C),
+    NL = 20
+  )
+} else {
+  neutMC_df <- data.frame()  # Empty if no neutral data
+}
+
+# Then add to your plot (after the baseline points, before facet_wrap):
 plotNDD_MC <- ggplot() +
   # Plot lines connecting all points (including baseline)
   geom_line(data = res_final, 
@@ -961,31 +1167,34 @@ plotNDD_MC <- ggplot() +
                     ymin = meanMC - sdMC, ymax = meanMC + sdMC),
                 width = 0.05, alpha = .5, size = .75,
                 position = position_dodge(width = 0.075)) +
-  # Add baseline points if they exist
-  {if(nrow(baseline_unique) > 0) {
+
+  # Add neutral scenario points
+  {if(exists("neutMC_df") && nrow(neutMC_df) > 0) {
     list(
-      geom_point(data = baseline_unique, 
-                 aes(x = N, y = meanMC), 
-                 color = "black", size = 4, shape = 3),
-      geom_errorbar(data = baseline_unique,
-                    aes(x = N, y = meanMC, ymin = meanMC - sdMC, ymax = meanMC + sdMC),
-                    color = "black", width = 0.005, alpha = 1)
+      geom_point(data = neutMC_df,
+                 aes(x = N, y = meanMC),
+                 color = "darkgrey", size = 4, shape = 3,
+                  position = position_nudge(x = 0.02)),
+      geom_errorbar(data = neutMC_df,
+                    aes(x = N, ymin = meanMC - sdMC, ymax = meanMC + sdMC),
+                    color = "darkgrey", width = 0.005, size = 0.75,
+                     position = position_nudge(x = 0.02))
     )
   }} +
   facet_wrap(~ C, ncol = 3, scales = "fixed",
-             labeller = labeller(C = function(x) paste("radius =", x))) +
-  labs(x = "strength",
+             labeller = labeller(C = function(x) paste("nDD radius =", x))) +
+  labs(x = "nDD strength",
        y = "mean stabilizing CDD (%)",
-       color = "lambda\n(specificity)") +
-  theme_classic(base_size = 16) +
+       color = "nDD lambda\n(specificity)") +
+  theme_classic(base_size = 14) +
   theme(
     strip.background = element_blank(),
     legend.position = "right",
-    strip.text = element_text(size = 15, margin = margin(b = -0)),
+    strip.text = element_text(size = 14, margin = margin(b = -0)),
     plot.margin = margin(20, 20, 20, 20),
     panel.spacing = unit(1, "lines"),
-    axis.title.x = element_text(margin = margin(t = 15)),
-    axis.title.y = element_text(margin = margin(r = 15)),
+    axis.title.x = element_text(margin = margin(t = 14)),
+    axis.title.y = element_text(margin = margin(r = 14)),
     panel.grid.major.y = element_line(color = "grey90", size = 0.2),
     panel.grid.minor.y = element_line(color = "grey95", size = 0.2),
     panel.grid.major.x = element_blank(),
@@ -994,21 +1203,22 @@ plotNDD_MC <- ggplot() +
   coord_cartesian(clip = "off") +
   scale_color_manual(values = cb_colors) +
   scale_x_continuous(breaks = seq(0, 1, by = 0.2)) + 
-    geom_hline(
-    data = baseline_unique,
-    aes(yintercept = meanMC),
-    linetype = "dashed",
-    color = "black"
-  )
+    # Add baseline points if they exist
+      geom_point(data = baseline_unique, 
+                 aes(x = N, y = meanMC), 
+                 color = "black", size = 4, shape = 3) +
+      geom_errorbar(data = baseline_unique,
+                    aes(x = N, y = meanMC, ymin = meanMC - sdMC, ymax = meanMC + sdMC),
+                    color = "black", width = 0.005, alpha = 1) 
 
 print(plotNDD_MC)
 
 ```
 
 ```{r}
-pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnMC.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
-print(plotNDD_MC)
-dev.off()
+# pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnMC.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
+# print(plotNDD_MC)
+# dev.off()
 ```
 
 ```{r}
@@ -1112,19 +1322,19 @@ plotNDD_SR <- ggplot() +
     )
   }} +
   facet_wrap(~ C, ncol = 3, scales = "fixed",
-             labeller = labeller(C = function(x) paste("radius =", x))) +
-  labs(x = "strength",
+             labeller = labeller(C = function(x) paste("nDD radius =", x))) +
+  labs(x = "nDD strength",
        y = "mean species richness",
-       color = "lambda\n(specificity)") +
-  theme_classic(base_size = 16) +
+       color = "nDD lambda\n(specificity)") +
+  theme_classic(base_size = 14) +
   theme(
     strip.background = element_blank(),
     legend.position = "right",
-    strip.text = element_text(size = 15, margin = margin(b = -20)),
+    strip.text = element_text(size = 14, margin = margin(b = -20)),
     plot.margin = margin(20, 20, 20, 20),
     panel.spacing = unit(1, "lines"),
-    axis.title.x = element_text(margin = margin(t = 15)),
-    axis.title.y = element_text(margin = margin(r = 15)),
+    axis.title.x = element_text(margin = margin(t = 14)),
+    axis.title.y = element_text(margin = margin(r = 14)),
     panel.grid.major.y = element_line(color = "grey90", size = 0.2),
     panel.grid.minor.y = element_line(color = "grey95", size = 0.2),
     panel.grid.major.x = element_blank(),
@@ -1132,14 +1342,38 @@ plotNDD_SR <- ggplot() +
   ) + 
   coord_cartesian(clip = "off") +
   scale_color_manual(values = cb_colors) +
-  scale_x_continuous(breaks = seq(0, 1, by = 0.2)) 
+  scale_x_continuous(breaks = seq(0, 1, by = 0.2))
+
+neutSR_df <- data.frame(
+  N = 0,                          
+  meanSR = neutSR$meanSR,
+  sdSR = neutSR$sdSR,
+  C = unique(res_final$C)[1],     
+  NL = 20                         
+)
+
+neutSR_df <- expand.grid(
+  N = 0,
+  meanSR = neutSR$meanSR,
+  sdSR = neutSR$sdSR,
+  C = unique(res_final$C),
+  NL = 20
+)
+
+plotNDD_SR <- plotNDD_SR +
+  geom_point(data = neutSR_df,
+             aes(x = N, y = meanSR),
+             color = "grey", size = 4, shape = 3) +
+  geom_errorbar(data = neutSR_df,
+                aes(x = N, ymin = meanSR - sdSR, ymax = meanSR + sdSR),
+                color = "grey", width = 0.005, size = 0.75)
 
 print(plotNDD_SR)
 
 ```
 
 ```{r}
-pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnSR.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
-print(plotNDD_SR)
-dev.off()
+# pdf(paste0(root, "local/figures/plot_sr-params/nddEffectOnSR.pdf"), width = 10, height = 5, onefile = TRUE, useDingbats = FALSE)
+# print(plotNDD_SR)
+# dev.off()
 ```
