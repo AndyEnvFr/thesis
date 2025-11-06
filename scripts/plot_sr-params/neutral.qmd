@@ -40,7 +40,6 @@ runsRaw  <- readRDS(paste0(root, "/local/runs/plot_sr-params/mat/neutral.rds"))
 runsRaw  <- getConNeigh(runsRaw, radius = 5)
 ```
 
-
 ```{r}
 S <- getSpecTime(runsRaw, plot = FALSE)
 ```

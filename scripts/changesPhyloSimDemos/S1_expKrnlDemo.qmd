@@ -295,9 +295,39 @@ legend(x = 0.1, y = 1,, legend = c("neutral", "pDD", "nDD"), lty = 2, col = c("b
 
 @fig-kernel_medians shows how the DD can effect median phylogenetic differences in a community. For chosen settings the graph suggests that low specificities (i.e., low lambda values) produce greater impact on the DD in total. However, in the pDD scenario lambda = 5 produces the strongest median impact on DD. Now, it becomes clear, why the norm_factor is chosen to be 20: it hits approximately the point, where high lambda values begin to produce lower impact on DD, because their curves drop below curves of low lambda values.
 
-This demo also demonstrated that finding the appropriate specificity term was not straightforward and involved a degree of subjective judgment. Further, there is a feedback between the chosen specificity term and the other DD settings.
+This demo also demonstrated that finding the appropriate specificity term was not straightforward and involved a degree of subjective judgment. Further, there is a feedback between the chosen specificity term and the other DD settings. Thereby, I strongly oriented the implementation on the neutral scenario and the fitness values it produced. So, I tried to neither favor a high- nor a low phyllogenetic distance within the community. Eventually, increasing the responsiveness of the  feedbacks between DD effects and evolution towards the parameterization of the model, allowing communities with low- or high phyllogenetic distance. Another step to ensure such impartial behavior was to define the specificity such to have approximately similar integral near the range of neutral scenarios.
 
-The next demo uses a break-point similar approach. From debug files we can see the fitness values that are produced inside PhyloSim.
+```{r}
+areas <- sapply(lambda_values, function(lam) {
+  integrate(function(x) kernel(x, lambda = lam, factor = 20), 
+            lower = 0, upper = 0.05)$value # 0.05 comprises neutral scenario
+})
+paste0("lambda = ", lambda_values, " : area = ",round(areas,4))
+```
+
+Still, the feedback between evolution can favor high or low specificity values.
+```{r}
+# favoring high specificy value, if relatedness in the community is low:
+
+lowRelatedness <- .02
+highRelatedness <- .2
+
+areasLow <- sapply(lambda_values, function(lam) {
+  integrate(function(x) kernel(x, lambda = lam, factor = 20), 
+            lower = 0, upper = lowRelatedness)$value # 0.05 comprises neutral scenario
+})
+cat("low relatedness\n: ",paste0("lambda = ", lambda_values, " : area = ",round(areasLow,4),"\n"), "\n\n")
+
+areasHigh <- sapply(lambda_values, function(lam) {
+  integrate(function(x) kernel(x, lambda = lam, factor = 20), 
+            lower = 0, upper = highRelatedness)$value # 0.05 comprises neutral scenario
+})
+cat("high relatedness\n", paste0("lambda = ", lambda_values, " : area = ",round(areasHigh,4),"\n"), "\n\n")
+```
+
+
+
+The next demo uses a break-point approach to unveil fitness values that are produced inside PhyloSim at different settings.
 
 # Illustration of fitness values in PhyloSim with the applied specificity kernel
 

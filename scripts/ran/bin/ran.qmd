@@ -459,7 +459,6 @@ pred <- lapply(seq_along(pred), function(i){
 names(pred) <- names(metamod)
 ```
 
-
 ```{r}
 names(runs) <- names(dat_meta)
 srRaw <- getSpecTime(runs, plot = FALSE)
@@ -512,14 +511,13 @@ res_scenarios <- map2(scenario_types$prefix, scenario_types$comp, ~ {
   set_names(paste0(scenario_types$prefix, scenario_types$comp))
 ```
 
-
 ```{r}
-saveRDS(res, paste0(root, "/local/runs/mstr/20250903/ranResMax_iii.rds"))
+# saveRDS(res, paste0(root, "/local/runs/mstr/20250903/ranResMax_iii.rds"))
 ```
 
 ```{r}
 #| fig-width: 10
-#| fig-height: 6.5
+#| fig-height: 8
 
 ## ---- helper functions ----
 pred_lm_log <- function(mod, newdata, k = 2) {
@@ -709,7 +707,6 @@ plot_all_scenarios(list(res), "combined data",
                    ylim_sr = c(40,100))
 ```
 
-
 ```{r}
 # pdf(paste0(root, "local/figures/plot_sr-params/pddSupplPlots.pdf"), width = 10, height = 6.5, onefile = TRUE, useDingbats = FALSE)
     # Generate all plots for all scenarios with p-values
@@ -721,121 +718,7 @@ plot_all_scenarios(list(res), "combined data",
 
 ```
 
-## rac
-
-```{r}
-rac(runs = runs$ndd1var5cut1_pdd1var20cut5, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
-rac(runs = runs$ndd1var5cut1_pdd1var20cut3, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
-rac(runs = runs$ndd1var5cut1_pdd0.6var0.1cut1, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
-rac(runs = runs$ndd1var5cut1_pdd0.4var0.1cut3, which.result = seq(180,200,2), xmax = 90, ymax = 30000)
-```
-
-## mutlidemsional plots
-
-```{r}
-# Load required libraries
-library(ggplot2)
-library(dplyr)
-library(stringr)
-library(gridExtra)
-
-# Assuming your data is in a dataframe called 'res'
-# If not, load it first with: res <- read.csv("your_file.csv") or similar
-
-# 1. Plot with meanSR vs slope, colored by int
-plot1 <- ggplot(res, aes(x = slope, y = meanSR, color = int)) +
-  geom_point(size = 3, alpha = 0.7) +
-  scale_color_viridis_c(name = "Intercept") +
-  labs(title = "Mean SR vs Slope (colored by intercept)",
-       x = "Slope",
-       y = "Mean SR") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# 2. Plot with meanSR vs slope, colored by cvMC
-plot2 <- ggplot(res, aes(x = slope, y = meanSR, color = cvMC)) +
-  geom_point(size = 3, alpha = 0.7) +
-  scale_color_viridis_c(name = "CV") +
-  labs(title = "Mean SR vs Slope (colored by CV)",
-       x = "Slope",
-       y = "Mean SR") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# Extract parameters from the param column
-# Parse the parameter string to extract P, L, C, N values
-parse_params <- function(param_string) {
-  # Extract P value and its L,C
-  p_part <- str_extract(param_string, "P[0-9.]+\\-L[0-9.]+\\-C[0-9]+")
-  n_part <- str_extract(param_string, "N[0-9.]+\\-L[0-9.]+\\-C[0-9]+")
-  
-  # Extract individual values
-  P <- as.numeric(str_extract(str_extract(p_part, "P[0-9.]+"), "[0-9.]+"))
-  PL <- as.numeric(str_extract(str_extract(p_part, "L[0-9.]+"), "[0-9.]+"))
-  PC <- as.numeric(str_extract(str_extract(p_part, "C[0-9]+"), "[0-9]+"))
-  
-  N <- as.numeric(str_extract(str_extract(n_part, "N[0-9.]+"), "[0-9.]+"))
-  NL <- as.numeric(str_extract(str_extract(n_part, "L[0-9.]+"), "[0-9.]+"))
-  NC <- as.numeric(str_extract(str_extract(n_part, "C[0-9]+"), "[0-9]+"))
-  
-  return(data.frame(P = P, PL = PL, PC = PC, N = N, NL = NL, NC = NC))
-}
-
-# Apply the parsing function
-parsed_params <- do.call(rbind, lapply(res$param, parse_params))
-res_extended <- cbind(res, parsed_params)
-
-# 3. Plot P vs N, colored by meanSR
-plot3 <- ggplot(res_extended, aes(x = P, y = N, color = meanSR)) +
-  geom_point(size = 3, alpha = 0.7) +
-  scale_color_viridis_c(name = "Mean SR") +
-  labs(title = "P vs N (colored by Mean SR)",
-       x = "P parameter",
-       y = "N parameter") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# 4. Plot PL vs NL, colored by meanSR
-plot4 <- ggplot(res_extended, aes(x = PL, y = NL, color = meanSR)) +
-  geom_point(size = 3, alpha = 0.7) +
-  scale_color_viridis_c(name = "Mean SR") +
-  labs(title = "PL vs NL (colored by Mean SR)",
-       x = "PL parameter",
-       y = "NL parameter") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# 5. Plot PC vs NC, colored by meanSR
-plot5 <- ggplot(res_extended, aes(x = PC, y = NC, color = meanSR)) +
-  geom_point(size = 3, alpha = 0.7) +
-  scale_color_viridis_c(name = "Mean SR") +
-  labs(title = "PC vs NC (colored by Mean SR)",
-       x = "PC parameter",
-       y = "NC parameter") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5))
-
-# Display plots
-print(plot1)
-print(plot2)
-print(plot3)
-print(plot4)
-print(plot5)
-
-# If you want to save all plots in one figure
-combined_plot <- grid.arrange(
-  plot3, plot4, plot5,
-  ncol = 2, nrow = 2,
-  top = "Parameter Relationships"
-)
-
-# Save plots if needed
-# ggsave(paste0(root, "local/figures/ran/meanSR_slope_int_iii.pdf"), plot1, width = 10, height = 6, dpi = 300)
-# ggsave(paste0(root, "local/figures/ran/meanSR_slope_CV_iii.pdf"), plot2, width = 10, height = 6, dpi = 300)
-# ggsave(paste0(root, "local/figures/ran/meanSR_params_iii.pdf"), combined_plot, width = 15, height = 10, dpi = 300)
-```
-
-  #all results combined
+#all results combined
 
 ```{r}
 resi <- readRDS(paste0(root, "/local/runs/mstr/20250903/ranResMax_i.rds"))
@@ -846,241 +729,16 @@ res_all <- rbind(resi,resii,resiii)
 ```
 
 ```{r}
-# filter by scenarios
-resPC1 <- res_all %>%
-  dplyr::filter(grepl("P.*-C1_", param))
-resPC2 <- res_all %>%
-  dplyr::filter(grepl("P.*-C2_", param))
-resPC3 <- res_all %>%
-  dplyr::filter(grepl("P.*-C3_", param))
-resPC4 <- res_all %>%
-  dplyr::filter(grepl("P.*-C4_", param))
-resPC5 <- res_all %>%
-  dplyr::filter(grepl("P.*-C5_", param))
-# filter by scenarios
-resNC1 <- res_all %>%
-  dplyr::filter(grepl("N.*-C1$", param))
-resNC2 <- res_all %>%
-  dplyr::filter(grepl("N.*-C2$", param))
-resNC3 <- res_all %>%
-  dplyr::filter(grepl("N.*-C3$", param))
-resNC4 <- res_all %>%
-  dplyr::filter(grepl("N.*-C4$", param))
-resNC5 <- res_all %>%
-  dplyr::filter(grepl("N.*-C5$", param))
-```
-
-```{r}
 #| fig-width: 10
-#| fig-height: 6.5
-
-## ---- helper functions ----
-pred_glm_pois <- function(mod, newdata, k = 2) {
-  lp <- predict(mod, newdata = newdata, se.fit = TRUE, type = "link")
-  fit <- exp(lp$fit)
-  lo  <- exp(lp$fit - k*lp$se.fit)
-  hi  <- exp(lp$fit + k*lp$se.fit)
-  list(fit = fit, lo = lo, hi = hi)
-}
-
-# Helper function to format p-values
-format_pvalue <- function(p) {
-  if (p < 0.001) {
-    return("p < 0.001")
-  } else if (p < 0.01) {
-    return(sprintf("p = %.3f", p))
-  } else {
-    return(sprintf("p = %.2f", p))
-  }
-}
-
-# Unified function for species richness vs slope plot
-plot_sr_slope <- function(dat, tag, ylim_sr = c(40,100)) {
-  fm1 <- lm(meanSR ~ slope, data = dat)
-  newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
-  predi <- predict(fm1, newdata = newdat, se.fit = TRUE)
-  
-  # Extract p-value
-  p_val <- summary(fm1)$coefficients[2, 4]  # p-value for slope coefficient
-  p_text <- format_pvalue(p_val)
-  
-  plot(dat$slope, dat$meanSR, ylim = ylim_sr, pch = 16, col = "blue",
-       xlab = "mortality change ~ abundance: slope", ylab = "mean species richness",
-       main = paste0("Species Richness - Scenario ", tag))
-  points(dat$slope, dat$medianSR, pch = 16, col = "red")
-  arrows(dat$slope, dat$meanSR - dat$sdSR, dat$slope, dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05)
-  lines(newdat$slope, predi$fit, lwd = 2, col = 1)
-  lines(newdat$slope, predi$fit - 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  lines(newdat$slope, predi$fit + 2*predi$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("topright", legend = c("mean SR", "median SR", "fitted lm", "CI"),
-         pch = c(16,16,NA,NA), lty = c(NA,NA,1,2), col = c(4,2,1,1), bty = "n")
-  
-  # Add p-value text
-  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
-}
-
-# Unified function for abundance vs slope plot
-plot_abund_slope <- function(dat, tag, ylim_abund = NULL) {
-  fm2 <- glm(abund ~ slope, data = dat, family = poisson())
-  newdat <- data.frame(slope = seq(min(dat$slope), max(dat$slope), length = 100))
-  pg <- pred_glm_pois(fm2, newdat, k = 2)
-  
-  # Extract p-value
-  p_val <- summary(fm2)$coefficients[2, 4]  # p-value for slope coefficient
-  p_text <- format_pvalue(p_val)
-  
-  plot(dat$slope, dat$abund, pch = 16, col = 1,
-       xlab = "mortality change ~ abundance: slope", ylab = "max abundance",
-       main = paste0("Abundance - Scenario ", tag), ylim = ylim_abund)
-  lines(newdat$slope, pg$fit, lwd = 2, col = 1)
-  lines(newdat$slope, pg$lo, lwd = 1, lty = 2, col = 1)
-  lines(newdat$slope, pg$hi, lwd = 1, lty = 2, col = "grey")
-  legend("topleft", legend = c("abund", "fitted glm pois", "CI"),
-         pch = c(16,NA,NA), lty = c(NA,1,2), col = c(1,1,1), bty = "n")
-  
-  # Add p-value text
-  text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
-}
-
-# Unified function for species richness vs CV mortality change
-plot_sr_cvmc <- function(dat, tag, ylim_sr = c(40,90)) {
-  fm3 <- lm(meanSR ~ cvMC, data = dat)
-  newdat <- data.frame(cvMC = seq(min(dat$cvMC), max(dat$cvMC), length = 100))
-  pred <- predict(fm3, newdata = newdat, se.fit = TRUE)
-  
-  # Extract p-value
-  p_val <- summary(fm3)$coefficients[2, 4]  # p-value for cvMC coefficient
-  p_text <- format_pvalue(p_val)
-  
-  cols <- viridis(length(dat$slope))[rank(dat$slope)]
-  plot(dat$cvMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
-       xlab = "CV Mortality Change", ylab = "mean species richness",
-       main = paste0("SR vs CV MC - Scenario ", tag))
-  arrows(dat$cvMC, dat$meanSR - dat$sdSR, dat$cvMC, dat$meanSR + dat$sdSR,
-         angle = 90, code = 3, length = 0.05, col = cols)
-  lines(newdat$cvMC, pred$fit, lwd = 2, col = 1)
-  lines(newdat$cvMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
-  lines(newdat$cvMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("topright", title = "slope",
-         fill = viridis(5),
-         legend = signif(seq(min(dat$slope), max(dat$slope), length.out = 5), 2),
-         bty = "n")
-  
-  # Add p-value text
-  text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
-}
-
-# Unified function for species richness vs mean mortality change
-plot_sr_meanmc <- function(dat, tag, ylim_sr = c(40,90)) {
-  fm4 <- lm(meanSR ~ log(meanMC), data = dat)
-  newdat <- data.frame(meanMC = seq(min(dat$meanMC), max(dat$meanMC), length = 100))
-  pred <- predict(fm4, newdata = newdat, se.fit = TRUE)
-  
-  # Extract p-value
-  p_val <- summary(fm4)$coefficients[2, 4]  # p-value for log(meanMC) coefficient
-  p_text <- format_pvalue(p_val)
-  
-  cols <- viridis(length(dat$slope))[rank(dat$slope)]
-  plot(dat$meanMC, dat$meanSR, ylim = ylim_sr, pch = 16, col = cols,
-       xlab = "mean Mortality Change", ylab = "mean species richness",
-       main = paste0("SR vs Mean MC - Scenario ", tag))
-  lines(newdat$meanMC, pred$fit, lwd = 2, col = 1)
-  lines(newdat$meanMC, pred$fit - 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
-  lines(newdat$meanMC, pred$fit + 2*pred$se.fit, lwd = 1, lty = 2, col = 1)
-  legend("bottomright", title = "slope",
-         fill = viridis(5),
-         legend = signif(seq(min(dat$slope), max(dat$slope), length.out = 5), 2),
-         bty = "n")
-  legend("topleft", legend = c("fitted lm log(meanMC)", "CI"),
-         lty = c(1,2), bty = "n")
-  
-  # Add p-value text
-  text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]), 
-       y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-       labels = p_text, pos = 4, cex = 0.9, col = "darkred")
-}
+#| fig-height: 10
 
 
-# Master plotting function for all scenario plots (6 plot types per scenario)
-plot_all_scenarios <- function(scenario_list, scenario_names, 
-                              ylim_sr = c(40,100), ylim_abund = c(0,15000)) {
-  n_scenarios <- length(scenario_list)
-  
-  # For each scenario, create all 6 plot types
-  for(i in 1:n_scenarios) {
-    # Set up 2x3 grid for each scenario
-    par(mfrow = c(2, 3), mar = c(4,4,3,2))
-    
-    cat("Plotting scenario", scenario_names[i], "\n")
-    
-    # Main analysis plots
-    plot_sr_slope(scenario_list[[i]], scenario_names[i], ylim_sr)
-    plot_abund_slope(scenario_list[[i]], scenario_names[i], ylim_abund)
-    plot_sr_cvmc(scenario_list[[i]], scenario_names[i], ylim_sr)
-    plot_sr_meanmc(scenario_list[[i]], scenario_names[i], ylim_sr)
-    
-    # Additional diagnostic plots with models and p-values
-    cols <- viridis(length(scenario_list[[i]]$slope))[rank(scenario_list[[i]]$slope)]
-    
-    # Diagnostic 1: SD MC vs slope (with linear model and p-value)
-    fm_diag1 <- lm(slope ~ sdMC, data = scenario_list[[i]])
-    p_val1 <- summary(fm_diag1)$coefficients[2, 4]
-    p_text1 <- format_pvalue(p_val1)
-    
-    plot(scenario_list[[i]]$sdMC, scenario_list[[i]]$slope, pch = 16, 
-         xlab = "SD Mortality Change", ylab = "slope",
-         main = paste0("SD MC vs Slope - Scenario ", scenario_names[i]))
-    abline(fm_diag1, col = "black", lwd = 2)
-    text(x = par("usr")[1] + 0.75 * diff(par("usr")[1:2]), 
-         y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-         labels = p_text1, pos = 4, cex = 0.9, col = "darkred")
-    
-    # Diagnostic 2: SD MC vs meanSR (colored by slope, with linear model and p-value)
-    fm_diag2 <- lm(meanSR ~ sdMC, data = scenario_list[[i]])
-    p_val2 <- summary(fm_diag2)$coefficients[2, 4]
-    p_text2 <- format_pvalue(p_val2)
-    
-    plot(scenario_list[[i]]$sdMC, scenario_list[[i]]$meanSR, pch = 16, col = cols,
-         xlab = "SD Mortality Change", ylab = "mean species richness",
-         main = paste0("SD MC vs SR - Scenario ", scenario_names[i]), ylim = c(45,85))
-    abline(fm_diag2, col = "black", lwd = 2)
-    legend("bottomright", title = "slope", fill = viridis(5),
-           legend = signif(seq(min(scenario_list[[i]]$slope), max(scenario_list[[i]]$slope), length.out = 5), 2), bty = "n")
-    text(x = par("usr")[1] + 0.02 * diff(par("usr")[1:2]), 
-         y = par("usr")[4] - 0.05 * diff(par("usr")[3:4]), 
-         labels = p_text2, pos = 4, cex = 0.9, col = "darkred")
-  }
-}
+# pdf(paste0(root, "local/figures/ran%ran_allMax.pdf"), width = 10, height = 6.5, onefile = TRUE, useDingbats = FALSE)
+# Generate all plots for all scenarios with p-values
+plot_all_scenarios(list(res_all), "",
+                   ylim_sr = c(40,100))
 
-## ---- apply to scenarios C1-C5 ----
-# Assuming you have data objects: resC1, resC2, resC3, resC4, resC5
-scenario_dataP <- list(resPC1, resPC2, resPC3, resPC4, resPC5)
-scenario_labelsP <- c("pC1","pC2", "pC3","pC4", "pC5")
-scenario_dataN <- list(resNC1,resNC2, resNC3,resNC4, resNC5)
-scenario_labelsN <- c("nC1","nC2", "nC3","nC4", "nC5")
-scenario_labelsP <- c("pC1","pC2", "pC3","pC4", "pC5")
-
-scenario_all <- list(res_all)
-scenario_label_all <- c("all")
-
-
-pdf(paste0(root, "local/figures/ran/ran_allMax.pdf"), width = 10, height = 6.5, onefile = TRUE, useDingbats = FALSE)
-    # Generate all plots for all scenarios with p-values
-    plot_all_scenarios(scenario_dataP, scenario_labelsP, 
-                       ylim_sr = c(40,100), ylim_abund = c(0,15000))
-    plot_all_scenarios(scenario_dataN, scenario_labelsN, 
-                       ylim_sr = c(40,100), ylim_abund = c(0,15000))
-    plot_all_scenarios(scenario_all, scenario_label_all, 
-                       ylim_sr = c(40,100), ylim_abund = c(0,15000))
-dev.off()
-
+# dev.off()
 ```
 
 ## mutlidemsional plots

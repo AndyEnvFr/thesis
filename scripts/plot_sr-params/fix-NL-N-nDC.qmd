@@ -507,6 +507,165 @@ for (i in seq_len(nrow(combos))) {
 
 # Print all plots
 sapply(plots_list, print)
+
+p1 <- ggarrange(plots_list[[1]], plots_list[[2]], plots_list[[3]], 
+                plots_list[[4]], plots_list[[5]], plots_list[[6]], 
+                plots_list[[7]], plots_list[[8]], plots_list[[9]],
+                plots_list[[10]], plots_list[[11]], plots_list[[12]],
+                plots_list[[13]], plots_list[[14]], plots_list[[15]],
+                ncol = 3, nrow = 5)
+```
+```{r}
+#| fig-width: 20
+#| fig-height: 28
+
+
+cb_colors <- c(
+  "#029E73",  # Green
+  "#0173B2",  # Blue
+  "#DE8F05",  # Orange
+  "#CC78BC",  # Purple
+  "firebrick"   # Brown
+)
+
+
+## --- build predictions (as you had) ---
+pred <- lapply(dat_meta, function(x){
+  expand_grid(log_N = seq(min(x$log_N, na.rm = TRUE),
+                          max(x$log_N, na.rm = TRUE),
+                          length.out = 1000))
+})
+pred <- lapply(pred, function(x){
+  x$abund <- exp(x$log_N)
+  x
+})
+pred <- lapply(seq_along(pred), function(i){
+  x <- pred[[i]]
+  y <- metamod[[i]]
+  cbind(x, predict(object = y, newmods = x$log_N))
+})
+names(pred) <- namesShort
+
+## --- helper function (unchanged) ---
+extract_params <- function(nm) {
+  lhs <- sub("_.*", "", nm)
+  P  <- as.numeric(sub("P([0-9.]+)-.*", "\\1", lhs))
+  PL <- as.numeric(sub(".*-L([0-9.]+)-.*", "\\1", lhs))
+  C  <- as.numeric(sub(".*-C([0-9.]+)$", "\\1", lhs))
+  data.frame(P = P, PL = PL, C = C)
+}
+
+## --- bind list to df with parsed params ---
+pred_df_raw <- do.call(rbind, lapply(seq_along(pred), function(i) {
+  df <- pred[[i]]
+  pars <- extract_params(names(pred)[i])
+  df$scenario <- names(pred)[i]
+  df$P  <- pars$P
+  df$PL <- pars$PL
+  df$C  <- pars$C
+  df
+}))
+
+## --- normalize predict() columns ---
+if ("pred" %in% names(pred_df_raw))   names(pred_df_raw)[names(pred_df_raw)=="pred"]   <- "fitted"
+if ("fit"  %in% names(pred_df_raw))   names(pred_df_raw)[names(pred_df_raw)=="fit"]    <- "fitted"
+if ("ci.lb" %in% names(pred_df_raw))  pred_df_raw$ci_lower <- pred_df_raw$ci.lb
+if ("ci.ub" %in% names(pred_df_raw))  pred_df_raw$ci_upper <- pred_df_raw$ci.ub
+
+pred_df <- pred_df_raw %>% filter(P != 0)
+
+## --- null models for each C value ---
+null_nameC1 <- "P0-L20-C1_N1-L5-C1"
+null_dataC1 <- if (null_nameC1 %in% pred_df_raw$scenario) pred_df_raw[pred_df_raw$scenario == null_nameC1, ] else NULL
+
+null_nameC3 <- "P0-L20-C3_N1-L5-C1"
+null_dataC3 <- if (null_nameC3 %in% pred_df_raw$scenario) pred_df_raw[pred_df_raw$scenario == null_nameC3, ] else NULL
+
+null_nameC5 <- "P0-L20-C5_N1-L5-C1"
+null_dataC5 <- if (null_nameC5 %in% pred_df_raw$scenario) pred_df_raw[pred_df_raw$scenario == null_nameC5, ] else NULL
+
+## --- CHANGED: build separate plots per (P, C), lines = PL levels ---
+library(ggplot2)
+
+# common axes
+x_range <- range(pred_df$abund[pred_df$abund > 0 & is.finite(pred_df$abund)], na.rm = TRUE)
+y_range <- range(c(pred_df$ci_lower, pred_df$ci_upper), na.rm = TRUE)
+
+# order PL nicely for legend (now PL is color)
+pred_df$PL_fac <- factor(pred_df$PL, levels = sort(unique(pred_df$PL)))
+
+# CHANGED: now combinations are P and C
+combos <- unique(pred_df[c("P", "C")])
+combos <- combos[order(combos$P, combos$C), ]
+
+plots_list <- vector("list", nrow(combos))
+names(plots_list) <- paste0("P", combos$P, "_C", combos$C)
+
+for (i in seq_len(nrow(combos))) {
+  p_i <- combos$P[i]
+  c_i <- combos$C[i]
+  dat <- subset(pred_df, P == p_i & C == c_i)
+  if (nrow(dat) == 0) next
+
+  p <- ggplot()
+
+  # add appropriate null model
+  null_data <- if (c_i == 1) null_dataC1 else if (c_i == 3) null_dataC3 else if (c_i == 5) null_dataC5 else NULL
+  
+  if (!is.null(null_data)) {
+    p <- p +
+      geom_ribbon(data = null_data,
+                  aes(x = abund, ymin = ci_lower, ymax = ci_upper),
+                  alpha = 0.2, fill = "black") +
+      geom_line(data = null_data,
+                aes(x = abund, y = fitted),
+                linetype = "dashed", size = .5, color = "black", alpha = 0.9)
+  }
+
+  # CHANGED: treatment lines now colored by PL (specificity)
+  p <- p +
+    geom_ribbon(data = dat, 
+                aes(x = abund, ymin = ci_lower, ymax = ci_upper, fill = PL_fac),
+                alpha = 0.1) +
+    geom_line(data = dat, 
+              aes(x = abund, y = fitted, color = PL_fac), 
+              size = 1.2) +
+    scale_x_log10(limits = x_range, expand = expansion(mult = 0.02)) +
+    labs(title = paste0("pDD strength = ", p_i, ", pDD radius = ", c_i),
+         x = "",
+         y = "",
+         color = "pDD specificity (lambda)",
+         fill = "pDD specificity (lambda)") +
+    theme_classic(base_size = 16) +
+    theme(legend.position = "none",
+          axis.text = element_text(size = 18),  # Increase axis text size
+          plot.title = element_text(size = 18, hjust = 0.5, vjust = -2)) +
+    scale_color_manual(values = cb_colors) +
+    scale_fill_manual(values = cb_colors) +
+    coord_cartesian(ylim = c(-0.0004, 0.0013))
+
+
+  plots_list[[i]] <- p
+}
+
+# Print all plots
+# sapply(plots_list, print)
+
+p1 <- ggarrange(plots_list[[1]], plots_list[[2]], plots_list[[3]], 
+                plots_list[[4]], plots_list[[5]], plots_list[[6]], 
+                plots_list[[7]], plots_list[[8]], plots_list[[9]],
+                plots_list[[10]], plots_list[[11]], plots_list[[12]],
+                plots_list[[13]], plots_list[[14]], plots_list[[15]],
+                ncol = 3, nrow = 5)
+
+print(p1)
+```
+
+
+```{r}
+# pdf(paste0(root, "local/figures/plot_sr-params/pddSlope.pdf"), width = 18, height = 26, onefile = TRUE, useDingbats = FALSE)
+# print(p1)
+# dev.off()
 ```
 
 ## save PDF
